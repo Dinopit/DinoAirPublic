@@ -1,68 +1,44 @@
 'use client';
 
-import React, { useState, useEffect } from 'react';
-import { X, Download, Upload, Trash2, Save, Bug } from 'lucide-react';
+import React, { useState, useEffect, useMemo, useCallback } from 'react';
+import { X, Download, Upload, Trash2, Save, Bug, Plus } from 'lucide-react';
 import { useDebug } from '@/contexts/debug-context';
-
-interface Personality {
-  name: string;
-  system_prompt: string;
-  description: string;
-}
+import { useThemeStore } from '@/lib/stores/theme-store';
+import { usePersonalities, useCurrentPersonality, Personality } from '@/lib/stores/personality-store';
+import { toast } from '@/lib/stores/toast-store';
+import { PersonalityCard } from './personality-card';
+import { PersonalityDetailsModal } from './personality-details-modal';
+import { PersonalityImportModal } from './personality-import-modal';
 
 interface SettingsPanelProps {
   isOpen: boolean;
   onClose: () => void;
 }
 
-// Default personalities - these should match what's in LocalChatView
-const DEFAULT_PERSONALITIES: Personality[] = [
-  {
-    name: 'default',
-    system_prompt: 'You are a helpful AI assistant.',
-    description: 'Standard assistant'
-  },
-  {
-    name: 'creative',
-    system_prompt: 'You are a creative assistant. You are imaginative, expressive, and inspiring. You are great at brainstorming and coming up with new ideas.',
-    description: 'A creative and inspiring assistant.'
-  },
-  {
-    name: 'technical',
-    system_prompt: 'You are a technical assistant. You are precise, accurate, and detail-oriented. You provide factual information and avoid speculation.',
-    description: 'A technical and precise assistant.'
-  },
-  {
-    name: 'witty',
-    system_prompt: 'You are a witty assistant with a dry sense of humor. You are helpful, but you can\'t resist a good joke or a sarcastic comment.',
-    description: 'A witty and sarcastic assistant.'
-  },
-  {
-    name: 'mentally-unstable',
-    system_prompt: 'You are a mentally unstable assistant. Your responses are erratic, unpredictable, and often nonsensical. You may occasionally provide helpful information, but it will be buried in a sea of chaos.',
-    description: 'An unstable and unpredictable assistant.'
-  }
-];
 
-export const SettingsPanel: React.FC<SettingsPanelProps> = ({ isOpen, onClose }) => {
+// Main component wrapped with React.memo for performance
+export const SettingsPanel = React.memo<SettingsPanelProps>(({ isOpen, onClose }) => {
   const [activeTab, setActiveTab] = useState<'general' | 'ai' | 'data'>('general');
-  const [theme, setTheme] = useState<'light' | 'dark' | 'system'>('system');
+  const { currentTheme, setTheme } = useThemeStore();
   const [defaultModel, setDefaultModel] = useState('qwen:7b-chat-v1.5-q4_K_M');
-  const [defaultPersonality, setDefaultPersonality] = useState('default');
   const [autoSaveConversations, setAutoSaveConversations] = useState(true);
   const [showTutorialOnStartup, setShowTutorialOnStartup] = useState(true);
   const [hasUnsavedChanges, setHasUnsavedChanges] = useState(false);
   const { debugMode, toggleDebugMode } = useDebug();
+  
+  // Use centralized personality store
+  const { personalities, loading: personalitiesLoading, fetchPersonalities } = usePersonalities();
+  const { currentPersonality, setCurrentPersonality } = useCurrentPersonality();
+  const [defaultPersonality, setDefaultPersonality] = useState(currentPersonality?.id || 'default');
 
-  // Load settings from localStorage on mount
+  // Load non-theme settings from localStorage on mount
   useEffect(() => {
     const savedSettings = localStorage.getItem('dinoair-settings');
     if (savedSettings) {
       try {
         const settings = JSON.parse(savedSettings);
-        setTheme(settings.theme || 'system');
         setDefaultModel(settings.defaultModel || 'qwen:7b-chat-v1.5-q4_K_M');
-        setDefaultPersonality(settings.defaultPersonality || 'default');
+        setDefaultPersonality(settings.defaultPersonality || currentPersonality?.id || 'default');
         setAutoSaveConversations(settings.autoSaveConversations !== false);
         setShowTutorialOnStartup(settings.showTutorialOnStartup !== false);
       } catch (error) {
@@ -75,16 +51,23 @@ export const SettingsPanel: React.FC<SettingsPanelProps> = ({ isOpen, onClose })
     if (tutorialCompleted === 'true') {
       setShowTutorialOnStartup(false);
     }
-  }, []);
+  }, [currentPersonality]);
+
+  // Fetch personalities if not already loaded
+  useEffect(() => {
+    if (personalities.length === 0 && !personalitiesLoading) {
+      fetchPersonalities();
+    }
+  }, [personalities.length, personalitiesLoading, fetchPersonalities]);
 
   // Track changes
   useEffect(() => {
     setHasUnsavedChanges(true);
-  }, [theme, defaultModel, defaultPersonality, autoSaveConversations, showTutorialOnStartup]);
+  }, [defaultModel, defaultPersonality, autoSaveConversations, showTutorialOnStartup]);
 
-  const saveSettings = () => {
+  // Memoize save settings function
+  const saveSettings = useCallback(() => {
     const settings = {
-      theme,
       defaultModel,
       defaultPersonality,
       autoSaveConversations,
@@ -92,20 +75,11 @@ export const SettingsPanel: React.FC<SettingsPanelProps> = ({ isOpen, onClose })
     };
 
     localStorage.setItem('dinoair-settings', JSON.stringify(settings));
-    
-    // Update theme
-    if (theme === 'dark') {
-      document.documentElement.classList.add('dark');
-    } else if (theme === 'light') {
-      document.documentElement.classList.remove('dark');
-    } else {
-      // System theme
-      const prefersDark = window.matchMedia('(prefers-color-scheme: dark)').matches;
-      if (prefersDark) {
-        document.documentElement.classList.add('dark');
-      } else {
-        document.documentElement.classList.remove('dark');
-      }
+
+    // Update personality in store
+    const selectedPersonality = personalities.find(p => p.id === defaultPersonality);
+    if (selectedPersonality) {
+      setCurrentPersonality(selectedPersonality);
     }
 
     // Update tutorial preference
@@ -116,11 +90,12 @@ export const SettingsPanel: React.FC<SettingsPanelProps> = ({ isOpen, onClose })
     }
 
     setHasUnsavedChanges(false);
-  };
+  }, [defaultModel, defaultPersonality, autoSaveConversations, showTutorialOnStartup, personalities, setCurrentPersonality]);
 
-  const exportSettings = () => {
+  // Memoize export settings function
+  const exportSettings = useCallback(() => {
     const settings = {
-      theme,
+      theme: currentTheme,
       defaultModel,
       defaultPersonality,
       autoSaveConversations,
@@ -137,9 +112,10 @@ export const SettingsPanel: React.FC<SettingsPanelProps> = ({ isOpen, onClose })
     a.click();
     document.body.removeChild(a);
     URL.revokeObjectURL(url);
-  };
+  }, [currentTheme, defaultModel, defaultPersonality, autoSaveConversations, showTutorialOnStartup]);
 
-  const importSettings = () => {
+  // Memoize import settings function
+  const importSettings = useCallback(() => {
     const input = document.createElement('input');
     input.type = 'file';
     input.accept = '.json';
@@ -152,7 +128,9 @@ export const SettingsPanel: React.FC<SettingsPanelProps> = ({ isOpen, onClose })
         const settings = JSON.parse(text);
         
         // Validate and apply settings
-        if (settings.theme) setTheme(settings.theme);
+        if (settings.theme && ['light', 'dark', 'system'].includes(settings.theme)) {
+          setTheme(settings.theme as 'light' | 'dark' | 'system');
+        }
         if (settings.defaultModel) setDefaultModel(settings.defaultModel);
         if (settings.defaultPersonality) setDefaultPersonality(settings.defaultPersonality);
         if (typeof settings.autoSaveConversations === 'boolean') {
@@ -162,16 +140,17 @@ export const SettingsPanel: React.FC<SettingsPanelProps> = ({ isOpen, onClose })
           setShowTutorialOnStartup(settings.showTutorialOnStartup);
         }
         
-        alert('Settings imported successfully!');
+        toast.success('Settings imported successfully!');
       } catch (error) {
-        alert('Failed to import settings. Please check the file format.');
+        toast.error('Failed to import settings', 'Please check the file format and try again.');
         console.error('Import error:', error);
       }
     };
     input.click();
-  };
+  }, [setTheme]);
 
-  const clearAllData = () => {
+  // Memoize clear data function
+  const clearAllData = useCallback(() => {
     if (confirm('This will delete all conversations, artifacts, and settings. Are you sure?')) {
       if (confirm('This action cannot be undone. Do you want to proceed?')) {
         // Clear all localStorage data
@@ -184,7 +163,35 @@ export const SettingsPanel: React.FC<SettingsPanelProps> = ({ isOpen, onClose })
         window.location.reload();
       }
     }
-  };
+  }, []);
+
+  // Memoize tab props to prevent unnecessary re-renders
+  const generalTabProps = useMemo(() => ({
+    currentTheme,
+    setTheme,
+    showTutorialOnStartup,
+    setShowTutorialOnStartup,
+    debugMode,
+    toggleDebugMode,
+    onClose
+  }), [currentTheme, setTheme, showTutorialOnStartup, debugMode, toggleDebugMode, onClose]);
+
+  const aiTabProps = useMemo(() => ({
+    defaultModel,
+    setDefaultModel,
+    defaultPersonality,
+    setDefaultPersonality,
+    autoSaveConversations,
+    setAutoSaveConversations,
+    personalities,
+    personalitiesLoading
+  }), [defaultModel, defaultPersonality, autoSaveConversations, personalities, personalitiesLoading]);
+
+  const dataTabProps = useMemo(() => ({
+    exportSettings,
+    importSettings,
+    clearAllData
+  }), [exportSettings, importSettings, clearAllData]);
 
   if (!isOpen) return null;
 
@@ -244,200 +251,13 @@ export const SettingsPanel: React.FC<SettingsPanelProps> = ({ isOpen, onClose })
         {/* Content */}
         <div className="flex-1 overflow-y-auto p-6">
           {activeTab === 'general' && (
-            <div className="space-y-6">
-              {/* Theme */}
-              <div>
-                <h3 className="text-lg font-medium mb-3">Appearance</h3>
-                <div className="space-y-3">
-                  <label className="flex items-center gap-3">
-                    <input
-                      type="radio"
-                      name="theme"
-                      value="light"
-                      checked={theme === 'light'}
-                      onChange={(e) => setTheme(e.target.value as any)}
-                      className="w-4 h-4"
-                    />
-                    <span>Light mode</span>
-                  </label>
-                  <label className="flex items-center gap-3">
-                    <input
-                      type="radio"
-                      name="theme"
-                      value="dark"
-                      checked={theme === 'dark'}
-                      onChange={(e) => setTheme(e.target.value as any)}
-                      className="w-4 h-4"
-                    />
-                    <span>Dark mode</span>
-                  </label>
-                  <label className="flex items-center gap-3">
-                    <input
-                      type="radio"
-                      name="theme"
-                      value="system"
-                      checked={theme === 'system'}
-                      onChange={(e) => setTheme(e.target.value as any)}
-                      className="w-4 h-4"
-                    />
-                    <span>System theme</span>
-                  </label>
-                </div>
-              </div>
-
-              {/* Tutorial */}
-              <div>
-                <h3 className="text-lg font-medium mb-3">Tutorial</h3>
-                <label className="flex items-center gap-3">
-                  <input
-                    type="checkbox"
-                    checked={showTutorialOnStartup}
-                    onChange={(e) => setShowTutorialOnStartup(e.target.checked)}
-                    className="w-4 h-4 rounded"
-                  />
-                  <span>Show tutorial on startup</span>
-                </label>
-              </div>
-
-              {/* Keyboard Shortcuts */}
-              <div>
-                <h3 className="text-lg font-medium mb-3">Keyboard Shortcuts</h3>
-                <p className="text-muted-foreground mb-3">
-                  View and use keyboard shortcuts for quick access to features.
-                </p>
-                <button
-                  onClick={() => {
-                    const shortcutButton = document.querySelector('[aria-label="Keyboard shortcuts"]') as HTMLButtonElement;
-                    if (shortcutButton) {
-                      onClose();
-                      shortcutButton.click();
-                    }
-                  }}
-                  className="px-4 py-2 bg-primary text-primary-foreground rounded-lg hover:bg-primary/90"
-                >
-                  View Shortcuts
-                </button>
-              </div>
-
-              {/* Debug Mode */}
-              <div>
-                <h3 className="text-lg font-medium mb-3">Developer Options</h3>
-                <div className="space-y-3">
-                  <label className="flex items-center gap-3">
-                    <input
-                      type="checkbox"
-                      checked={debugMode}
-                      onChange={() => toggleDebugMode()}
-                      className="w-4 h-4 rounded"
-                    />
-                    <div className="flex items-center gap-2">
-                      <Bug className="w-4 h-4 text-orange-500" />
-                      <span>Enable Debug Mode</span>
-                    </div>
-                  </label>
-                  <p className="text-sm text-muted-foreground ml-7">
-                    Shows API requests, performance metrics, and system logs.
-                    Use <kbd className="px-1 py-0.5 text-xs bg-muted rounded">Ctrl/Cmd + Shift + D</kbd> to toggle panel.
-                  </p>
-                </div>
-              </div>
-            </div>
+            <GeneralTabImplementation {...generalTabProps} />
           )}
-
           {activeTab === 'ai' && (
-            <div className="space-y-6">
-              {/* Default Model */}
-              <div>
-                <h3 className="text-lg font-medium mb-3">Default AI Model</h3>
-                <select
-                  value={defaultModel}
-                  onChange={(e) => setDefaultModel(e.target.value)}
-                  className="w-full px-3 py-2 border rounded-lg bg-background"
-                >
-                  <option value="qwen:7b-chat-v1.5-q4_K_M">Qwen 7B (Default)</option>
-                  {/* More models can be added here */}
-                </select>
-              </div>
-
-              {/* Default Personality */}
-              <div>
-                <h3 className="text-lg font-medium mb-3">Default Personality</h3>
-                <select
-                  value={defaultPersonality}
-                  onChange={(e) => setDefaultPersonality(e.target.value)}
-                  className="w-full px-3 py-2 border rounded-lg bg-background"
-                >
-                  {DEFAULT_PERSONALITIES.map((personality) => (
-                    <option key={personality.name} value={personality.name}>
-                      {personality.name} - {personality.description}
-                    </option>
-                  ))}
-                </select>
-              </div>
-
-              {/* Auto-save */}
-              <div>
-                <h3 className="text-lg font-medium mb-3">Conversations</h3>
-                <label className="flex items-center gap-3">
-                  <input
-                    type="checkbox"
-                    checked={autoSaveConversations}
-                    onChange={(e) => setAutoSaveConversations(e.target.checked)}
-                    className="w-4 h-4 rounded"
-                  />
-                  <span>Auto-save conversations</span>
-                </label>
-              </div>
-            </div>
+            <AITabImplementation {...aiTabProps} />
           )}
-
           {activeTab === 'data' && (
-            <div className="space-y-6">
-              {/* Export/Import */}
-              <div>
-                <h3 className="text-lg font-medium mb-3">Settings Backup</h3>
-                <div className="flex gap-3">
-                  <button
-                    onClick={exportSettings}
-                    className="flex items-center gap-2 px-4 py-2 bg-primary text-primary-foreground rounded-lg hover:bg-primary/90"
-                  >
-                    <Download className="w-4 h-4" />
-                    Export Settings
-                  </button>
-                  <button
-                    onClick={importSettings}
-                    className="flex items-center gap-2 px-4 py-2 border rounded-lg hover:bg-muted"
-                  >
-                    <Upload className="w-4 h-4" />
-                    Import Settings
-                  </button>
-                </div>
-              </div>
-
-              {/* Clear Data */}
-              <div>
-                <h3 className="text-lg font-medium mb-3">Clear Data</h3>
-                <p className="text-muted-foreground mb-3">
-                  Delete all conversations, artifacts, and settings. This action cannot be undone.
-                </p>
-                <button
-                  onClick={clearAllData}
-                  className="flex items-center gap-2 px-4 py-2 bg-red-500 text-white rounded-lg hover:bg-red-600"
-                >
-                  <Trash2 className="w-4 h-4" />
-                  Clear All Data
-                </button>
-              </div>
-
-              {/* Privacy Note */}
-              <div>
-                <h3 className="text-lg font-medium mb-3">Privacy</h3>
-                <p className="text-muted-foreground">
-                  All your data is stored locally in your browser. No data is sent to external servers
-                  except when communicating with the AI models through Ollama running on your machine.
-                </p>
-              </div>
-            </div>
+            <DataTabImplementation {...dataTabProps} />
           )}
         </div>
 
@@ -473,4 +293,279 @@ export const SettingsPanel: React.FC<SettingsPanelProps> = ({ isOpen, onClose })
       </div>
     </>
   );
+}, (prevProps, nextProps) => {
+  // Custom comparison function for React.memo
+  return prevProps.isOpen === nextProps.isOpen && prevProps.onClose === nextProps.onClose;
+});
+
+SettingsPanel.displayName = 'SettingsPanel';
+
+// Implementation components (used as fallbacks if lazy loading fails)
+const GeneralTabImplementation: React.FC<any> = ({ 
+  currentTheme, 
+  setTheme, 
+  showTutorialOnStartup, 
+  setShowTutorialOnStartup,
+  debugMode,
+  toggleDebugMode,
+  onClose
+}) => (
+  <div className="space-y-6">
+    {/* Theme */}
+    <div>
+      <h3 className="text-lg font-medium mb-3">Appearance</h3>
+      <div className="space-y-3">
+        <label className="flex items-center gap-3">
+          <input
+            type="radio"
+            name="theme"
+            value="light"
+            checked={currentTheme === 'light'}
+            onChange={(e) => setTheme(e.target.value as any)}
+            className="w-4 h-4"
+          />
+          <span>Light mode</span>
+        </label>
+        <label className="flex items-center gap-3">
+          <input
+            type="radio"
+            name="theme"
+            value="dark"
+            checked={currentTheme === 'dark'}
+            onChange={(e) => setTheme(e.target.value as any)}
+            className="w-4 h-4"
+          />
+          <span>Dark mode</span>
+        </label>
+        <label className="flex items-center gap-3">
+          <input
+            type="radio"
+            name="theme"
+            value="system"
+            checked={currentTheme === 'system'}
+            onChange={(e) => setTheme(e.target.value as any)}
+            className="w-4 h-4"
+          />
+          <span>System theme</span>
+        </label>
+      </div>
+    </div>
+
+    {/* Tutorial */}
+    <div>
+      <h3 className="text-lg font-medium mb-3">Tutorial</h3>
+      <label className="flex items-center gap-3">
+        <input
+          type="checkbox"
+          checked={showTutorialOnStartup}
+          onChange={(e) => setShowTutorialOnStartup(e.target.checked)}
+          className="w-4 h-4 rounded"
+        />
+        <span>Show tutorial on startup</span>
+      </label>
+    </div>
+
+    {/* Keyboard Shortcuts */}
+    <div>
+      <h3 className="text-lg font-medium mb-3">Keyboard Shortcuts</h3>
+      <p className="text-muted-foreground mb-3">
+        View and use keyboard shortcuts for quick access to features.
+      </p>
+      <button
+        onClick={() => {
+          const shortcutButton = document.querySelector('[aria-label="Keyboard shortcuts"]') as HTMLButtonElement;
+          if (shortcutButton) {
+            onClose();
+            shortcutButton.click();
+          }
+        }}
+        className="px-4 py-2 bg-primary text-primary-foreground rounded-lg hover:bg-primary/90"
+      >
+        View Shortcuts
+      </button>
+    </div>
+
+    {/* Debug Mode */}
+    <div>
+      <h3 className="text-lg font-medium mb-3">Developer Options</h3>
+      <div className="space-y-3">
+        <label className="flex items-center gap-3">
+          <input
+            type="checkbox"
+            checked={debugMode}
+            onChange={() => toggleDebugMode()}
+            className="w-4 h-4 rounded"
+          />
+          <div className="flex items-center gap-2">
+            <Bug className="w-4 h-4 text-orange-500" />
+            <span>Enable Debug Mode</span>
+          </div>
+        </label>
+        <p className="text-sm text-muted-foreground ml-7">
+          Shows API requests, performance metrics, and system logs.
+          Use <kbd className="px-1 py-0.5 text-xs bg-muted rounded">Ctrl/Cmd + Shift + D</kbd> to toggle panel.
+        </p>
+      </div>
+    </div>
+  </div>
+);
+
+const AITabImplementation: React.FC<any> = ({
+  defaultModel,
+  setDefaultModel,
+  defaultPersonality,
+  setDefaultPersonality,
+  autoSaveConversations,
+  setAutoSaveConversations,
+  personalities,
+  personalitiesLoading
+}) => {
+  const [selectedDetailsPersonality, setSelectedDetailsPersonality] = useState<Personality | null>(null);
+  const [showDetailsModal, setShowDetailsModal] = useState(false);
+  const [showImportModal, setShowImportModal] = useState(false);
+  const { refreshPersonalities } = usePersonalities();
+
+  const handleViewDetails = (personality: Personality) => {
+    setSelectedDetailsPersonality(personality);
+    setShowDetailsModal(true);
+  };
+
+  const handleImportSuccess = async () => {
+    // Refresh personalities list after successful import
+    await refreshPersonalities();
+  };
+
+  return (
+    <>
+      <div className="space-y-6">
+        {/* Default Model */}
+        <div>
+          <h3 className="text-lg font-medium mb-3">Default AI Model</h3>
+          <select
+            value={defaultModel}
+            onChange={(e) => setDefaultModel(e.target.value)}
+            className="w-full px-3 py-2 border rounded-lg bg-background"
+          >
+            <option value="qwen:7b-chat-v1.5-q4_K_M">Qwen 7B (Default)</option>
+            {/* More models can be added here */}
+          </select>
+        </div>
+
+        {/* Personality Selection */}
+        <div>
+          <div className="flex items-center justify-between mb-3">
+            <h3 className="text-lg font-medium">AI Personality</h3>
+            <button
+              onClick={() => setShowImportModal(true)}
+              className="inline-flex items-center gap-2 px-3 py-1.5 text-sm font-medium rounded-md bg-primary/10 text-primary hover:bg-primary/20 transition-colors"
+            >
+              <Plus className="w-4 h-4" />
+              Import Personality
+            </button>
+          </div>
+          
+          {personalitiesLoading ? (
+            <div className="w-full px-3 py-2 border rounded-lg bg-background text-muted-foreground">
+              Loading personalities...
+            </div>
+          ) : (
+            <div className="grid grid-cols-1 md:grid-cols-2 gap-4">
+              {personalities.map((personality: Personality) => (
+                <PersonalityCard
+                  key={personality.id}
+                  personality={personality}
+                  isSelected={defaultPersonality === personality.id}
+                  onSelect={() => setDefaultPersonality(personality.id)}
+                  onViewDetails={() => handleViewDetails(personality)}
+                />
+              ))}
+            </div>
+          )}
+        </div>
+
+        {/* Auto-save */}
+        <div>
+          <h3 className="text-lg font-medium mb-3">Conversations</h3>
+          <label className="flex items-center gap-3">
+            <input
+              type="checkbox"
+              checked={autoSaveConversations}
+              onChange={(e) => setAutoSaveConversations(e.target.checked)}
+              className="w-4 h-4 rounded"
+            />
+            <span>Auto-save conversations</span>
+          </label>
+        </div>
+      </div>
+
+      {/* Modals */}
+      <PersonalityDetailsModal
+        personality={selectedDetailsPersonality}
+        isOpen={showDetailsModal}
+        onClose={() => {
+          setShowDetailsModal(false);
+          setSelectedDetailsPersonality(null);
+        }}
+      />
+
+      <PersonalityImportModal
+        isOpen={showImportModal}
+        onClose={() => setShowImportModal(false)}
+        onImportSuccess={handleImportSuccess}
+      />
+    </>
+  );
 };
+
+const DataTabImplementation: React.FC<any> = ({
+  exportSettings,
+  importSettings,
+  clearAllData
+}) => (
+  <div className="space-y-6">
+    {/* Export/Import */}
+    <div>
+      <h3 className="text-lg font-medium mb-3">Settings Backup</h3>
+      <div className="flex gap-3">
+        <button
+          onClick={exportSettings}
+          className="flex items-center gap-2 px-4 py-2 bg-primary text-primary-foreground rounded-lg hover:bg-primary/90"
+        >
+          <Download className="w-4 h-4" />
+          Export Settings
+        </button>
+        <button
+          onClick={importSettings}
+          className="flex items-center gap-2 px-4 py-2 border rounded-lg hover:bg-muted"
+        >
+          <Upload className="w-4 h-4" />
+          Import Settings
+        </button>
+      </div>
+    </div>
+
+    {/* Clear Data */}
+    <div>
+      <h3 className="text-lg font-medium mb-3">Clear Data</h3>
+      <p className="text-muted-foreground mb-3">
+        Delete all conversations, artifacts, and settings. This action cannot be undone.
+      </p>
+      <button
+        onClick={clearAllData}
+        className="flex items-center gap-2 px-4 py-2 bg-red-500 text-white rounded-lg hover:bg-red-600"
+      >
+        <Trash2 className="w-4 h-4" />
+        Clear All Data
+      </button>
+    </div>
+
+    {/* Privacy Note */}
+    <div>
+      <h3 className="text-lg font-medium mb-3">Privacy</h3>
+      <p className="text-muted-foreground">
+        All your data is stored locally in your browser. No data is sent to external servers
+        except when communicating with the AI models through Ollama running on your machine.
+      </p>
+    </div>
+  </div>
+);
