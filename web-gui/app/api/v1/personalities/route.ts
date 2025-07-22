@@ -1,5 +1,4 @@
 import { NextRequest, NextResponse } from 'next/server';
-import { withApiAuth } from '@/lib/middleware/api-auth';
 import fs from 'fs/promises';
 import path from 'path';
 
@@ -84,4 +83,4 @@ async function listPersonalities(request: NextRequest) {
   }
 }
 
-export const GET = withApiAuth(listPersonalities);
+export const GET = listPersonalities;

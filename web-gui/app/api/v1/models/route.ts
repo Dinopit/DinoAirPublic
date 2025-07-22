@@ -1,5 +1,4 @@
 import { NextRequest, NextResponse } from 'next/server';
-import { withApiAuth } from '@/lib/middleware/api-auth';
 
 interface OllamaModel {
   name: string;
@@ -51,4 +50,4 @@ async function listModels(request: NextRequest) {
   }
 }
 
-export const GET = withApiAuth(listModels);
+export const GET = listModels;

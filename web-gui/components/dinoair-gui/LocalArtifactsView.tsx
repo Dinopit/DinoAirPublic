@@ -1,28 +1,64 @@
 'use client';
 
 import React, { useState, useEffect, useMemo } from 'react';
-import Prism from 'prismjs';
-import 'prismjs/themes/prism-tomorrow.css';
-import 'prismjs/components/prism-javascript';
-import 'prismjs/components/prism-typescript';
-import 'prismjs/components/prism-jsx';
-import 'prismjs/components/prism-tsx';
-import 'prismjs/components/prism-python';
-import 'prismjs/components/prism-java';
-import 'prismjs/components/prism-cpp';
-import 'prismjs/components/prism-csharp';
-import 'prismjs/components/prism-css';
-import 'prismjs/components/prism-json';
-import 'prismjs/components/prism-yaml';
-import 'prismjs/components/prism-markdown';
-import 'prismjs/components/prism-sql';
-import 'prismjs/components/prism-bash';
-import 'prismjs/components/prism-rust';
-import 'prismjs/components/prism-go';
-import 'prismjs/components/prism-php';
 import { versionControl } from '@/lib/utils/artifact-version-control';
 import { ArtifactExporter } from '@/lib/utils/artifact-export';
 import { SkeletonCard } from '../ui/skeleton';
+
+// Dynamically import PrismJS to avoid SSR issues
+let Prism: any = null;
+
+// Initialize PrismJS safely
+const initializePrism = async () => {
+  try {
+    if (typeof window !== 'undefined' && !Prism) {
+      // Import core PrismJS
+      const prismModule = await import('prismjs');
+      Prism = prismModule.default;
+      
+      // Make Prism available globally for components that expect it
+      (window as any).Prism = Prism;
+      
+      // Import theme with type assertion to avoid TS error
+      await import('prismjs/themes/prism-tomorrow.css' as any);
+      
+      // Import language components with error handling
+      const languageImports = [
+        import('prismjs/components/prism-javascript' as any),
+        import('prismjs/components/prism-typescript' as any),
+        import('prismjs/components/prism-jsx' as any),
+        import('prismjs/components/prism-tsx' as any),
+        import('prismjs/components/prism-python' as any),
+        import('prismjs/components/prism-java' as any),
+        import('prismjs/components/prism-cpp' as any),
+        import('prismjs/components/prism-csharp' as any),
+        import('prismjs/components/prism-css' as any),
+        import('prismjs/components/prism-json' as any),
+        import('prismjs/components/prism-yaml' as any),
+        import('prismjs/components/prism-markdown' as any),
+        import('prismjs/components/prism-sql' as any),
+        import('prismjs/components/prism-bash' as any),
+        import('prismjs/components/prism-rust' as any),
+        import('prismjs/components/prism-go' as any),
+        import('prismjs/components/prism-php' as any)
+      ];
+      
+      // Load all languages, catching any errors
+      const results = await Promise.allSettled(languageImports);
+      
+      // Log any failed imports for debugging
+      results.forEach((result, index) => {
+        if (result.status === 'rejected') {
+          console.warn(`Failed to load PrismJS language component ${index}:`, result.reason);
+        }
+      });
+    }
+    return Prism;
+  } catch (error) {
+    console.error('Failed to initialize PrismJS:', error);
+    return null;
+  }
+};
 
 interface Artifact {
   id: string;
@@ -119,12 +155,36 @@ const LocalArtifactsView = () => {
     return languageMap[type.toLowerCase()] || 'text';
   };
 
-  // Apply syntax highlighting
+  // Initialize PrismJS on component mount
+  useEffect(() => {
+    initializePrism();
+  }, []);
+
+  // Apply syntax highlighting with error handling
   useEffect(() => {
     if (viewingArtifact) {
-      setTimeout(() => {
-        Prism.highlightAll();
-      }, 100);
+      const applySyntaxHighlighting = async () => {
+        try {
+          // Ensure Prism is loaded
+          const prismInstance = await initializePrism();
+          if (prismInstance && prismInstance.highlightAll) {
+            // Use setTimeout to ensure DOM is ready
+            setTimeout(() => {
+              try {
+                prismInstance.highlightAll();
+              } catch (highlightError) {
+                console.error('Error during syntax highlighting:', highlightError);
+                // Continue without syntax highlighting rather than crashing
+              }
+            }, 100);
+          }
+        } catch (error) {
+          console.error('Failed to apply syntax highlighting:', error);
+          // Continue without syntax highlighting
+        }
+      };
+      
+      applySyntaxHighlighting();
     }
   }, [viewingArtifact]);
 
@@ -693,8 +753,11 @@ const LocalArtifactsView = () => {
               <span className="text-sm text-muted-foreground">{viewingArtifact.type}</span>
             </div>
             <div className="flex-1 overflow-auto mb-4">
-              <pre className="p-4 rounded-lg bg-[#2d2d2d] text-white">
-                <code className={`language-${getPrismLanguage(viewingArtifact.type)}`}>
+              <pre className="p-4 rounded-lg bg-[#2d2d2d] text-white overflow-auto">
+                <code
+                  className={`language-${getPrismLanguage(viewingArtifact.type)}`}
+                  style={{ whiteSpace: 'pre-wrap', wordBreak: 'break-word' }}
+                >
                   {viewingArtifact.content}
                 </code>
               </pre>
