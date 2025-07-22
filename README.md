@@ -446,10 +446,10 @@ DEBUG=dinoair:*
 
 ### Getting Help
 
-- 📖 Check the [documentation](docs/)
+- 📖 Check the out the website: https://www.dinopitstudios-llc.com/
 - 🐛 Report issues on [GitHub](https://github.com/yourusername/DinoAir/issues)
-- 💬 Join our [Discord community](https://discord.gg/dinoair)
-- 📧 Contact support: support@dinoair.example.com
+- 💬 Join our the discord! https://discord.gg/GVd4jSh3
+- 📧 Contact support: Admin@dinopitstudios-llc.com 
 
 ## 📄 License
 
