@@ -1,0 +1,132 @@
+@tailwind base;
+@tailwind components;
+@tailwind utilities;
+
+@layer base {
+  :root {
+    /* Link shadcn's CSS variables to our dynamic theme variables */
+    --background: var(--color-background);
+    --foreground: var(--color-foreground);
+    --card: var(--color-background);
+    --card-foreground: var(--color-foreground);
+    --popover: var(--color-background);
+    --popover-foreground: var(--color-foreground);
+    --primary: var(--color-primary);
+    --primary-foreground: var(--color-background);
+    --secondary: var(--color-secondary);
+    --secondary-foreground: var(--color-foreground);
+    --muted: var(--color-muted);
+    --muted-foreground: var(--color-foreground);
+    --accent: var(--color-accent);
+    --accent-foreground: var(--color-background);
+    --destructive: #ef4444;
+    --destructive-foreground: #ffffff;
+    --border: var(--color-border);
+    --input: var(--color-border);
+    --ring: var(--color-primary);
+    --radius: 0.5rem;
+  }
+}
+
+/* DinoAir Theme Variables */
+:root {
+  /* Dynamic theme colors - updated by theme system */
+  --color-primary: #3b82f6;
+  --color-secondary: #60a5fa;
+  --color-accent: #2563eb;
+  --color-background: #ffffff;
+  --color-foreground: #0f172a;
+  --color-muted: #f8fafc;
+  --color-border: #e2e8f0;
+}
+
+.dark {
+  --color-primary: #3b82f6;
+  --color-secondary: #60a5fa;
+  --color-accent: #2563eb;
+  --color-background: #0f172a;
+  --color-foreground: #f8fafc;
+  --color-muted: #1e293b;
+  --color-border: #334155;
+}
+
+@layer base {
+  * {
+    @apply border-border;
+  }
+  body {
+    @apply bg-background text-foreground;
+  }
+}
+
+@layer components {
+  /* Chat Interface Styles */
+  .chat-container {
+    @apply flex h-screen bg-gradient-to-br from-background to-muted;
+  }
+  
+  .chat-messages {
+    @apply flex-1 overflow-y-auto p-4 space-y-4;
+  }
+  
+  .message-bubble {
+    @apply max-w-[70%] p-3 rounded-lg shadow-sm;
+  }
+  
+  .message-user {
+    @apply bg-primary text-primary-foreground ml-auto;
+  }
+  
+  .message-assistant {
+    @apply bg-card text-card-foreground border;
+  }
+  
+  .message-input {
+    @apply flex items-center gap-2 p-4 border-t bg-background;
+  }
+  
+  /* Loading and Status Indicators */
+  .loading-spinner {
+    @apply animate-spin rounded-full h-6 w-6 border-b-2 border-primary;
+  }
+  
+  /* Responsive Design */
+  @media (max-width: 768px) {
+    .message-bubble {
+      @apply max-w-[85%];
+    }
+  }
+}
+
+@layer utilities {
+  .text-balance {
+    text-wrap: balance;
+  }
+  
+  .scrollbar-hide {
+    -ms-overflow-style: none;
+    scrollbar-width: none;
+  }
+  
+  .scrollbar-hide::-webkit-scrollbar {
+    display: none;
+  }
+}
+
+/* Custom scrollbar for webkit browsers */
+::-webkit-scrollbar {
+  width: 6px;
+}
+
+::-webkit-scrollbar-track {
+  background: hsl(var(--muted));
+}
+
+::-webkit-scrollbar-thumb {
+  background: hsl(var(--border));
+  border-radius: 3px;
+}
+
+::-webkit-scrollbar-thumb:hover {
+  background: hsl(var(--muted-foreground));
+}

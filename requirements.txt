@@ -1,0 +1,11 @@
+# DinoAir Model Downloader Dependencies
+# These are additional requirements for the automated model download functionality
+
+# HTTP requests library for downloading files
+requests>=2.31.0
+
+# Progress bar library for showing download progress
+tqdm>=4.66.0
+
+# Note: ComfyUI has its own requirements.txt that will be installed separately
+# This file contains only the additional dependencies needed for model downloading
