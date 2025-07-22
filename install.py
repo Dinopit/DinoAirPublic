@@ -4,6 +4,8 @@ import subprocess
 import json
 from importlib import import_module
 import platform
+import argparse
+import shutil
 
 def check_python_version():
     """Checks if the Python version is 3.11 or higher."""
@@ -35,30 +37,96 @@ def check_ollama():
         print("Please install Ollama from https://ollama.ai/ and try again.")
         return False
 
+def find_npm_command():
+    """Finds the npm command by checking common locations."""
+    # Try direct command first
+    npm_commands = ["npm", "npm.cmd"]
+    
+    # Common Node.js installation paths
+    common_paths = []
+    if platform.system() == "Windows":
+        common_paths.extend([
+            os.path.join(os.environ.get("ProgramFiles", ""), "nodejs"),
+            os.path.join(os.environ.get("ProgramFiles(x86)", ""), "nodejs"),
+            os.path.join(os.environ.get("APPDATA", ""), "npm"),
+            os.path.join(os.environ.get("LOCALAPPDATA", ""), "Programs", "nodejs")
+        ])
+        npm_commands.extend(["npm.cmd", "npm.exe"])
+    else:
+        common_paths.extend([
+            "/usr/local/bin",
+            "/usr/bin",
+            "/opt/nodejs/bin",
+            os.path.expanduser("~/.nvm/current/bin"),
+            os.path.expanduser("~/.npm-global/bin")
+        ])
+    
+    # Try commands in PATH first
+    for cmd in npm_commands:
+        if shutil.which(cmd):
+            return cmd
+    
+    # Try common installation paths
+    for path in common_paths:
+        if os.path.exists(path):
+            for cmd in npm_commands:
+                npm_path = os.path.join(path, cmd)
+                if os.path.exists(npm_path) and os.access(npm_path, os.X_OK):
+                    return npm_path
+    
+    # Try using 'where' or 'which' command
+    try:
+        if platform.system() == "Windows":
+            result = subprocess.run(["where", "npm"], capture_output=True, text=True)
+        else:
+            result = subprocess.run(["which", "npm"], capture_output=True, text=True)
+        
+        if result.returncode == 0:
+            npm_path = result.stdout.strip().split('\n')[0]
+            if npm_path and os.path.exists(npm_path):
+                return npm_path
+    except:
+        pass
+    
+    return None
+
 def check_nodejs():
     """Checks if Node.js and npm are installed."""
     try:
         # Check Node.js
-        node_result = subprocess.run(["node", "--version"], capture_output=True, text=True)
+        node_cmd = shutil.which("node") or shutil.which("node.exe")
+        if not node_cmd:
+            print("Node.js not found in PATH.")
+            return False
+            
+        node_result = subprocess.run([node_cmd, "--version"], capture_output=True, text=True)
         if node_result.returncode == 0:
             node_version = node_result.stdout.strip()
             print(f"Node.js {node_version} found.")
         else:
             return False
+        
+        # Find npm
+        npm_cmd = find_npm_command()
+        if not npm_cmd:
+            print("npm not found. Searched common installation locations.")
+            print("Please ensure Node.js and npm are properly installed.")
+            return False, None
             
-        # Check npm
-        npm_result = subprocess.run(["npm", "--version"], capture_output=True, text=True)
+        # Check npm version
+        npm_result = subprocess.run([npm_cmd, "--version"], capture_output=True, text=True)
         if npm_result.returncode == 0:
             npm_version = npm_result.stdout.strip()
-            print(f"npm {npm_version} found.")
+            print(f"npm {npm_version} found at: {npm_cmd}")
+            return True, npm_cmd
         else:
-            return False
+            print(f"npm found at {npm_cmd} but couldn't get version.")
+            return False, None
             
-        return True
-    except FileNotFoundError:
-        print("Error: Node.js/npm is not installed or not in your PATH.")
+    except Exception as e:
+        print(f"Error checking Node.js/npm: {e}")
         print("Please install Node.js from https://nodejs.org/ and try again.")
-        return False
+        return False, None
 
 def confirm_installation():
     """Asks the user to confirm the installation."""
@@ -85,13 +153,19 @@ def install_comfyui():
         print(f"Error during ComfyUI installation: {e}")
         sys.exit(1)
 
-import shutil
-
 def copy_comfyui_workflows():
     """Copies the ComfyUI workflows to the ComfyUI directory."""
     print("Copying ComfyUI workflows...")
-    source_dir = os.path.join(os.path.dirname(__file__), "..", "FreeTierPacked")
-    target_dir = "ComfyUI/workflows" # This might need adjustment based on where ComfyUI stores workflows
+    # Fix path resolution
+    script_dir = os.path.dirname(os.path.abspath(__file__))
+    source_dir = os.path.join(script_dir, "FreeTierPacked")
+    
+    # Check if source directory exists
+    if not os.path.exists(source_dir):
+        print(f"Warning: Workflow source directory not found at {source_dir}")
+        return False
+    
+    target_dir = "ComfyUI/workflows"
     
     # Ensure the target directory exists
     os.makedirs(target_dir, exist_ok=True)
@@ -182,13 +256,15 @@ def pull_ollama_models():
         print(f"Error pulling Ollama model: {e}")
         sys.exit(1)
 
-def install_web_gui():
+def install_web_gui(npm_cmd):
     """Installs the web GUI dependencies."""
     print("\nInstalling Web GUI...")
-    web_gui_path = os.path.join(os.path.dirname(__file__), "web-gui")
+    script_dir = os.path.dirname(os.path.abspath(__file__))
+    web_gui_path = os.path.join(script_dir, "web-gui")
     
     if not os.path.exists(web_gui_path):
-        print("Error: web-gui directory not found!")
+        print(f"Error: web-gui directory not found at {web_gui_path}!")
+        print("Please ensure the installer is run from the correct directory.")
         return False
     
     try:
@@ -197,10 +273,10 @@ def install_web_gui():
         os.chdir(web_gui_path)
         
         print("Installing npm dependencies (this may take a few minutes)...")
-        if platform.system() == "Windows":
-            subprocess.run(["npm.cmd", "install"], check=True)
-        else:
-            subprocess.run(["npm", "install"], check=True)
+        print(f"Using npm at: {npm_cmd}")
+        
+        # Use the detected npm command
+        subprocess.run([npm_cmd, "install"], check=True)
         
         print("Web GUI dependencies installed successfully.")
         
@@ -210,10 +286,15 @@ def install_web_gui():
         
     except subprocess.CalledProcessError as e:
         print(f"Error installing Web GUI dependencies: {e}")
+        print("\nTroubleshooting:")
+        print("1. Check your internet connection")
+        print("2. Try running 'npm cache clean --force' and retry")
+        print("3. Ensure you have sufficient permissions")
         os.chdir(original_dir)
         return False
     except Exception as e:
         print(f"Unexpected error during Web GUI installation: {e}")
+        print(f"Error type: {type(e).__name__}")
         os.chdir(original_dir)
         return False
 
@@ -270,17 +351,36 @@ def print_summary(models_downloaded=False, web_gui_installed=False):
 
 def main():
     """Main function to run the installer."""
+    # Parse command line arguments
+    parser = argparse.ArgumentParser(description="DinoAir Free Tier Installer")
+    parser.add_argument("--no-models", action="store_true",
+                       help="Skip downloading SDXL and Ollama models")
+    args = parser.parse_args()
+    
     print("="*60)
     print("DinoAir Free Tier Installation")
     print("="*60)
+    
+    if args.no_models:
+        print("\n--no-models flag detected: Will skip model downloads")
 
     check_python_version()
     check_pip_version()
     
     if not check_ollama():
-        sys.exit(1)
+        if not args.no_models:
+            print("\nError: Ollama is required when --no-models flag is not used.")
+            sys.exit(1)
+        else:
+            print("\nWarning: Ollama not found, but skipping due to --no-models flag.")
     
-    nodejs_available = check_nodejs()
+    nodejs_result = check_nodejs()
+    if isinstance(nodejs_result, tuple):
+        nodejs_available, npm_cmd = nodejs_result
+    else:
+        nodejs_available = nodejs_result
+        npm_cmd = None
+        
     if not nodejs_available:
         print("\nWarning: Node.js/npm not found. Web GUI will not be installed.")
         print("You can install Node.js later and run this installer again.\n")
@@ -289,15 +389,20 @@ def main():
 
     install_comfyui()
     copy_comfyui_workflows()
-    pull_ollama_models()
     
-    # Download SDXL models
-    models_downloaded = download_sdxl_models()
+    # Skip model downloads if --no-models flag is set
+    models_downloaded = False
+    if not args.no_models:
+        pull_ollama_models()
+        models_downloaded = download_sdxl_models()
+    else:
+        print("\nSkipping Ollama model pull due to --no-models flag")
+        print("Skipping SDXL model download due to --no-models flag")
     
     # Install Web GUI if Node.js is available
     web_gui_installed = False
-    if nodejs_available:
-        web_gui_installed = install_web_gui()
+    if nodejs_available and npm_cmd:
+        web_gui_installed = install_web_gui(npm_cmd)
     
     generate_dependency_log()
     print_summary(models_downloaded, web_gui_installed)
