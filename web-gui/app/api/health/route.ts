@@ -1,114 +1,101 @@
-import { NextResponse } from 'next/server';
+import { NextRequest, NextResponse } from 'next/server';
 
-interface ServiceStatus {
-  status: 'healthy' | 'unhealthy' | 'unknown';
-  message?: string;
-  timestamp: string;
+async function checkAPI(): Promise<boolean> {
+  try {
+    // Check if the API is responsive
+    const apiUrl = process.env.API_BASE_URL || 'http://localhost:8080';
+    const controller = new AbortController();
+    const timeoutId = setTimeout(() => controller.abort(), 5000); // 5 second timeout
+    
+    const response = await fetch(`${apiUrl}/health`, {
+      signal: controller.signal,
+      method: 'HEAD',
+    }).catch(() => null);
+    
+    clearTimeout(timeoutId);
+    return response?.ok || false;
+  } catch {
+    return false;
+  }
 }
 
-interface HealthResponse {
-  overall: 'healthy' | 'degraded' | 'unhealthy';
-  services: {
-    ollama: ServiceStatus;
-    comfyui: ServiceStatus;
+async function checkComfyUI(): Promise<boolean> {
+  try {
+    // Check if ComfyUI backend is responsive
+    const comfyUrl = process.env.COMFYUI_API_URL || 'http://localhost:8188';
+    const controller = new AbortController();
+    const timeoutId = setTimeout(() => controller.abort(), 5000); // 5 second timeout
+    
+    const response = await fetch(`${comfyUrl}/`, {
+      signal: controller.signal,
+      method: 'HEAD',
+    }).catch(() => null);
+    
+    clearTimeout(timeoutId);
+    return response?.ok || false;
+  } catch {
+    return false;
+  }
+}
+
+export async function GET(request: NextRequest) {
+  const startTime = Date.now();
+  
+  // Perform health checks
+  const [apiHealthy, comfyUIHealthy] = await Promise.all([
+    checkAPI(),
+    checkComfyUI(),
+  ]);
+  
+  const allHealthy = apiHealthy && comfyUIHealthy;
+  const responseTime = Date.now() - startTime;
+  
+  const healthStatus = {
+    status: allHealthy ? 'healthy' : 'degraded',
+    timestamp: new Date().toISOString(),
+    responseTime: `${responseTime}ms`,
+    version: process.env.NEXT_PUBLIC_VERSION || '1.0.0',
+    environment: process.env.NODE_ENV || 'development',
+    checks: {
+      api: {
+        status: apiHealthy ? 'healthy' : 'unhealthy',
+        endpoint: process.env.API_BASE_URL || 'http://localhost:8080',
+      },
+      comfyui: {
+        status: comfyUIHealthy ? 'healthy' : 'unhealthy',
+        endpoint: process.env.COMFYUI_API_URL || 'http://localhost:8188',
+      },
+      memory: {
+        status: 'healthy',
+        usage: process.memoryUsage(),
+      },
+      uptime: {
+        status: 'healthy',
+        seconds: process.uptime(),
+      },
+    },
   };
-  timestamp: string;
+  
+  // Return appropriate status code based on health
+  const statusCode = allHealthy ? 200 : 503;
+  
+  return NextResponse.json(healthStatus, { 
+    status: statusCode,
+    headers: {
+      'Cache-Control': 'no-cache, no-store, must-revalidate',
+    },
+  });
 }
 
-async function checkOllamaHealth(): Promise<ServiceStatus> {
-  try {
-    const response = await fetch('http://localhost:11434/api/tags', {
-      method: 'GET',
-      signal: AbortSignal.timeout(5000), // 5 second timeout
-    });
-
-    if (response.ok) {
-      return {
-        status: 'healthy',
-        message: 'Ollama is running and accessible',
-        timestamp: new Date().toISOString(),
-      };
-    }
-
-    return {
-      status: 'unhealthy',
-      message: `Ollama returned status ${response.status}`,
-      timestamp: new Date().toISOString(),
-    };
-  } catch (error) {
-    return {
-      status: 'unhealthy',
-      message: error instanceof Error ? error.message : 'Failed to connect to Ollama',
-      timestamp: new Date().toISOString(),
-    };
-  }
-}
-
-async function checkComfyUIHealth(): Promise<ServiceStatus> {
-  try {
-    const response = await fetch('http://localhost:8188/system_stats', {
-      method: 'GET',
-      signal: AbortSignal.timeout(5000), // 5 second timeout
-    });
-
-    if (response.ok) {
-      return {
-        status: 'healthy',
-        message: 'ComfyUI is running and accessible',
-        timestamp: new Date().toISOString(),
-      };
-    }
-
-    return {
-      status: 'unhealthy',
-      message: `ComfyUI returned status ${response.status}`,
-      timestamp: new Date().toISOString(),
-    };
-  } catch (error) {
-    return {
-      status: 'unhealthy',
-      message: error instanceof Error ? error.message : 'Failed to connect to ComfyUI',
-      timestamp: new Date().toISOString(),
-    };
-  }
-}
-
-export async function GET() {
-  try {
-    // Check both services in parallel
-    const [ollamaStatus, comfyuiStatus] = await Promise.all([
-      checkOllamaHealth(),
-      checkComfyUIHealth(),
-    ]);
-
-    // Determine overall health
-    let overall: HealthResponse['overall'] = 'healthy';
-    if (ollamaStatus.status === 'unhealthy' && comfyuiStatus.status === 'unhealthy') {
-      overall = 'unhealthy';
-    } else if (ollamaStatus.status === 'unhealthy' || comfyuiStatus.status === 'unhealthy') {
-      overall = 'degraded';
-    }
-
-    const response: HealthResponse = {
-      overall,
-      services: {
-        ollama: ollamaStatus,
-        comfyui: comfyuiStatus,
-      },
-      timestamp: new Date().toISOString(),
-    };
-
-    return NextResponse.json(response, {
-      status: overall === 'healthy' ? 200 : overall === 'degraded' ? 206 : 503,
-    });
-  } catch (error) {
-    return NextResponse.json(
-      {
-        overall: 'unhealthy',
-        error: error instanceof Error ? error.message : 'Unknown error occurred',
-        timestamp: new Date().toISOString(),
-      },
-      { status: 500 }
-    );
-  }
+// Support HEAD requests for lighter health checks
+export async function HEAD(request: NextRequest) {
+  const [apiHealthy, comfyUIHealthy] = await Promise.all([
+    checkAPI(),
+    checkComfyUI(),
+  ]);
+  
+  const allHealthy = apiHealthy && comfyUIHealthy;
+  const statusCode = allHealthy ? 200 : 503;
+  
+  return new NextResponse(null, { status: statusCode });
 }

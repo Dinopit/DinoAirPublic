@@ -138,7 +138,7 @@ def check_nodejs():
 def start_comfyui():
     """Start ComfyUI server."""
     print_info("Starting ComfyUI...")
-    comfyui_path = os.path.join(os.path.dirname(__file__), "..", "ComfyUI")
+    comfyui_path = os.path.join(os.path.dirname(os.path.abspath(__file__)), "ComfyUI")
     
     if not os.path.exists(comfyui_path):
         print_error("ComfyUI not found!")
@@ -245,7 +245,7 @@ def check_ollama():
 def start_web_gui():
     """Start the Next.js web GUI."""
     print("Starting Web GUI...")
-    web_gui_path = os.path.join(os.path.dirname(__file__), "web-gui")
+    web_gui_path = os.path.join(os.path.dirname(os.path.abspath(__file__)), "web-gui")
     
     if not os.path.exists(web_gui_path):
         print("Error: Web GUI not found. Please run install.py first.")
