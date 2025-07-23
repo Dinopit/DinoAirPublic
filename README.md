@@ -1,25 +1,58 @@
 # DinoAir 🦕✨
 
-![Version](https://img.shields.io/badge/version-1.0-blue.svg)
+![Version](https://img.shields.io/badge/version-1.1.0-blue.svg)
 ![Build Status](https://img.shields.io/badge/build-passing-brightgreen.svg)
 ![Test Coverage](https://img.shields.io/badge/coverage-85%25-green.svg)
 ![License](https://img.shields.io/badge/license-MIT-orange.svg)
 
 > A powerful, self-contained AI platform combining local language models with image generation capabilities. Built with modern web technologies and enterprise-grade features.
 
+## 🔒 SECURITY UPDATE v1.1.0 🔒
+
+**Major stability and security improvements have been implemented:**
+
+### ✅ Installation & Reliability
+- **Fixed**: Node.js/npm detection issues on Windows systems
+- **New**: Enhanced installer (`install_safe.py`) with prerequisite checking and automatic rollback
+- **New**: System resource validation before installation
+
+### 🛡️ Security Enhancements
+- **Authentication**: All API endpoints now require authentication (JWT/API key)
+- **Rate Limiting**: Configurable request throttling to prevent abuse
+- **Input Validation**: Request sanitization and validation middleware
+- **Process Isolation**: Each service runs with configurable resource limits
+
+### 💪 Stability Features
+- **Memory Management**: Automatic model unloading to prevent crashes
+- **Circuit Breakers**: Prevents cascading failures in external services
+- **Health Monitoring**: Automatic service restart on failure
+- **Error Recovery**: Multiple recovery strategies with automatic retry
+- **Graceful Shutdown**: Proper cleanup and state preservation
+
+### 📊 Operations & Monitoring
+- **Resource Monitoring**: Real-time tracking of CPU, memory, disk usage
+- **Comprehensive Logging**: Structured logs with automatic rotation
+- **Backup System**: Automated backups with compression
+- **Rollback Capability**: Snapshot-based recovery for failed updates
+
+**Recommended**: Use the new `install_safe.py` installer for the most reliable installation experience.
+
+See [CHANGELOG.md](CHANGELOG.md) for complete details.
+
+---
+
 ## ⚠️ IMPORTANT STABILITY WARNING ⚠️
 
-**This is Version 1.0 - EXPERIMENTAL SOFTWARE**
+**This is Version 1.1.0 - EXPERIMENTAL SOFTWARE**
 
-While DinoAir is feature-complete, it is currently **less stable than initially expected**. Users should be aware of the following:
+While DinoAir has received significant stability improvements, users should still be aware:
 
-- 🚨 **Potential System Instability**: The software may cause unexpected system behavior
-- 💻 **Resource Intensive**: May consume significant CPU/GPU resources unexpectedly
-- 🔄 **Frequent Restarts**: You may need to restart services regularly
+- 🚨 **Experimental Features**: Some features are still in active development
+- 💻 **Resource Intensive**: May consume significant CPU/GPU resources
 - 💾 **Data Safety**: Always backup important data before use
-- 🛡️ **Test Environment Recommended**: Consider running in a virtual machine or non-critical system first
+- 🛡️ **Test Environment Recommended**: Consider testing in a safe environment first
 
-**USE AT YOUR OWN RISK** - We strongly recommend testing in a safe environment before deploying on production systems. We appreciate your patience and feedback as we work to improve stability!
+**The v1.1.0 update addresses many stability issues**, but we still recommend caution in production environments. We appreciate your patience and feedback!
 
 ## 📋 Table of Contents
 
@@ -46,12 +79,34 @@ While DinoAir is feature-complete, it is currently **less stable than initially 
 - 💾 **Artifact Management** - Store, organize, and manage generated content
 - 🎭 **Multiple Personalities** - Customizable AI personalities for different use cases
 
-### Recent Enhancements (v1.0)
+### Recent Enhancements (v1.1.0)
 - 🔒 **Enhanced Security**
+  - JWT and API key authentication for all endpoints
+  - Advanced rate limiting with multiple strategies
+  - Request validation and sanitization
+  - Process isolation and sandboxing
+- 🛡️ **Stability Improvements**
+  - Memory monitoring with automatic model unloading
+  - Circuit breakers for external services
+  - Health checks with auto-restart
+  - Error boundaries and recovery mechanisms
+- 📈 **Operational Excellence**
+  - Comprehensive logging with rotation
+  - Resource usage monitoring
+  - Automated backup system
+  - Rollback capabilities
+- 🐛 **Critical Bug Fixes**
+  - Windows installation issues resolved
+  - ComfyUI installation reliability
+  - Memory leak prevention
+  - Race condition fixes
+
+### Legacy Features (v1.0)
+- 🔒 **Basic Security**
   - API key authentication system
   - Rate limiting protection
   - CORS header configuration
-- 🐛 **Critical Bug Fixes**
+- 🐛 **Initial Bug Fixes**
   - PrismJS import resolution
   - SD 1.5 model compatibility
   - API authentication flow
@@ -78,8 +133,13 @@ While DinoAir is feature-complete, it is currently **less stable than initially 
 git clone https://github.com/yourusername/DinoAir.git
 cd DinoAir
 
-# Install and start
+# Use the new safe installer (recommended)
+python install_safe.py
+
+# Or use the original installer
 python install.py
+
+# Start the application
 python start.py
 
 # Open your browser at http://localhost:3000
@@ -106,16 +166,20 @@ Ensure you have the following installed:
 ### Automated Installation (Recommended)
 
 ```bash
-# Run the installer
-python install.py
+# Run the enhanced installer with safety features
+python install_safe.py
+
+# Or for a check-only mode
+python install_safe.py --check-only
 ```
 
-The installer will:
-- ✅ Verify all prerequisites
-- ✅ Install ComfyUI and dependencies
-- ✅ Pull required Ollama models
-- ✅ Set up the web interface
-- ✅ Optionally download AI models
+The enhanced installer will:
+- ✅ Validate all prerequisites with detailed checks
+- ✅ Verify system resources (CPU, RAM, disk space)
+- ✅ Install ComfyUI with automatic fallbacks
+- ✅ Configure security settings
+- ✅ Set up monitoring and logging
+- ✅ Create rollback points for safety
 
 ### Manual Installation
 
@@ -151,6 +215,7 @@ Create a `.env.local` file in the `web-gui` directory:
 # API Configuration
 NEXT_PUBLIC_API_URL=http://localhost:3000
 DINOAIR_API_KEY=your-secure-api-key-here
+DINOAIR_SECRET_KEY=minimum-32-character-secret-key
 
 # ComfyUI Settings
 COMFYUI_URL=http://localhost:8188
@@ -166,6 +231,26 @@ RATE_LIMIT_MAX_REQUESTS=100
 
 # Development
 NODE_ENV=production
+```
+
+### Advanced Configuration
+
+Copy `config.example.yaml` to `config.yaml` for advanced settings:
+
+```yaml
+# See config.example.yaml for all available options
+security:
+  secret_key: ${DINOAIR_SECRET_KEY}
+  jwt_algorithm: HS256
+  jwt_expiry_hours: 24
+
+resources:
+  max_memory_mb: 8192
+  max_cpu_percent: 80.0
+
+monitoring:
+  enabled: true
+  health_check_interval: 30
 ```
 
 ### API Key Setup
@@ -184,7 +269,7 @@ Add to your environment or `.env.local` file.
 ### Starting the Application
 
 ```bash
-# Start all services
+# Start all services with safety features
 python start.py
 
 # Or start individually:
@@ -206,6 +291,7 @@ Navigate to `http://localhost:3000` to access:
 - **Image Generation** - Text-to-image creation
 - **Artifacts** - Manage generated content
 - **Settings** - Configure personalities and preferences
+- **Health Dashboard** - Monitor system status (new)
 
 ### Example: Generate an Image
 
@@ -242,6 +328,8 @@ Access the Swagger UI at `http://localhost:3000/api-docs` for:
 | `/api/generate-image` | POST | Generate images |
 | `/api/artifacts` | GET/POST | Manage artifacts |
 | `/api/health` | GET | Health check |
+| `/api/health/comfyui` | GET | ComfyUI status |
+| `/api/health/ollama` | GET | Ollama status |
 
 ### Authentication
 
@@ -295,6 +383,7 @@ docker build -t dinoair:latest .
 # Run the container
 docker run -p 3000:3000 -p 8188:8188 \
   -e DINOAIR_API_KEY=your-key \
+  -e DINOAIR_SECRET_KEY=your-secret \
   dinoair:latest
 ```
 
@@ -312,12 +401,14 @@ cd web-gui && vercel
 
 ### Production Checklist
 
-- [ ] Set secure API keys
+- [ ] Set secure API keys and secrets
 - [ ] Enable HTTPS
 - [ ] Configure rate limiting
-- [ ] Set up monitoring
+- [ ] Set up monitoring alerts
 - [ ] Enable error tracking
-- [ ] Configure backups
+- [ ] Configure automated backups
+- [ ] Test rollback procedures
+- [ ] Review security settings
 
 ## 🛠️ Development
 
@@ -330,7 +421,21 @@ DinoAir/
 │   ├── components/          # React components
 │   ├── hooks/              # Custom React hooks
 │   ├── lib/                # Utilities & helpers
+│   │   ├── middleware/     # Auth, rate limit, validation
+│   │   ├── monitoring/     # Health & performance
+│   │   └── security/       # Security utilities
 │   └── public/             # Static assets
+├── lib/                    # Python safety modules
+│   ├── backup/            # Backup system
+│   ├── circuit_breaker/   # Fault tolerance
+│   ├── config/            # Configuration validation
+│   ├── health_monitor/    # Service monitoring
+│   ├── logging/           # Structured logging
+│   ├── monitoring/        # Resource monitoring
+│   ├── process_manager/   # Process isolation
+│   ├── rollback/          # Rollback system
+│   ├── sandbox/           # Code sandboxing
+│   └── shutdown/          # Graceful shutdown
 ├── ComfyUI/                # Image generation backend
 │   ├── models/             # AI models
 │   └── workflows/          # Generation workflows
@@ -382,6 +487,12 @@ DinoAir/
                         │   Ollama    │           │  AI Models  │
                         │ (Chat LLM)  │           │ (SDXL/SD15) │
                         └─────────────┘           └─────────────┘
+                               │
+                               ▼
+                        ┌─────────────┐
+                        │  Safety     │
+                        │  Modules    │
+                        └─────────────┘
 ```
 
 ### Key Components
@@ -389,10 +500,11 @@ DinoAir/
 - **Frontend**: Next.js 14 with App Router
 - **State Management**: Zustand stores
 - **API Layer**: Next.js API routes with middleware
-- **Authentication**: API key-based with rate limiting
+- **Authentication**: JWT/API key with rate limiting
 - **Image Generation**: ComfyUI with workflow system
 - **Chat Backend**: Ollama integration
 - **Storage**: Local file system for artifacts
+- **Safety**: Process isolation, monitoring, backups
 
 ## 🤝 Contributing
 
@@ -471,7 +583,7 @@ This project is licensed under the MIT License - see the [LICENSE](LICENSE) file
 
 <div align="center">
 
-**DinoAir v1.0** - Built with ❤️ by the DinoAir Team
+**DinoAir v1.1.0** - Built with ❤️ by the DinoAir Team
 
 [Documentation](docs/) • [Issues](https://github.com/yourusername/DinoAir/issues) • [Discord](https://discord.gg/dinoair)
 
