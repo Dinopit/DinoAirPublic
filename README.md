@@ -7,7 +7,19 @@
 
 > A powerful, self-contained AI platform combining local language models with image generation capabilities. Built with modern web technologies and enterprise-grade features.
 
-**⚠️ Note: This is Version 1.0** - While feature-complete and production-ready, you may encounter occasional quirks. We appreciate your patience and feedback!
+## ⚠️ IMPORTANT STABILITY WARNING ⚠️
+
+**This is Version 1.0 - EXPERIMENTAL SOFTWARE**
+
+While DinoAir is feature-complete, it is currently **less stable than initially expected**. Users should be aware of the following:
+
+- 🚨 **Potential System Instability**: The software may cause unexpected system behavior
+- 💻 **Resource Intensive**: May consume significant CPU/GPU resources unexpectedly
+- 🔄 **Frequent Restarts**: You may need to restart services regularly
+- 💾 **Data Safety**: Always backup important data before use
+- 🛡️ **Test Environment Recommended**: Consider running in a virtual machine or non-critical system first
+
+**USE AT YOUR OWN RISK** - We strongly recommend testing in a safe environment before deploying on production systems. We appreciate your patience and feedback as we work to improve stability!
 
 ## 📋 Table of Contents
 
