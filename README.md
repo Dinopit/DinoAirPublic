@@ -157,9 +157,36 @@ Ensure you have the following installed:
 | Git | Any | Dependency management |
 
 **System Requirements:**
-- 16GB RAM (recommended)
-- 20GB free disk space (including models)
-- GPU with 6GB+ VRAM (optional, for faster image generation)
+
+DinoAir now features automatic hardware detection and adaptive configuration! The installer will automatically detect your system capabilities and recommend the best mode for your hardware.
+
+### Minimum Requirements (Easy Mode - CPU Only)
+- **OS**: Windows 10/11, Ubuntu 20.04+, macOS 11+
+- **CPU**: 4-core processor (2015 or newer)
+- **RAM**: 4GB (8GB recommended)
+- **Storage**: 10GB free space
+- **GPU**: Not required
+- **Models**: Qwen 1.5B, limited features
+
+### Recommended Requirements (Standard Mode)
+- **OS**: Windows 10/11, Ubuntu 20.04+, macOS 11+
+- **CPU**: 6-core processor
+- **RAM**: 8-16GB
+- **Storage**: 25GB free space
+- **GPU**: Integrated graphics or better
+- **Models**: Qwen 3B, most features
+
+### Optimal Requirements (Pro Mode)
+- **OS**: Windows 10/11, Ubuntu 20.04+, macOS 11+
+- **CPU**: 8+ core processor
+- **RAM**: 16GB+
+- **Storage**: 50GB free space
+- **GPU**: NVIDIA GPU with 8GB+ VRAM
+- **Models**: Qwen 7B+, all features including image generation
+
+**Note**: The hardware detection system will automatically configure DinoAir to run optimally on your system, selecting appropriate models and features based on available resources.
+
+📖 **For detailed requirements by hardware tier, see [SYSTEM_REQUIREMENTS.md](SYSTEM_REQUIREMENTS.md)**
 
 ## 🔧 Installation
 
@@ -180,6 +207,23 @@ The enhanced installer will:
 - ✅ Configure security settings
 - ✅ Set up monitoring and logging
 - ✅ Create rollback points for safety
+
+### Electron Desktop Installer (New!)
+
+DinoAir now includes a professional desktop installer built with Electron, providing a user-friendly installation experience across all platforms.
+
+**Key Features:**
+- 🦕 **Custom Application Icons** - Beautiful DinoAir dinosaur-themed icons for all platforms
+- 🔍 **Hardware Detection** - Automatic system capability detection with Python script integration
+- 📁 **Installation Path Customization** - Choose where to install DinoAir on your system
+- 🔒 **Code Signing Support** - Configuration ready for trusted application distribution
+
+**To use the desktop installer:**
+1. Navigate to the `installer/` directory
+2. Run `npm install` to install dependencies
+3. Use `npm start` for development or `npm run dist` to build installers
+
+For detailed instructions on building and customizing the installer, see [`installer/README.md`](installer/README.md).
 
 ### Manual Installation
 

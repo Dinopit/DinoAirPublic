@@ -1,0 +1,111 @@
+{
+  "name": "dinoair-installer",
+  "version": "1.0.0",
+  "description": "DinoAir Progressive Mode System Installer",
+  "main": "main.js",
+  "scripts": {
+    "start": "electron .",
+    "dev": "electron . --dev",
+    "build": "electron-builder",
+    "build:win": "electron-builder --win",
+    "build:mac": "electron-builder --mac",
+    "build:linux": "electron-builder --linux",
+    "test": "node test/test-installer.js",
+    "generate-icons": "node scripts/generate-icons.js"
+  },
+  "author": "DinoAir Team",
+  "license": "MIT",
+  "devDependencies": {
+    "electron": "^28.0.0",
+    "electron-builder": "^24.9.1",
+    "sharp": "^0.33.0"
+  },
+  "dependencies": {
+    "node-machine-id": "^1.1.12"
+  },
+  "build": {
+    "appId": "com.dinoair.installer",
+    "productName": "DinoAir Installer",
+    "directories": {
+      "output": "dist"
+    },
+    "files": [
+      "**/*",
+      "!test/**/*",
+      "!dist/**/*"
+    ],
+    "extraResources": [
+      {
+        "from": "../lib/hardware_detection",
+        "to": "lib/hardware_detection",
+        "filter": ["**/*.py"]
+      },
+      {
+        "from": "../lib/model_recommendation",
+        "to": "lib/model_recommendation",
+        "filter": ["**/*.py"]
+      },
+      {
+        "from": "scripts",
+        "to": "scripts",
+        "filter": ["*.py"]
+      }
+    ],
+    "win": {
+      "target": "nsis",
+      "icon": "assets/icon.ico",
+      "certificateFile": "${env.WINDOWS_CERTIFICATE_FILE}",
+      "certificatePassword": "${env.WINDOWS_CERTIFICATE_PASSWORD}",
+      "verifyUpdateCodeSignature": true,
+      "publisherName": "DinoAir Team",
+      "signingHashAlgorithms": ["sha256"],
+      "rfc3161TimeStampServer": "http://timestamp.digicert.com"
+    },
+    "nsis": {
+      "oneClick": false,
+      "allowToChangeInstallationDirectory": true,
+      "createDesktopShortcut": true,
+      "createStartMenuShortcut": true
+    },
+    "mac": {
+      "target": "dmg",
+      "icon": "assets/icon.icns",
+      "category": "public.app-category.developer-tools",
+      "hardenedRuntime": true,
+      "entitlements": "entitlements.mac.plist",
+      "entitlementsInherit": "entitlements.mac.plist",
+      "gatekeeperAssess": false,
+      "notarize": {
+        "teamId": "${env.APPLE_TEAM_ID}"
+      },
+      "identity": "${env.APPLE_IDENTITY}"
+    },
+    "dmg": {
+      "sign": false,
+      "contents": [
+        {
+          "x": 130,
+          "y": 220
+        },
+        {
+          "x": 410,
+          "y": 220,
+          "type": "link",
+          "path": "/Applications"
+        }
+      ]
+    },
+    "linux": {
+      "target": ["AppImage", "deb", "rpm"],
+      "icon": "assets/icon.png",
+      "category": "Development",
+      "maintainer": "DinoAir Team <support@dinoair.com>",
+      "synopsis": "AI-powered image generation for everyone",
+      "description": "DinoAir is a progressive AI image generation system that adapts to your hardware capabilities."
+    },
+    "protocols": {
+      "name": "dinoair-protocol",
+      "schemes": ["dinoair"]
+    }
+  }
+}

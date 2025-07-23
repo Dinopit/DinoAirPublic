@@ -1,0 +1,535 @@
+/* Reset and base styles */
+* {
+    margin: 0;
+    padding: 0;
+    box-sizing: border-box;
+}
+
+body {
+    font-family: -apple-system, BlinkMacSystemFont, 'Segoe UI', Roboto, Oxygen, Ubuntu, Cantarell, sans-serif;
+    background: linear-gradient(135deg, #1e3c72 0%, #2a5298 100%);
+    color: #333;
+    height: 100vh;
+    overflow: hidden;
+    user-select: none;
+}
+
+/* Container */
+.installer-container {
+    height: 100vh;
+    display: flex;
+    align-items: center;
+    justify-content: center;
+}
+
+/* Screens */
+.screen {
+    background: white;
+    border-radius: 12px;
+    box-shadow: 0 10px 30px rgba(0, 0, 0, 0.3);
+    width: 800px;
+    min-height: 600px;
+    padding: 40px;
+    display: none;
+    flex-direction: column;
+    animation: fadeIn 0.3s ease-in-out;
+}
+
+.screen.active {
+    display: flex;
+}
+
+@keyframes fadeIn {
+    from { opacity: 0; transform: translateY(20px); }
+    to { opacity: 1; transform: translateY(0); }
+}
+
+/* Logo and branding */
+.logo-container {
+    text-align: center;
+    margin-bottom: 40px;
+}
+
+.logo {
+    font-size: 72px;
+    margin-bottom: 20px;
+}
+
+h1 {
+    font-size: 32px;
+    color: #1e3c72;
+    margin-bottom: 10px;
+}
+
+h2 {
+    font-size: 28px;
+    color: #1e3c72;
+    margin-bottom: 30px;
+    text-align: center;
+}
+
+h3 {
+    font-size: 20px;
+    color: #2a5298;
+    margin-bottom: 15px;
+}
+
+.subtitle {
+    font-size: 18px;
+    color: #666;
+}
+
+/* Content area */
+.content {
+    flex: 1;
+    margin-bottom: 30px;
+}
+
+.content p {
+    font-size: 16px;
+    line-height: 1.6;
+    color: #555;
+    margin-bottom: 20px;
+    text-align: center;
+}
+
+/* Features */
+.features {
+    display: flex;
+    justify-content: space-around;
+    margin-top: 40px;
+}
+
+.feature {
+    display: flex;
+    flex-direction: column;
+    align-items: center;
+    gap: 10px;
+}
+
+.feature .icon {
+    font-size: 32px;
+}
+
+/* Buttons */
+.button-container {
+    display: flex;
+    justify-content: center;
+    gap: 20px;
+}
+
+.primary-btn, .secondary-btn {
+    padding: 12px 32px;
+    font-size: 16px;
+    border: none;
+    border-radius: 6px;
+    cursor: pointer;
+    transition: all 0.3s ease;
+    font-weight: 500;
+}
+
+.primary-btn {
+    background: #2a5298;
+    color: white;
+}
+
+.primary-btn:hover:not(:disabled) {
+    background: #1e3c72;
+    transform: translateY(-2px);
+    box-shadow: 0 4px 12px rgba(30, 60, 114, 0.3);
+}
+
+.primary-btn:disabled {
+    background: #ccc;
+    cursor: not-allowed;
+}
+
+.secondary-btn {
+    background: transparent;
+    color: #2a5298;
+    border: 2px solid #2a5298;
+}
+
+.secondary-btn:hover {
+    background: #2a5298;
+    color: white;
+}
+
+/* Hardware detection */
+.loading-container {
+    text-align: center;
+    padding: 60px 0;
+}
+
+.spinner {
+    width: 50px;
+    height: 50px;
+    border: 4px solid #f3f3f3;
+    border-top: 4px solid #2a5298;
+    border-radius: 50%;
+    animation: spin 1s linear infinite;
+    margin: 0 auto 20px;
+}
+
+@keyframes spin {
+    0% { transform: rotate(0deg); }
+    100% { transform: rotate(360deg); }
+}
+
+.hardware-results {
+    display: grid;
+    grid-template-columns: repeat(3, 1fr);
+    gap: 20px;
+    margin-bottom: 30px;
+}
+
+.hardware-section {
+    background: #f8f9fa;
+    padding: 20px;
+    border-radius: 8px;
+    border-left: 4px solid #2a5298;
+}
+
+.hardware-section h3 {
+    margin-bottom: 10px;
+}
+
+.hardware-section p {
+    font-size: 14px;
+    color: #666;
+    text-align: left;
+    margin: 0;
+}
+
+.recommendation-box {
+    grid-column: 1 / -1;
+    background: #e3f2fd;
+    padding: 25px;
+    border-radius: 8px;
+    border: 2px solid #2a5298;
+}
+
+.recommendation-box h3 {
+    color: #1565c0;
+}
+
+.recommendation-box p {
+    text-align: left;
+    margin-bottom: 10px;
+}
+
+/* Mode selection */
+.mode-cards {
+    display: grid;
+    grid-template-columns: repeat(3, 1fr);
+    gap: 20px;
+    margin-bottom: 30px;
+}
+
+.mode-card {
+    background: #f8f9fa;
+    border: 2px solid transparent;
+    border-radius: 8px;
+    padding: 25px;
+    cursor: pointer;
+    transition: all 0.3s ease;
+}
+
+.mode-card:hover {
+    border-color: #2a5298;
+    transform: translateY(-4px);
+    box-shadow: 0 6px 20px rgba(42, 82, 152, 0.2);
+}
+
+.mode-card.selected {
+    border-color: #2a5298;
+    background: #e3f2fd;
+}
+
+.mode-header {
+    display: flex;
+    justify-content: space-between;
+    align-items: center;
+    margin-bottom: 20px;
+}
+
+.badge {
+    background: #4caf50;
+    color: white;
+    padding: 4px 12px;
+    border-radius: 12px;
+    font-size: 12px;
+    font-weight: 600;
+}
+
+.badge.recommended {
+    background: #ff9800;
+}
+
+.mode-features {
+    list-style: none;
+}
+
+.mode-features li {
+    padding: 8px 0;
+    color: #555;
+    font-size: 14px;
+}
+
+.mode-note {
+    font-size: 14px;
+    text-align: center;
+    color: #666;
+    font-style: italic;
+}
+
+/* Progress screen */
+.progress-container {
+    margin: 40px 0;
+}
+
+.progress-bar {
+    height: 30px;
+    background: #e0e0e0;
+    border-radius: 15px;
+    overflow: hidden;
+    margin-bottom: 20px;
+}
+
+.progress-fill {
+    height: 100%;
+    background: linear-gradient(90deg, #2a5298 0%, #1e3c72 100%);
+    border-radius: 15px;
+    width: 0%;
+    transition: width 0.3s ease;
+}
+
+.progress-percentage {
+    text-align: center;
+    font-size: 24px;
+    font-weight: 600;
+    color: #2a5298;
+}
+
+.status-container {
+    text-align: center;
+    margin-bottom: 30px;
+}
+
+.status-text {
+    font-size: 18px;
+    color: #333;
+    margin-bottom: 10px;
+}
+
+.status-details {
+    font-size: 14px;
+    color: #666;
+}
+
+.installation-log {
+    background: #f5f5f5;
+    border-radius: 8px;
+    padding: 20px;
+    max-height: 200px;
+}
+
+.installation-log h4 {
+    margin-bottom: 15px;
+    color: #2a5298;
+}
+
+.log-content {
+    font-family: 'Courier New', monospace;
+    font-size: 12px;
+    color: #333;
+    max-height: 150px;
+    overflow-y: auto;
+}
+
+.log-content p {
+    margin: 4px 0;
+    text-align: left;
+}
+
+/* Success screen */
+.success-icon {
+    font-size: 72px;
+    text-align: center;
+    margin-bottom: 20px;
+}
+
+.success-details {
+    background: #f8f9fa;
+    padding: 20px;
+    border-radius: 8px;
+    margin: 20px 0;
+}
+
+.detail-item {
+    display: flex;
+    justify-content: space-between;
+    padding: 10px 0;
+    border-bottom: 1px solid #e0e0e0;
+}
+
+.detail-item:last-child {
+    border-bottom: none;
+}
+
+.next-steps {
+    margin-top: 30px;
+}
+
+.next-steps ul {
+    list-style: none;
+    padding-left: 20px;
+}
+
+.next-steps li {
+    padding: 8px 0;
+    color: #555;
+}
+
+.next-steps li:before {
+    content: "→ ";
+    color: #2a5298;
+    font-weight: bold;
+    margin-right: 10px;
+}
+
+/* Error screen */
+.error-icon {
+    font-size: 72px;
+    text-align: center;
+    margin-bottom: 20px;
+}
+
+.error-details {
+    background: #ffebee;
+    padding: 20px;
+    border-radius: 8px;
+    margin: 20px 0;
+    border-left: 4px solid #f44336;
+}
+
+.error-message {
+    font-family: 'Courier New', monospace;
+    font-size: 14px;
+    color: #d32f2f;
+    margin-top: 10px;
+}
+
+.error-suggestions {
+    margin-top: 30px;
+}
+
+.error-suggestions ul {
+    list-style: none;
+    padding-left: 20px;
+}
+
+.error-suggestions li {
+    padding: 8px 0;
+    color: #555;
+}
+
+.error-suggestions li:before {
+    content: "• ";
+    color: #f44336;
+    font-weight: bold;
+    margin-right: 10px;
+}
+
+/* Path Selection Screen Styles */
+.path-selection {
+    margin-bottom: 30px;
+}
+
+.path-selection label {
+    display: block;
+    margin-bottom: 10px;
+    font-weight: 600;
+    color: #333;
+}
+
+.path-input-container {
+    display: flex;
+    gap: 10px;
+    margin-bottom: 10px;
+}
+
+.path-input {
+    flex: 1;
+    padding: 10px;
+    border: 2px solid #e0e0e0;
+    border-radius: 5px;
+    font-size: 14px;
+    background-color: #f5f5f5;
+}
+
+.browse-btn {
+    padding: 10px 20px;
+    background-color: #2196F3;
+    color: white;
+    border: none;
+    border-radius: 5px;
+    cursor: pointer;
+    font-size: 14px;
+    transition: background-color 0.3s;
+}
+
+.browse-btn:hover {
+    background-color: #1976D2;
+}
+
+.path-info {
+    font-size: 12px;
+    color: #666;
+    margin-top: 5px;
+}
+
+.space-info {
+    background-color: #f8f9fa;
+    border-radius: 8px;
+    padding: 20px;
+}
+
+.space-info h4 {
+    margin-top: 0;
+    margin-bottom: 15px;
+    color: #333;
+}
+
+.space-details {
+    margin-bottom: 20px;
+}
+
+.space-item {
+    display: flex;
+    justify-content: space-between;
+    padding: 8px 0;
+    border-bottom: 1px solid #e0e0e0;
+}
+
+.space-item:last-child {
+    border-bottom: none;
+}
+
+.space-item.total {
+    font-weight: 600;
+    margin-top: 10px;
+    padding-top: 15px;
+    border-top: 2px solid #e0e0e0;
+    border-bottom: none;
+}
+
+.available-space {
+    display: flex;
+    justify-content: space-between;
+    padding: 10px;
+    background-color: #e8f5e9;
+    border-radius: 5px;
+    font-weight: 600;
+    color: #2e7d32;
+}
