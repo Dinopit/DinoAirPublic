@@ -1,15 +1,15 @@
 import { NextRequest, NextResponse } from 'next/server';
 
-async function checkAPI(): Promise<boolean> {
+async function checkOllama(): Promise<boolean> {
   try {
-    // Check if the API is responsive
-    const apiUrl = process.env.API_BASE_URL || 'http://localhost:8080';
+    // Check if Ollama is responsive
+    const ollamaUrl = process.env.NEXT_PUBLIC_OLLAMA_URL || 'http://localhost:11434';
     const controller = new AbortController();
     const timeoutId = setTimeout(() => controller.abort(), 5000); // 5 second timeout
     
-    const response = await fetch(`${apiUrl}/health`, {
+    const response = await fetch(`${ollamaUrl}/api/tags`, {
       signal: controller.signal,
-      method: 'HEAD',
+      method: 'GET',
     }).catch(() => null);
     
     clearTimeout(timeoutId);
@@ -42,12 +42,12 @@ export async function GET(request: NextRequest) {
   const startTime = Date.now();
   
   // Perform health checks
-  const [apiHealthy, comfyUIHealthy] = await Promise.all([
-    checkAPI(),
+  const [ollamaHealthy, comfyUIHealthy] = await Promise.all([
+    checkOllama(),
     checkComfyUI(),
   ]);
   
-  const allHealthy = apiHealthy && comfyUIHealthy;
+  const allHealthy = ollamaHealthy && comfyUIHealthy;
   const responseTime = Date.now() - startTime;
   
   const healthStatus = {
@@ -57,9 +57,9 @@ export async function GET(request: NextRequest) {
     version: process.env.NEXT_PUBLIC_VERSION || '1.0.0',
     environment: process.env.NODE_ENV || 'development',
     checks: {
-      api: {
-        status: apiHealthy ? 'healthy' : 'unhealthy',
-        endpoint: process.env.API_BASE_URL || 'http://localhost:8080',
+      ollama: {
+        status: ollamaHealthy ? 'healthy' : 'unhealthy',
+        endpoint: process.env.NEXT_PUBLIC_OLLAMA_URL || 'http://localhost:11434',
       },
       comfyui: {
         status: comfyUIHealthy ? 'healthy' : 'unhealthy',
@@ -89,12 +89,12 @@ export async function GET(request: NextRequest) {
 
 // Support HEAD requests for lighter health checks
 export async function HEAD(request: NextRequest) {
-  const [apiHealthy, comfyUIHealthy] = await Promise.all([
-    checkAPI(),
+  const [ollamaHealthy, comfyUIHealthy] = await Promise.all([
+    checkOllama(),
     checkComfyUI(),
   ]);
   
-  const allHealthy = apiHealthy && comfyUIHealthy;
+  const allHealthy = ollamaHealthy && comfyUIHealthy;
   const statusCode = allHealthy ? 200 : 503;
   
   return new NextResponse(null, { status: statusCode });

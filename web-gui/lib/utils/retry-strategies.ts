@@ -13,7 +13,7 @@ export interface RetryConfig {
 
 // Default retry configuration
 export const DEFAULT_RETRY_CONFIG: RetryConfig = {
-  maxAttempts: 3,
+  maxAttempts: 2, // Reduced from 3 to prevent excessive retries
   initialDelay: 1000,
   maxDelay: 30000,
   factor: 2,
@@ -23,6 +23,7 @@ export const DEFAULT_RETRY_CONFIG: RetryConfig = {
     ErrorType.TIMEOUT,
     ErrorType.RATE_LIMIT,
     ErrorType.SERVER
+    // Explicitly excluding ErrorType.AUTH to prevent retrying 401 errors
   ]
 };
 
@@ -233,11 +234,21 @@ export async function retry<T>(
 
       // Check if error is retryable
       if (error instanceof DinoAirError) {
+        // Never retry AUTH errors (401 Unauthorized)
+        if (error.type === ErrorType.AUTH) {
+          throw error;
+        }
+        
         if (!error.retryable ||
             (finalConfig.retryableErrors &&
              !finalConfig.retryableErrors.includes(error.type))) {
           throw error;
         }
+      }
+      
+      // Check for HTTP 401 status in regular errors
+      if (error.message?.includes('401') || error.message?.includes('Unauthorized')) {
+        throw error;
       }
 
       // If this is the last attempt, throw the error

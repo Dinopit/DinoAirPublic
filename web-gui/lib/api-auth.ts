@@ -36,6 +36,11 @@ VALID_API_KEYS.forEach(key => {
  * @returns true if valid, false otherwise
  */
 export function validateApiKey(apiKey: string | null | undefined): boolean {
+  // Check if authentication is disabled
+  if (process.env.AUTH_ENABLED === 'false' || process.env.NEXT_PUBLIC_AUTH_ENABLED === 'false') {
+    return true;
+  }
+  
   if (!apiKey) return false;
   
   // Remove 'Bearer ' prefix if present
