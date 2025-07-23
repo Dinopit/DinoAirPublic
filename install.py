@@ -63,8 +63,9 @@ def find_npm_command():
     
     # Try commands in PATH first
     for cmd in npm_commands:
-        if shutil.which(cmd):
-            return cmd
+        npm_path = shutil.which(cmd)
+        if npm_path:
+            return npm_path
     
     # Try common installation paths
     for path in common_paths:
@@ -141,14 +142,60 @@ def install_comfyui():
     """Clones ComfyUI and installs its dependencies."""
     print("Installing ComfyUI...")
     try:
-        if not os.path.exists("ComfyUI"):
-            subprocess.run(["git", "clone", "https://github.com/comfyanonymous/ComfyUI.git"], check=True)
+        # Check if ComfyUI directory exists and contains required files
+        comfyui_exists = os.path.exists("ComfyUI")
+        comfyui_valid = False
+        
+        if comfyui_exists:
+            # Check for essential files that indicate a proper installation
+            required_files = ["requirements.txt", "main.py", "server.py"]
+            comfyui_valid = all(os.path.exists(os.path.join("ComfyUI", f)) for f in required_files)
+            
+            if not comfyui_valid:
+                print("ComfyUI directory exists but is empty or incomplete. Removing and re-cloning...")
+                shutil.rmtree("ComfyUI", ignore_errors=True)
+                comfyui_exists = False
+        
+        # Clone if directory doesn't exist or was removed
+        if not comfyui_exists:
+            print("Cloning ComfyUI repository...")
+            max_retries = 3
+            for attempt in range(max_retries):
+                try:
+                    subprocess.run(["git", "clone", "https://github.com/comfyanonymous/ComfyUI.git"],
+                                 check=True, capture_output=True, text=True)
+                    print("ComfyUI cloned successfully.")
+                    break
+                except subprocess.CalledProcessError as clone_error:
+                    if attempt < max_retries - 1:
+                        print(f"Clone attempt {attempt + 1} failed: {clone_error}")
+                        print(f"Retrying in 5 seconds...")
+                        import time
+                        time.sleep(5)
+                    else:
+                        print(f"Failed to clone ComfyUI after {max_retries} attempts.")
+                        print("\nError details:")
+                        print(f"  {clone_error}")
+                        print("\nPossible solutions:")
+                        print("  1. Check your internet connection")
+                        print("  2. Try again later if GitHub is having issues")
+                        print("  3. Manually clone: git clone https://github.com/comfyanonymous/ComfyUI.git")
+                        print("  4. Download ComfyUI manually from https://github.com/comfyanonymous/ComfyUI/archive/refs/heads/master.zip")
+                        print("     and extract it to a 'ComfyUI' folder")
+                        raise clone_error
+        else:
+            print("ComfyUI already exists with valid installation.")
         
         # Install dependencies
-        pip_args = [sys.executable, "-m", "pip", "install", "-r", "ComfyUI/requirements.txt"]
-        subprocess.run(pip_args, check=True)
+        if os.path.exists("ComfyUI/requirements.txt"):
+            pip_args = [sys.executable, "-m", "pip", "install", "-r", "ComfyUI/requirements.txt"]
+            subprocess.run(pip_args, check=True)
+            print("ComfyUI dependencies installed successfully.")
+        else:
+            print("Warning: ComfyUI/requirements.txt not found. Skipping dependency installation.")
+            print("You may need to install dependencies manually.")
         
-        print("ComfyUI installed successfully.")
+        print("ComfyUI installation process completed.")
     except (subprocess.CalledProcessError, FileNotFoundError) as e:
         print(f"Error during ComfyUI installation: {e}")
         sys.exit(1)

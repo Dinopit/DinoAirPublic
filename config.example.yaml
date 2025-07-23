@@ -1,0 +1,51 @@
+# DinoAir Configuration Example
+# Copy this file to config.yaml and adjust settings as needed
+
+app_name: DinoAir
+environment: production
+debug: false
+
+server:
+  host: 0.0.0.0
+  port: 8000
+  workers: 4
+  timeout: 300
+
+security:
+  # Generate a secure secret key (minimum 32 characters)
+  secret_key: ${DINOAIR_SECRET_KEY}
+  jwt_algorithm: HS256
+  jwt_expiry_hours: 24
+  api_key_length: 32
+  rate_limit_requests: 100
+  rate_limit_window: 60
+
+resources:
+  max_memory_mb: 8192
+  max_cpu_percent: 80.0
+  max_concurrent_requests: 50
+
+comfyui:
+  enabled: true
+  host: localhost
+  port: 8188
+  api_timeout: 120
+
+ollama:
+  enabled: true
+  host: localhost
+  port: 11434
+  api_timeout: 60
+  default_model: llama2
+
+logging:
+  level: INFO
+  format: json
+  file_path: ./logs/dinoair.log
+  max_file_size_mb: 10
+  backup_count: 10
+
+monitoring:
+  enabled: true
+  health_check_interval: 30
+  metrics_interval: 60
