@@ -1,0 +1,64 @@
+# DinoAir Staging Environment Configuration
+app_name: DinoAir
+environment: staging
+debug: false
+
+server:
+  host: 0.0.0.0
+  port: 8000
+  workers: 2
+  timeout: 200
+  cors_origins:
+    - https://staging.dinoair.app
+    - https://staging-api.dinoair.app
+
+database:
+  type: postgresql
+  host: ${DINOAIR_DB_HOST:-localhost}
+  port: ${DINOAIR_DB_PORT:-5432}
+  name: ${DINOAIR_DB_NAME:-dinoair_staging}
+  user: ${DINOAIR_DB_USER:-dinoair}
+  password: ${DINOAIR_DB_PASSWORD}
+  connection_pool_size: 8
+
+security:
+  secret_key: ${DINOAIR_SECRET_KEY}
+  jwt_algorithm: HS256
+  jwt_expiry_hours: 12
+  allowed_hosts:
+    - staging.dinoair.app
+    - staging-api.dinoair.app
+  rate_limit_requests: 200
+  rate_limit_window: 60
+
+comfyui:
+  enabled: true
+  host: ${COMFYUI_HOST:-localhost}
+  port: ${COMFYUI_PORT:-8188}
+  api_timeout: 120
+
+ollama:
+  enabled: true
+  host: ${OLLAMA_HOST:-localhost}
+  port: ${OLLAMA_PORT:-11434}
+  default_model: ${OLLAMA_MODEL:-llama2}
+  temperature: 0.7
+
+resources:
+  max_memory_mb: 6144
+  max_cpu_percent: 75.0
+  max_concurrent_requests: 30
+
+logging:
+  level: INFO
+  format: json
+  file_path: ./logs/dinoair_staging.log
+  max_file_size_mb: 20
+  backup_count: 7
+  console_output: false
+
+monitoring:
+  enabled: true
+  health_check_interval: 30
+  metrics_interval: 60
+  alert_email: ${ALERT_EMAIL:-admin@dinoair.app}
