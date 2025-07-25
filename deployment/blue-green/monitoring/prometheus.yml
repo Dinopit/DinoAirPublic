@@ -1,0 +1,59 @@
+global:
+  scrape_interval: 15s
+  evaluation_interval: 15s
+  external_labels:
+    cluster: 'dinoair-blue-green'
+    environment: 'production'
+
+rule_files:
+  - "alerts.yml"
+
+scrape_configs:
+  # Nginx Load Balancer
+  - job_name: 'nginx-lb'
+    static_configs:
+      - targets: ['nginx-lb:8080']
+    scrape_interval: 10s
+    metrics_path: '/nginx-health'
+    params:
+      format: ['prometheus']
+    
+  # Blue Environment - Web GUI
+  - job_name: 'blue-web-gui'
+    static_configs:
+      - targets: ['dinoair-web-gui-blue:3000']
+    scrape_interval: 15s
+    metrics_path: '/api/metrics'
+    scheme: http
+    
+  # Green Environment - Web GUI  
+  - job_name: 'green-web-gui'
+    static_configs:
+      - targets: ['dinoair-web-gui-green:3000']
+    scrape_interval: 15s
+    metrics_path: '/api/metrics'
+    scheme: http
+    
+  # Blue Environment - ComfyUI
+  - job_name: 'blue-comfyui'
+    static_configs:
+      - targets: ['dinoair-comfyui-blue:8188']
+    scrape_interval: 30s
+    metrics_path: '/metrics'
+    scheme: http
+    
+  # Green Environment - ComfyUI
+  - job_name: 'green-comfyui'
+    static_configs:
+      - targets: ['dinoair-comfyui-green:8188']
+    scrape_interval: 30s
+    metrics_path: '/metrics'
+    scheme: http
+
+  # Docker containers monitoring (if node-exporter is available)
+  - job_name: 'docker-containers'
+    static_configs:
+      - targets: ['host.docker.internal:9100']
+    scrape_interval: 30s
+    metrics_path: '/metrics'
+    scheme: http

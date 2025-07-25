@@ -1,0 +1,146 @@
+groups:
+  - name: dinoair-blue-green.rules
+    rules:
+      # Service Health Alerts
+      - alert: ServiceDown
+        expr: up == 0
+        for: 1m
+        labels:
+          severity: critical
+          component: "{{ $labels.job }}"
+        annotations:
+          summary: "DinoAir service {{ $labels.job }} is down"
+          description: "{{ $labels.instance }} of job {{ $labels.job }} has been down for more than 1 minute."
+
+      - alert: LoadBalancerDown
+        expr: up{job="nginx-lb"} == 0
+        for: 30s
+        labels:
+          severity: critical
+          component: load-balancer
+        annotations:
+          summary: "Load balancer is down"
+          description: "The nginx load balancer is not responding. This affects all traffic routing."
+
+      # Environment Health Alerts
+      - alert: BlueEnvironmentDown
+        expr: up{job=~"blue-.*"} == 0
+        for: 2m
+        labels:
+          severity: warning
+          environment: blue
+        annotations:
+          summary: "Blue environment service is down"
+          description: "Service {{ $labels.job }} in blue environment has been down for more than 2 minutes."
+
+      - alert: GreenEnvironmentDown
+        expr: up{job=~"green-.*"} == 0
+        for: 2m
+        labels:
+          severity: warning
+          environment: green
+        annotations:
+          summary: "Green environment service is down"
+          description: "Service {{ $labels.job }} in green environment has been down for more than 2 minutes."
+
+      - alert: AllEnvironmentsDown
+        expr: count(up{job=~"(blue|green)-.*"} == 1) == 0
+        for: 1m
+        labels:
+          severity: critical
+          component: infrastructure
+        annotations:
+          summary: "All environments are down"
+          description: "Both blue and green environments are completely down. Application is unavailable."
+
+      # Performance Alerts
+      - alert: HighResponseTime
+        expr: avg_over_time(http_request_duration_seconds[5m]) > 5
+        for: 3m
+        labels:
+          severity: warning
+        annotations:
+          summary: "High response time detected"
+          description: "Average response time for {{ $labels.job }} is {{ $value }}s over the last 5 minutes."
+
+      - alert: HighErrorRate
+        expr: rate(http_requests_total{status=~"5.."}[5m]) / rate(http_requests_total[5m]) > 0.1
+        for: 2m
+        labels:
+          severity: warning
+        annotations:
+          summary: "High error rate detected"
+          description: "Error rate for {{ $labels.job }} is {{ $value | humanizePercentage }} over the last 5 minutes."
+
+      # Resource Alerts
+      - alert: HighMemoryUsage
+        expr: (container_memory_usage_bytes / container_spec_memory_limit_bytes) > 0.9
+        for: 5m
+        labels:
+          severity: warning
+        annotations:
+          summary: "High memory usage on {{ $labels.name }}"
+          description: "Container {{ $labels.name }} is using {{ $value | humanizePercentage }} of its memory limit."
+
+      - alert: HighCPUUsage
+        expr: rate(container_cpu_usage_seconds_total[5m]) > 0.8
+        for: 5m
+        labels:
+          severity: warning
+        annotations:
+          summary: "High CPU usage on {{ $labels.name }}"
+          description: "Container {{ $labels.name }} is using {{ $value | humanizePercentage }} CPU over the last 5 minutes."
+
+      # Deployment Alerts
+      - alert: DeploymentInProgress
+        expr: changes(nginx_active_backend[5m]) > 0
+        for: 0s
+        labels:
+          severity: info
+          component: deployment
+        annotations:
+          summary: "Traffic switch detected"
+          description: "Load balancer active backend has changed, indicating a deployment or traffic switch."
+
+      - alert: FailedDeployment
+        expr: nginx_upstream_servers{state="down"} > 0
+        for: 2m
+        labels:
+          severity: critical
+          component: deployment
+        annotations:
+          summary: "Failed deployment detected"
+          description: "Upstream server {{ $labels.upstream }} has {{ $value }} servers in down state."
+
+  - name: dinoair-business.rules
+    rules:
+      # Business Logic Alerts
+      - alert: NoActiveTraffic
+        expr: rate(http_requests_total[5m]) == 0
+        for: 5m
+        labels:
+          severity: warning
+          component: business
+        annotations:
+          summary: "No active traffic detected"
+          description: "No HTTP requests have been received in the last 5 minutes."
+
+      - alert: ImageGenerationFailures
+        expr: rate(comfyui_generation_failures_total[5m]) > 0.1
+        for: 3m
+        labels:
+          severity: warning
+          component: ai-processing
+        annotations:
+          summary: "High image generation failure rate"
+          description: "ComfyUI is experiencing {{ $value }} generation failures per second."
+
+      - alert: QueueBacklog
+        expr: comfyui_queue_size > 50
+        for: 5m
+        labels:
+          severity: warning
+          component: ai-processing
+        annotations:
+          summary: "Large processing queue detected"
+          description: "ComfyUI queue has {{ $value }} pending requests."

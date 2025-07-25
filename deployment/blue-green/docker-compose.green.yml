@@ -1,0 +1,115 @@
+version: '3.8'
+
+services:
+  # Green Environment - DinoAir Web GUI Service
+  web-gui-green:
+    build:
+      context: ../../web-gui
+      dockerfile: Dockerfile
+      target: runner
+      args:
+        NODE_ENV: ${NODE_ENV:-production}
+    image: dinoair-web-gui:${IMAGE_TAG:-latest}
+    container_name: dinoair-web-gui-green
+    ports:
+      - "3002:3000"  # External port for green environment
+    environment:
+      # Node environment
+      - NODE_ENV=${NODE_ENV:-production}
+      
+      # API Configuration
+      - API_BASE_URL=http://dinoair-comfyui-green:8188
+      - API_KEY=${API_KEY:-dinoair-green-api-key}
+      - API_SECRET=${API_SECRET}
+      
+      # Session and Security
+      - SESSION_SECRET=${SESSION_SECRET}
+      - JWT_SECRET=${JWT_SECRET}
+      
+      # CORS
+      - CORS_ORIGIN=${CORS_ORIGIN:-*}
+      
+      # Rate Limiting
+      - RATE_LIMIT_WINDOW_MS=${RATE_LIMIT_WINDOW_MS:-60000}
+      - RATE_LIMIT_MAX_REQUESTS=${RATE_LIMIT_MAX_REQUESTS:-100}
+      
+      # ComfyUI Backend
+      - COMFYUI_API_URL=http://dinoair-comfyui-green:8188
+      - COMFYUI_WORKFLOW_PATH=${COMFYUI_WORKFLOW_PATH:-./FreeTierPacked/sd15-workflow.json}
+      
+      # Client Configuration
+      - NEXT_PUBLIC_APP_NAME=${NEXT_PUBLIC_APP_NAME:-DinoAir Green}
+      - NEXT_PUBLIC_VERSION=${NEXT_PUBLIC_VERSION:-1.0.0}
+      - NEXT_PUBLIC_IS_FREE_TIER=${NEXT_PUBLIC_IS_FREE_TIER:-true}
+      - NEXT_PUBLIC_API_URL=http://localhost/api
+      - NEXT_PUBLIC_WS_URL=ws://localhost/ws
+      - NEXT_PUBLIC_ENVIRONMENT=green
+    volumes:
+      - green_uploads:/app/uploads
+      - ../../web-gui/FreeTierPacked:/app/FreeTierPacked:ro
+    networks:
+      - dinoair-blue-green
+    depends_on:
+      comfyui-green:
+        condition: service_healthy
+    restart: unless-stopped
+    healthcheck:
+      test: ["CMD", "node", "-e", "require('http').get('http://localhost:3000/api/health', (res) => { process.exit(res.statusCode === 200 ? 0 : 1); })"]
+      interval: 30s
+      timeout: 3s
+      retries: 3
+      start_period: 40s
+    labels:
+      - "environment=green"
+      - "service=web-gui"
+
+  # Green Environment - ComfyUI Service
+  comfyui-green:
+    image: python:3.11-slim
+    container_name: dinoair-comfyui-green
+    working_dir: /app
+    ports:
+      - "8190:8188"  # External port for green environment
+    volumes:
+      - ../../:/app
+      - green_models:/app/models
+      - green_output:/app/output
+      - green_input:/app/input
+      - green_custom_nodes:/app/custom_nodes
+    environment:
+      - PYTHONPATH=/app
+      - ENVIRONMENT=green
+    command: python main.py --listen 0.0.0.0 --port 8188
+    networks:
+      - dinoair-blue-green
+    restart: unless-stopped
+    healthcheck:
+      test: ["CMD", "python", "-c", "import urllib.request; urllib.request.urlopen('http://localhost:8188/').read()"]
+      interval: 30s
+      timeout: 10s
+      retries: 3
+      start_period: 60s
+    labels:
+      - "environment=green"
+      - "service=comfyui"
+
+networks:
+  dinoair-blue-green:
+    external: true
+
+volumes:
+  green_uploads:
+    labels:
+      - "environment=green"
+  green_models:
+    labels:
+      - "environment=green"
+  green_output:
+    labels:
+      - "environment=green"
+  green_input:
+    labels:
+      - "environment=green"
+  green_custom_nodes:
+    labels:
+      - "environment=green"
