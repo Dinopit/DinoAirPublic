@@ -72,6 +72,71 @@ jobs:
           flags: unittests
           name: codecov-umbrella
 
+  # Contract Tests (Consumer)
+  contract-tests-consumer:
+    name: Contract Tests (Consumer)
+    runs-on: ubuntu-latest
+    steps:
+      - name: Checkout code
+        uses: actions/checkout@v4
+
+      - name: Setup Node.js
+        uses: actions/setup-node@v4
+        with:
+          node-version: ${{ env.NODE_VERSION }}
+          cache: 'npm'
+          cache-dependency-path: web-gui/package-lock.json
+
+      - name: Install frontend dependencies
+        working-directory: ./web-gui
+        run: npm ci
+
+      - name: Run consumer contract tests
+        working-directory: ./web-gui
+        run: npm run test:contracts:consumer
+        env:
+          NODE_ENV: test
+
+      - name: Upload pact files
+        uses: actions/upload-artifact@v3
+        with:
+          name: pact-files
+          path: contracts/pacts/
+          retention-days: 7
+
+  # Contract Tests (Provider)
+  contract-tests-provider:
+    name: Contract Tests (Provider)
+    runs-on: ubuntu-latest
+    needs: [contract-tests-consumer]
+    steps:
+      - name: Checkout code
+        uses: actions/checkout@v4
+
+      - name: Setup Node.js
+        uses: actions/setup-node@v4
+        with:
+          node-version: ${{ env.NODE_VERSION }}
+          cache: 'npm'
+          cache-dependency-path: web-gui-node/package-lock.json
+
+      - name: Install backend dependencies
+        working-directory: ./web-gui-node
+        run: npm ci
+
+      - name: Download pact files
+        uses: actions/download-artifact@v3
+        with:
+          name: pact-files
+          path: contracts/pacts/
+
+      - name: Run provider contract verification
+        working-directory: ./web-gui-node
+        run: npm run test:contracts:provider
+        env:
+          NODE_ENV: test
+          CI: true
+
   # E2E Tests
   e2e-tests:
     name: E2E Tests
@@ -119,7 +184,7 @@ jobs:
   build:
     name: Build Application
     runs-on: ubuntu-latest
-    needs: [lint-and-type-check, unit-tests]
+    needs: [lint-and-type-check, unit-tests, contract-tests-provider]
     steps:
       - name: Checkout code
         uses: actions/checkout@v4
@@ -203,30 +268,268 @@ jobs:
           build-args: |
             NODE_ENV=production
 
-  # Security Scan
-  security-scan:
-    name: Security Scan
+  # Security Scanning - Base Images
+  security-scan-base-images:
+    name: Security Scan - Base Images
+    runs-on: ubuntu-latest
+    if: github.event_name == 'push' || github.event_name == 'pull_request'
+    steps:
+      - name: Checkout code
+        uses: actions/checkout@v4
+
+      - name: Run Trivy scanner on base images
+        uses: aquasecurity/trivy-action@master
+        with:
+          image-ref: 'node:20-alpine'
+          format: 'sarif'
+          output: 'trivy-base-node-results.sarif'
+          severity: 'CRITICAL,HIGH,MEDIUM'
+          exit-code: '0'  # Don't fail the build for base image vulnerabilities
+
+      - name: Run Trivy scanner on Python base image
+        uses: aquasecurity/trivy-action@master
+        with:
+          image-ref: 'python:3.11-slim'
+          format: 'sarif'
+          output: 'trivy-base-python-results.sarif'
+          severity: 'CRITICAL,HIGH,MEDIUM'
+          exit-code: '0'  # Don't fail the build for base image vulnerabilities
+
+      - name: Upload base images scan results
+        if: always()
+        uses: github/codeql-action/upload-sarif@v3
+        with:
+          sarif_file: 'trivy-base-node-results.sarif'
+          category: 'base-images-node'
+
+      - name: Upload Python base image scan results
+        if: always()
+        uses: github/codeql-action/upload-sarif@v3
+        with:
+          sarif_file: 'trivy-base-python-results.sarif'
+          category: 'base-images-python'
+
+  # Security Scanning - Dependencies
+  security-scan-dependencies:
+    name: Security Scan - Dependencies
+    runs-on: ubuntu-latest
+    if: github.event_name == 'push' || github.event_name == 'pull_request'
+    steps:
+      - name: Checkout code
+        uses: actions/checkout@v4
+
+      - name: Run Trivy filesystem scan
+        uses: aquasecurity/trivy-action@master
+        with:
+          scan-type: 'fs'
+          scan-ref: './web-gui'
+          format: 'sarif'
+          output: 'trivy-fs-results.sarif'
+          severity: 'CRITICAL,HIGH,MEDIUM'
+
+      - name: Run npm audit
+        working-directory: ./web-gui
+        run: |
+          npm audit --audit-level=moderate --json > npm-audit-results.json || true
+          
+      - name: Upload filesystem scan results
+        if: always()
+        uses: github/codeql-action/upload-sarif@v3
+        with:
+          sarif_file: 'trivy-fs-results.sarif'
+          category: 'dependencies'
+
+      - name: Upload security reports
+        if: always()
+        uses: actions/upload-artifact@v3
+        with:
+          name: security-reports-dependencies
+          path: |
+            trivy-fs-results.sarif
+            npm-audit-results.json
+          retention-days: 30
+
+  # Security Scanning - Container Images
+  security-scan-containers:
+    name: Security Scan - Container Images
     runs-on: ubuntu-latest
     needs: [docker-build]
-    if: github.event_name == 'push' && github.ref == 'refs/heads/main'
+    if: github.event_name == 'push' && (github.ref == 'refs/heads/main' || github.ref == 'refs/heads/develop')
+    permissions:
+      contents: read
+      packages: read
+      security-events: write
     steps:
+      - name: Checkout code
+        uses: actions/checkout@v4
+
       - name: Run Trivy vulnerability scanner
         uses: aquasecurity/trivy-action@master
         with:
-          image-ref: ${{ env.REGISTRY }}/${{ env.IMAGE_NAME }}:main
+          image-ref: ${{ env.REGISTRY }}/${{ env.IMAGE_NAME }}:${{ github.ref_name }}
           format: 'sarif'
-          output: 'trivy-results.sarif'
+          output: 'trivy-container-results.sarif'
+          severity: 'CRITICAL,HIGH,MEDIUM,LOW'
 
-      - name: Upload Trivy scan results
-        uses: github/codeql-action/upload-sarif@v2
+      - name: Run Trivy with JSON output for detailed reporting
+        uses: aquasecurity/trivy-action@master
         with:
-          sarif_file: 'trivy-results.sarif'
+          image-ref: ${{ env.REGISTRY }}/${{ env.IMAGE_NAME }}:${{ github.ref_name }}
+          format: 'json'
+          output: 'trivy-container-detailed.json'
+          severity: 'CRITICAL,HIGH,MEDIUM,LOW'
+
+      - name: Run Trivy configuration scan
+        uses: aquasecurity/trivy-action@master
+        with:
+          scan-type: 'config'
+          scan-ref: './web-gui'
+          format: 'json'
+          output: 'trivy-config-results.json'
+          severity: 'CRITICAL,HIGH,MEDIUM'
+
+      - name: Check vulnerability thresholds
+        run: |
+          # Install jq for JSON processing
+          sudo apt-get update && sudo apt-get install -y jq
+          
+          # Count vulnerabilities by severity
+          CRITICAL=$(jq '[.Results[]?.Vulnerabilities[]? | select(.Severity == "CRITICAL")] | length' trivy-container-detailed.json)
+          HIGH=$(jq '[.Results[]?.Vulnerabilities[]? | select(.Severity == "HIGH")] | length' trivy-container-detailed.json)
+          MEDIUM=$(jq '[.Results[]?.Vulnerabilities[]? | select(.Severity == "MEDIUM")] | length' trivy-container-detailed.json)
+          
+          echo "Critical vulnerabilities: $CRITICAL"
+          echo "High vulnerabilities: $HIGH" 
+          echo "Medium vulnerabilities: $MEDIUM"
+          
+          # Set vulnerability thresholds
+          CRITICAL_THRESHOLD=0
+          HIGH_THRESHOLD=5
+          MEDIUM_THRESHOLD=20
+          
+          # Check thresholds and create security summary
+          echo "# Security Scan Summary" > security-summary.md
+          echo "- **Critical**: $CRITICAL (threshold: $CRITICAL_THRESHOLD)" >> security-summary.md
+          echo "- **High**: $HIGH (threshold: $HIGH_THRESHOLD)" >> security-summary.md
+          echo "- **Medium**: $MEDIUM (threshold: $MEDIUM_THRESHOLD)" >> security-summary.md
+          echo "" >> security-summary.md
+          
+          if [ "$CRITICAL" -gt "$CRITICAL_THRESHOLD" ]; then
+            echo "❌ **CRITICAL**: $CRITICAL critical vulnerabilities found (threshold: $CRITICAL_THRESHOLD)" >> security-summary.md
+            echo "::error::$CRITICAL critical vulnerabilities found, exceeding threshold of $CRITICAL_THRESHOLD"
+            exit 1
+          elif [ "$HIGH" -gt "$HIGH_THRESHOLD" ]; then
+            echo "⚠️ **WARNING**: $HIGH high vulnerabilities found (threshold: $HIGH_THRESHOLD)" >> security-summary.md
+            echo "::warning::$HIGH high vulnerabilities found, exceeding threshold of $HIGH_THRESHOLD"
+            exit 1
+          elif [ "$MEDIUM" -gt "$MEDIUM_THRESHOLD" ]; then
+            echo "ℹ️ **INFO**: $MEDIUM medium vulnerabilities found (threshold: $MEDIUM_THRESHOLD)" >> security-summary.md
+            echo "::notice::$MEDIUM medium vulnerabilities found, exceeding threshold of $MEDIUM_THRESHOLD"
+          else
+            echo "✅ **PASSED**: All vulnerability thresholds met" >> security-summary.md
+            echo "::notice::Security scan passed - all vulnerability thresholds met"
+          fi
+
+      - name: Upload container scan results
+        if: always()
+        uses: github/codeql-action/upload-sarif@v3
+        with:
+          sarif_file: 'trivy-container-results.sarif'
+          category: 'container-images'
+
+      - name: Upload security reports
+        if: always()
+        uses: actions/upload-artifact@v3
+        with:
+          name: security-reports-containers
+          path: |
+            trivy-container-results.sarif
+            trivy-container-detailed.json
+            trivy-config-results.json
+            security-summary.md
+          retention-days: 30
+
+      - name: Create security dashboard
+        if: always()
+        run: |
+          # Create a comprehensive security dashboard
+          cat > security-dashboard.html << 'EOF'
+          <!DOCTYPE html>
+          <html>
+          <head>
+              <title>DinoAir Security Dashboard</title>
+              <style>
+                  body { font-family: Arial, sans-serif; margin: 20px; }
+                  .critical { color: #dc3545; }
+                  .high { color: #fd7e14; }
+                  .medium { color: #ffc107; }
+                  .low { color: #28a745; }
+                  .pass { color: #28a745; }
+                  table { border-collapse: collapse; width: 100%; }
+                  th, td { border: 1px solid #ddd; padding: 8px; text-align: left; }
+                  th { background-color: #f2f2f2; }
+              </style>
+          </head>
+          <body>
+              <h1>DinoAir Container Security Dashboard</h1>
+              <h2>Scan Summary</h2>
+          EOF
+          
+          # Add vulnerability summary to dashboard
+          if [ -f "security-summary.md" ]; then
+            echo "<pre>" >> security-dashboard.html
+            cat security-summary.md >> security-dashboard.html
+            echo "</pre>" >> security-dashboard.html
+          fi
+          
+          echo "</body></html>" >> security-dashboard.html
+
+      - name: Upload security dashboard
+        if: always()
+        uses: actions/upload-artifact@v3
+        with:
+          name: security-dashboard
+          path: security-dashboard.html
+          retention-days: 30
+
+  # Security Alerts
+  security-alerts:
+    name: Security Alerts
+    runs-on: ubuntu-latest
+    needs: [security-scan-containers]
+    if: failure() && (github.ref == 'refs/heads/main' || github.ref == 'refs/heads/develop')
+    steps:
+      - name: Send security alert
+        uses: actions/github-script@v6
+        with:
+          script: |
+            const issue = await github.rest.issues.create({
+              owner: context.repo.owner,
+              repo: context.repo.repo,
+              title: `🚨 Security Alert: Critical vulnerabilities detected in ${context.ref}`,
+              body: `
+            ## Security Alert
+            
+            Critical vulnerabilities have been detected in the latest container build.
+            
+            - **Branch**: ${context.ref}
+            - **Commit**: ${context.sha}
+            - **Workflow**: ${context.workflow}
+            - **Run**: ${context.runNumber}
+            
+            Please review the security scan results and take immediate action to remediate critical vulnerabilities.
+            
+            [View detailed security reports](${context.payload.repository.html_url}/actions/runs/${context.runId})
+              `,
+              labels: ['security', 'critical', 'bug']
+            });
+            console.log('Security alert issue created:', issue.data.number);
 
   # Deploy to Production (example)
   deploy:
     name: Deploy to Production
     runs-on: ubuntu-latest
-    needs: [docker-build, security-scan]
+    needs: [docker-build, security-scan-containers]
     if: github.event_name == 'push' && github.ref == 'refs/heads/main'
     environment:
       name: production
