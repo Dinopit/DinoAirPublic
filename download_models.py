@@ -47,12 +47,7 @@ class ModelDownloader:
                     "url": "https://huggingface.co/stabilityai/stable-diffusion-xl-base-1.0/resolve/main/sd_xl_base_1.0.safetensors",
                     "headers": {}
                 },
-                # Add CivitAI mirror if available
-                # {
-                #     "name": "CivitAI",
-                #     "url": "https://civitai.com/api/download/models/...",
-                #     "headers": {"Authorization": "Bearer YOUR_API_KEY"}  # Optional API key
-                # }
+
             ]
         },
         "sdxl_vae.safetensors": {
@@ -66,18 +61,7 @@ class ModelDownloader:
                 }
             ]
         },
-        # Optional: SDXL Refiner (commented out by default to save bandwidth)
-        # "sd_xl_refiner_1.0.safetensors": {
-        #     "size": 6075981930,  # ~6.08GB
-        #     "sha256": "7440042bbdc8a24813002c09b6b69b64dc90fded4472613437b7f55f9b7d9c5f",
-        #     "mirrors": [
-        #         {
-        #             "name": "HuggingFace",
-        #             "url": "https://huggingface.co/stabilityai/stable-diffusion-xl-refiner-1.0/resolve/main/sd_xl_refiner_1.0.safetensors",
-        #             "headers": {}
-        #         }
-        #     ]
-        # }
+
     }
     
     def __init__(self, models_dir: str = "ComfyUI/models/checkpoints", chunk_size: int = 8192 * 1024,
