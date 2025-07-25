@@ -1,6 +1,6 @@
 """
 DinoAir Configuration Module
-Provides configuration validation, type checking, and safe defaults
+Provides configuration validation, type checking, safe defaults, and advanced features
 """
 
 from .config_validator import (
@@ -22,22 +22,11 @@ from .config_validator import (
     CONFIG_TEMPLATE
 )
 
-from .config_export_import import (
-    ConfigExportImportManager,
-    ExportFormat,
-    ConfigSection,
-    ConfigVersionInfo,
-    ConfigExportError,
-    ConfigImportError,
-    ConfigBackupError,
-    export_config,
-    import_config,
-    backup_config,
-    validate_config_file
-)
 
+)
 __all__ = [
     # Core config classes
+r
     'ConfigError',
     'ConfigValueType',
     'ConfigField',
@@ -71,3 +60,4 @@ __all__ = [
 
 # Module version
 __version__ = '1.1.0'
+

@@ -1,0 +1,115 @@
+version: '3.8'
+
+services:
+  # Blue Environment - DinoAir Web GUI Service
+  web-gui-blue:
+    build:
+      context: ../../web-gui
+      dockerfile: Dockerfile
+      target: runner
+      args:
+        NODE_ENV: ${NODE_ENV:-production}
+    image: dinoair-web-gui:${IMAGE_TAG:-latest}
+    container_name: dinoair-web-gui-blue
+    ports:
+      - "3001:3000"  # External port for blue environment
+    environment:
+      # Node environment
+      - NODE_ENV=${NODE_ENV:-production}
+      
+      # API Configuration
+      - API_BASE_URL=http://dinoair-comfyui-blue:8188
+      - API_KEY=${API_KEY:-dinoair-blue-api-key}
+      - API_SECRET=${API_SECRET}
+      
+      # Session and Security
+      - SESSION_SECRET=${SESSION_SECRET}
+      - JWT_SECRET=${JWT_SECRET}
+      
+      # CORS
+      - CORS_ORIGIN=${CORS_ORIGIN:-*}
+      
+      # Rate Limiting
+      - RATE_LIMIT_WINDOW_MS=${RATE_LIMIT_WINDOW_MS:-60000}
+      - RATE_LIMIT_MAX_REQUESTS=${RATE_LIMIT_MAX_REQUESTS:-100}
+      
+      # ComfyUI Backend
+      - COMFYUI_API_URL=http://dinoair-comfyui-blue:8188
+      - COMFYUI_WORKFLOW_PATH=${COMFYUI_WORKFLOW_PATH:-./FreeTierPacked/sd15-workflow.json}
+      
+      # Client Configuration
+      - NEXT_PUBLIC_APP_NAME=${NEXT_PUBLIC_APP_NAME:-DinoAir Blue}
+      - NEXT_PUBLIC_VERSION=${NEXT_PUBLIC_VERSION:-1.0.0}
+      - NEXT_PUBLIC_IS_FREE_TIER=${NEXT_PUBLIC_IS_FREE_TIER:-true}
+      - NEXT_PUBLIC_API_URL=http://localhost/api
+      - NEXT_PUBLIC_WS_URL=ws://localhost/ws
+      - NEXT_PUBLIC_ENVIRONMENT=blue
+    volumes:
+      - blue_uploads:/app/uploads
+      - ../../web-gui/FreeTierPacked:/app/FreeTierPacked:ro
+    networks:
+      - dinoair-blue-green
+    depends_on:
+      comfyui-blue:
+        condition: service_healthy
+    restart: unless-stopped
+    healthcheck:
+      test: ["CMD", "node", "-e", "require('http').get('http://localhost:3000/api/health', (res) => { process.exit(res.statusCode === 200 ? 0 : 1); })"]
+      interval: 30s
+      timeout: 3s
+      retries: 3
+      start_period: 40s
+    labels:
+      - "environment=blue"
+      - "service=web-gui"
+
+  # Blue Environment - ComfyUI Service
+  comfyui-blue:
+    image: python:3.11-slim
+    container_name: dinoair-comfyui-blue
+    working_dir: /app
+    ports:
+      - "8189:8188"  # External port for blue environment
+    volumes:
+      - ../../:/app
+      - blue_models:/app/models
+      - blue_output:/app/output
+      - blue_input:/app/input
+      - blue_custom_nodes:/app/custom_nodes
+    environment:
+      - PYTHONPATH=/app
+      - ENVIRONMENT=blue
+    command: python main.py --listen 0.0.0.0 --port 8188
+    networks:
+      - dinoair-blue-green
+    restart: unless-stopped
+    healthcheck:
+      test: ["CMD", "python", "-c", "import urllib.request; urllib.request.urlopen('http://localhost:8188/').read()"]
+      interval: 30s
+      timeout: 10s
+      retries: 3
+      start_period: 60s
+    labels:
+      - "environment=blue"
+      - "service=comfyui"
+
+networks:
+  dinoair-blue-green:
+    external: true
+
+volumes:
+  blue_uploads:
+    labels:
+      - "environment=blue"
+  blue_models:
+    labels:
+      - "environment=blue"
+  blue_output:
+    labels:
+      - "environment=blue"
+  blue_input:
+    labels:
+      - "environment=blue"
+  blue_custom_nodes:
+    labels:
+      - "environment=blue"
