@@ -19,13 +19,16 @@
     "test:e2e": "playwright test",
     "test:e2e:headed": "playwright test --headed",
     "test:e2e:ui": "playwright test --ui",
-
+    "test:visual": "playwright test e2e/visual-regression.spec.ts e2e/responsive-visual.spec.ts",
+    "test:visual:update": "playwright test e2e/visual-regression.spec.ts e2e/responsive-visual.spec.ts --update-snapshots",
+    "test:visual:headed": "playwright test e2e/visual-regression.spec.ts e2e/responsive-visual.spec.ts --headed",
+    "test:visual:ui": "playwright test e2e/visual-regression.spec.ts e2e/responsive-visual.spec.ts --ui",
+    "setup:visual-testing": "scripts/setup-visual-testing.sh",
     "security:scan": "./scripts/security-scan.sh",
     "security:scan:deps": "./scripts/security-scan.sh --dependencies",
     "security:scan:secrets": "./scripts/security-scan.sh --secrets",
     "security:audit": "npm audit && ./scripts/security-scan.sh --dependencies --secrets",
     "clean": "rm -rf .next out coverage security-reports",
-   
     "postinstall": "npm run type-check"
   },
   "dependencies": {
