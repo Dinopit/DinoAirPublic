@@ -11,8 +11,8 @@ import json
 import argparse
 from pathlib import Path
 
-# Add lib directory to path to import telemetry module
-sys.path.insert(0, os.path.join(os.path.dirname(__file__), 'lib'))
+# Add current directory to path to import telemetry module
+sys.path.insert(0, os.path.dirname(__file__))
 
 try:
     from telemetry import TelemetryConfig, TelemetryCollector, CrashReporter

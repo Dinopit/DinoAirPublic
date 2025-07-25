@@ -9,8 +9,8 @@ import shutil
 import time
 import traceback
 
-# Add lib directory to path for telemetry module
-sys.path.insert(0, os.path.join(os.path.dirname(__file__), 'lib'))
+# Add current directory to path for telemetry module
+sys.path.insert(0, os.path.dirname(__file__))
 
 # Import telemetry system (with fallback if not available)
 try:

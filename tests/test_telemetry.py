@@ -10,8 +10,8 @@ import json
 import sys
 from unittest.mock import patch, MagicMock
 
-# Add lib directory to path
-sys.path.insert(0, os.path.join(os.path.dirname(__file__), '..', 'lib'))
+# Add current directory to path
+sys.path.insert(0, os.path.join(os.path.dirname(__file__), '..'))
 
 from telemetry import TelemetryConfig, TelemetryCollector, CrashReporter, create_telemetry_system
 
