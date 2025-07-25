@@ -1,19 +1,30 @@
 // Authentication middleware for Supabase
 const auth = require('../lib/auth');
 const db = require('../lib/db');
+const { LRUCache } = require('lru-cache');
 
-const authCache = new Map();
+const authCache = new LRUCache({
+  max: 1000,
+  ttl: 5000, // 5 seconds
+  updateAgeOnGet: true,
+  updateAgeOnHas: true,
+  dispose: (value, key) => {
+    console.log(`Auth cache entry ${key} disposed`);
+  }
+});
+
 const CACHE_TTL = 5000; // 5 seconds
 
 /**
  * Clear expired cache entries
  */
 function clearExpiredCache() {
-  const now = Date.now();
-  for (const [key, entry] of authCache.entries()) {
-    if (now - entry.timestamp > CACHE_TTL) {
-      authCache.delete(key);
-    }
+  const initialSize = authCache.size;
+  authCache.purgeStale();
+  
+  const currentSize = authCache.size;
+  if (initialSize !== currentSize) {
+    console.log(`Auth cache cleanup: removed ${initialSize - currentSize} expired entries. Current size: ${currentSize}`);
   }
 }
 
