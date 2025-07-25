@@ -35,3 +35,9 @@ yarn-error.log*
 # typescript
 *.tsbuildinfo
 next-env.d.ts
+
+# security reports (contain sensitive information)
+security-reports/
+*.sarif
+trivy-*.json
+npm-audit-*.json
