@@ -1,0 +1,98 @@
+# Dependencies
+node_modules
+npm-debug.log*
+yarn-debug.log*
+yarn-error.log*
+.pnp
+.pnp.js
+
+# Testing
+coverage
+.nyc_output
+test-results
+playwright-report
+playwright/.cache
+
+# Next.js
+.next
+out
+build
+dist
+
+# Environment files
+.env
+.env.local
+.env.development.local
+.env.test.local
+.env.production.local
+.env.development
+.env.test
+!.env.example
+
+# IDE
+.vscode
+.idea
+*.swp
+*.swo
+*~
+.DS_Store
+
+# Git
+.git
+.gitignore
+.gitattributes
+
+# Documentation
+*.md
+docs
+DOCUMENTATION
+
+# Docker
+Dockerfile
+docker-compose.yml
+.dockerignore
+
+# CI/CD
+.github
+.gitlab-ci.yml
+.circleci
+
+# Logs
+logs
+*.log
+
+# OS files
+Thumbs.db
+
+# Temporary files
+tmp
+temp
+.cache
+*.tmp
+*.temp
+
+# Build artifacts
+*.tsbuildinfo
+.vercel
+.turbo
+
+# Development
+.husky
+.eslintcache
+.stylelintcache
+
+# Package manager files
+pnpm-lock.yaml
+yarn.lock
+package-lock.json
+!package.json
+
+# Webpack
+.webpack
+webpack-stats.json
+analyze.html
+stats.json
+
+# Uploads (will be volume mounted)
+uploads/*
+!uploads/.gitkeep

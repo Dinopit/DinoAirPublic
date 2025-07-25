@@ -1,0 +1,246 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>DinoAir Installer</title>
+    <link rel="stylesheet" href="styles.css">
+</head>
+<body>
+    <div class="installer-container">
+        <!-- Welcome Screen -->
+        <div id="welcome-screen" class="screen active">
+            <div class="logo-container">
+                <div class="logo">🦕</div>
+                <h1>Welcome to DinoAir</h1>
+                <p class="subtitle">AI-powered image generation for everyone</p>
+            </div>
+            <div class="content">
+                <p>This installer will help you set up DinoAir on your computer.</p>
+                <p>We'll detect your hardware and recommend the best configuration for optimal performance.</p>
+                <div class="features">
+                    <div class="feature">
+                        <span class="icon">🚀</span>
+                        <span>One-click installation</span>
+                    </div>
+                    <div class="feature">
+                        <span class="icon">🔧</span>
+                        <span>Automatic hardware detection</span>
+                    </div>
+                    <div class="feature">
+                        <span class="icon">🎨</span>
+                        <span>Progressive mode system</span>
+                    </div>
+                </div>
+            </div>
+            <div class="button-container">
+                <button id="start-btn" class="primary-btn">Get Started</button>
+            </div>
+        </div>
+
+        <!-- Hardware Detection Screen -->
+        <div id="hardware-screen" class="screen">
+            <h2>Hardware Detection</h2>
+            <div class="content">
+                <div id="hardware-loading" class="loading-container">
+                    <div class="spinner"></div>
+                    <p>Detecting your hardware configuration...</p>
+                </div>
+                <div id="hardware-results" class="hardware-results" style="display: none;">
+                    <div class="hardware-section">
+                        <h3>CPU</h3>
+                        <p id="cpu-info">-</p>
+                    </div>
+                    <div class="hardware-section">
+                        <h3>Memory</h3>
+                        <p id="ram-info">-</p>
+                    </div>
+                    <div class="hardware-section">
+                        <h3>GPU</h3>
+                        <p id="gpu-info">-</p>
+                    </div>
+                    <div class="recommendation-box">
+                        <h3>Recommended Configuration</h3>
+                        <p id="tier-info">-</p>
+                        <p id="model-info">-</p>
+                        <p id="performance-info">-</p>
+                    </div>
+                </div>
+            </div>
+            <div class="button-container">
+                <button id="back-hardware-btn" class="secondary-btn">Back</button>
+                <button id="continue-hardware-btn" class="primary-btn" disabled>Continue</button>
+            </div>
+        </div>
+
+        <!-- Mode Selection Screen -->
+        <div id="mode-screen" class="screen">
+            <h2>Choose Your Mode</h2>
+            <div class="content">
+                <div class="mode-cards">
+                    <div class="mode-card" data-mode="easy">
+                        <div class="mode-header">
+                            <h3>Easy Mode</h3>
+                            <span class="badge recommended">Recommended</span>
+                        </div>
+                        <ul class="mode-features">
+                            <li>✓ Simplified interface</li>
+                            <li>✓ One-click generation</li>
+                            <li>✓ Curated presets</li>
+                            <li>✓ Perfect for beginners</li>
+                        </ul>
+                    </div>
+                    <div class="mode-card" data-mode="standard">
+                        <div class="mode-header">
+                            <h3>Standard Mode</h3>
+                        </div>
+                        <ul class="mode-features">
+                            <li>✓ Full parameter control</li>
+                            <li>✓ Multiple models</li>
+                            <li>✓ Custom workflows</li>
+                            <li>✓ Advanced features</li>
+                        </ul>
+                    </div>
+                    <div class="mode-card" data-mode="pro">
+                        <div class="mode-header">
+                            <h3>Pro Mode</h3>
+                        </div>
+                        <ul class="mode-features">
+                            <li>✓ Node-based editor</li>
+                            <li>✓ Custom pipelines</li>
+                            <li>✓ API access</li>
+                            <li>✓ Developer tools</li>
+                        </ul>
+                    </div>
+                </div>
+                <p class="mode-note">You can change modes at any time after installation.</p>
+            </div>
+            <div class="button-container">
+                <button id="back-mode-btn" class="secondary-btn">Back</button>
+                <button id="install-btn" class="primary-btn" disabled>Install</button>
+            </div>
+        </div>
+
+        <!-- Installation Path Screen -->
+        <div id="path-screen" class="screen">
+            <h2>Choose Installation Path</h2>
+            <div class="content">
+                <div class="path-selection">
+                    <label for="install-path">Installation Directory:</label>
+                    <div class="path-input-container">
+                        <input type="text" id="install-path" class="path-input" readonly>
+                        <button id="browse-btn" class="browse-btn">Browse...</button>
+                    </div>
+                    <p class="path-info">DinoAir will be installed in this directory</p>
+                </div>
+                <div class="space-info">
+                    <h4>Space Requirements</h4>
+                    <div class="space-details">
+                        <div class="space-item">
+                            <span>DinoAir Core:</span>
+                            <span>~500 MB</span>
+                        </div>
+                        <div class="space-item">
+                            <span>Selected Models:</span>
+                            <span id="model-size">~2 GB</span>
+                        </div>
+                        <div class="space-item total">
+                            <span>Total Required:</span>
+                            <span id="total-size">~2.5 GB</span>
+                        </div>
+                    </div>
+                    <div class="available-space">
+                        <span>Available Space:</span>
+                        <span id="available-space">Checking...</span>
+                    </div>
+                </div>
+            </div>
+            <div class="button-container">
+                <button id="back-path-btn" class="secondary-btn">Back</button>
+                <button id="install-path-btn" class="primary-btn">Install</button>
+            </div>
+        </div>
+
+        <!-- Installation Progress Screen -->
+        <div id="progress-screen" class="screen">
+            <h2>Installing DinoAir</h2>
+            <div class="content">
+                <div class="progress-container">
+                    <div class="progress-bar">
+                        <div id="progress-fill" class="progress-fill"></div>
+                    </div>
+                    <p id="progress-percentage" class="progress-percentage">0%</p>
+                </div>
+                <div class="status-container">
+                    <p id="status-text" class="status-text">Preparing installation...</p>
+                    <div id="status-details" class="status-details"></div>
+                </div>
+                <div class="installation-log" id="installation-log">
+                    <h4>Installation Log</h4>
+                    <div class="log-content" id="log-content"></div>
+                </div>
+            </div>
+        </div>
+
+        <!-- Success Screen -->
+        <div id="success-screen" class="screen">
+            <div class="success-icon">✅</div>
+            <h2>Installation Complete!</h2>
+            <div class="content">
+                <p>DinoAir has been successfully installed on your computer.</p>
+                <div class="success-details">
+                    <div class="detail-item">
+                        <strong>Mode:</strong> <span id="installed-mode">-</span>
+                    </div>
+                    <div class="detail-item">
+                        <strong>Model:</strong> <span id="installed-model">-</span>
+                    </div>
+                    <div class="detail-item">
+                        <strong>Location:</strong> <span id="install-location">-</span>
+                    </div>
+                </div>
+                <div class="next-steps">
+                    <h3>Next Steps</h3>
+                    <ul>
+                        <li>Launch DinoAir to start generating images</li>
+                        <li>Explore the tutorials and documentation</li>
+                        <li>Join our community for tips and support</li>
+                    </ul>
+                </div>
+            </div>
+            <div class="button-container">
+                <button id="launch-btn" class="primary-btn">Launch DinoAir</button>
+                <button id="finish-btn" class="secondary-btn">Finish</button>
+            </div>
+        </div>
+
+        <!-- Error Screen -->
+        <div id="error-screen" class="screen">
+            <div class="error-icon">❌</div>
+            <h2>Installation Failed</h2>
+            <div class="content">
+                <p>An error occurred during installation.</p>
+                <div class="error-details">
+                    <h4>Error Details</h4>
+                    <p id="error-message" class="error-message">-</p>
+                </div>
+                <div class="error-suggestions">
+                    <h4>Suggestions</h4>
+                    <ul>
+                        <li>Check your internet connection</li>
+                        <li>Ensure you have sufficient disk space</li>
+                        <li>Try running the installer as administrator</li>
+                        <li>Check the installation log for more details</li>
+                    </ul>
+                </div>
+            </div>
+            <div class="button-container">
+                <button id="retry-btn" class="primary-btn">Retry Installation</button>
+                <button id="exit-btn" class="secondary-btn">Exit</button>
+            </div>
+        </div>
+    </div>
+
+    <script src="renderer.js"></script>
+</body>
+</html>

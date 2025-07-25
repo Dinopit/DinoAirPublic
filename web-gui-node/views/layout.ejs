@@ -1,0 +1,110 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title><%= title %></title>
+    <meta name="description" content="<%= description %>">
+    
+    <!-- Favicon -->
+    <link rel="icon" type="image/x-icon" href="/favicon.ico">
+    
+    <!-- CSS -->
+    <link rel="stylesheet" href="/css/main.css">
+    <link rel="stylesheet" href="/css/components.css">
+    <link rel="stylesheet" href="/css/chat.css">
+    
+    <!-- Prism.js for syntax highlighting -->
+    <link rel="stylesheet" href="https://cdnjs.cloudflare.com/ajax/libs/prism/1.30.0/themes/prism.min.css">
+    
+    <!-- Socket.io client -->
+    <script src="/socket.io/socket.io.js"></script>
+</head>
+<body>
+    <!-- Navigation Header -->
+    <header class="header">
+        <nav class="navbar">
+            <div class="nav-brand">
+                <a href="/" class="brand-link">
+                    <h1>DinoAir</h1>
+                </a>
+            </div>
+            
+            <div class="nav-menu">
+                <a href="/" class="nav-link <%= currentPage === 'chat' ? 'active' : '' %>">Chat</a>
+                <a href="/artifacts" class="nav-link <%= currentPage === 'artifacts' ? 'active' : '' %>">Artifacts</a>
+                <a href="/models" class="nav-link <%= currentPage === 'models' ? 'active' : '' %>">Models</a>
+                <a href="/personalities" class="nav-link <%= currentPage === 'personalities' ? 'active' : '' %>">Personalities</a>
+                <a href="/api-docs" class="nav-link <%= currentPage === 'docs' ? 'active' : '' %>">API Docs</a>
+                <a href="/health" class="nav-link <%= currentPage === 'health' ? 'active' : '' %>">Health</a>
+                <a href="/settings" class="nav-link <%= currentPage === 'settings' ? 'active' : '' %>">Settings</a>
+            </div>
+            
+            <div class="nav-actions">
+                <button id="theme-toggle" class="btn btn-icon" title="Toggle theme">
+                    <span class="theme-icon">🌙</span>
+                </button>
+            </div>
+        </nav>
+    </header>
+
+    <!-- Main Content -->
+    <main class="main-content">
+        <div class="container">
+            <!-- Page Title -->
+            <% if (pageTitle) { %>
+            <div class="page-header">
+                <h2 class="page-title"><%= pageTitle %></h2>
+            </div>
+            <% } %>
+            
+            <!-- Page Content -->
+            <div class="page-content">
+                <%- body %>
+            </div>
+        </div>
+    </main>
+
+    <!-- Footer -->
+    <footer class="footer">
+        <div class="container">
+            <div class="footer-content">
+                <div class="footer-section">
+                    <p>&copy; 2025 DinoAir Team. All rights reserved.</p>
+                </div>
+                <div class="footer-section">
+                    <a href="/about" class="footer-link">About</a>
+                    <a href="/api-docs" class="footer-link">API</a>
+                    <a href="/health" class="footer-link">Status</a>
+                </div>
+            </div>
+        </div>
+    </footer>
+
+    <!-- Toast Notifications -->
+    <div id="toast-container" class="toast-container"></div>
+
+    <!-- Loading Overlay -->
+    <div id="loading-overlay" class="loading-overlay hidden">
+        <div class="loading-spinner">
+            <div class="spinner"></div>
+            <p>Loading...</p>
+        </div>
+    </div>
+
+    <!-- JavaScript -->
+    <script src="https://cdnjs.cloudflare.com/ajax/libs/prism/1.30.0/components/prism-core.min.js"></script>
+    <script src="https://cdnjs.cloudflare.com/ajax/libs/prism/1.30.0/plugins/autoloader/prism-autoloader.min.js"></script>
+    <script src="/js/utils.js"></script>
+    <script src="/js/theme.js"></script>
+    <script src="/js/notifications.js"></script>
+    <script src="/js/main.js"></script>
+    
+    <!-- Page-specific scripts -->
+    <% if (typeof scripts !== 'undefined' && scripts.length > 0) { %>
+        <% scripts.forEach(function(script) { %>
+            <script src="<%= script %>"></script>
+        <% }); %>
+    <% } %>
+</body>
+</html>

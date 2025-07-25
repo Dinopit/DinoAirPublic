@@ -1,0 +1,129 @@
+{
+  "api": {
+    "version": "1.0.0",
+    "name": "DinoAir API",
+    "description": "Configuration for DinoAir API endpoints and services",
+    "baseUrl": "http://localhost:3000/api",
+    "timeout": 30000,
+    "retryAttempts": 3
+  },
+  "endpoints": {
+    "chat": {
+      "url": "/chat",
+      "method": "POST",
+      "headers": {
+        "Content-Type": "application/json"
+      },
+      "rateLimit": {
+        "requests": 100,
+        "window": "1h"
+      }
+    },
+    "health": {
+      "url": "/health",
+      "method": "GET",
+      "cache": {
+        "enabled": true,
+        "ttl": 60
+      }
+    },
+    "artifacts": {
+      "list": {
+        "url": "/artifacts",
+        "method": "GET"
+      },
+      "create": {
+        "url": "/artifacts",
+        "method": "POST"
+      },
+      "update": {
+        "url": "/artifacts/{id}",
+        "method": "PUT"
+      },
+      "delete": {
+        "url": "/artifacts/{id}",
+        "method": "DELETE"
+      }
+    },
+    "images": {
+      "generate": {
+        "url": "/images/generate",
+        "method": "POST",
+        "timeout": 120000,
+        "maxFileSize": "10MB"
+      }
+    }
+  },
+  "services": {
+    "ollama": {
+      "host": "localhost",
+      "port": 11434,
+      "protocol": "http",
+      "models": {
+        "default": "qwen:7b-chat-v1.5-q4_K_M",
+        "available": [
+          "qwen:7b-chat-v1.5-q4_K_M",
+          "llama2:7b",
+          "mistral:7b"
+        ]
+      },
+      "parameters": {
+        "temperature": 0.7,
+        "top_p": 0.9,
+        "max_tokens": 2048,
+        "stream": true
+      }
+    },
+    "comfyui": {
+      "host": "localhost",
+      "port": 8188,
+      "protocol": "http",
+      "workflows": {
+        "text2img": "sd15-workflow.json",
+        "img2img": "Image_to_Image_workflow.json"
+      },
+      "models": {
+        "checkpoint": "sd_xl_base_1.0.safetensors",
+        "vae": "sdxl_vae.safetensors"
+      },
+      "defaultSettings": {
+        "steps": 20,
+        "cfg_scale": 7.5,
+        "width": 1024,
+        "height": 1024,
+        "sampler": "euler_a"
+      }
+    }
+  },
+  "security": {
+    "cors": {
+      "enabled": true,
+      "origins": ["http://localhost:3000"],
+      "methods": ["GET", "POST", "PUT", "DELETE"],
+      "allowedHeaders": ["Content-Type", "Authorization"]
+    },
+    "authentication": {
+      "enabled": false,
+      "type": "bearer",
+      "tokenExpiry": "24h"
+    }
+  },
+  "logging": {
+    "level": "info",
+    "format": "json",
+    "destinations": ["console", "file"],
+    "file": {
+      "path": "./logs/api.log",
+      "maxSize": "10MB",
+      "maxFiles": 5
+    }
+  },
+  "features": {
+    "darkMode": true,
+    "artifacts": true,
+    "imageGeneration": true,
+    "multiModal": true,
+    "localStorage": true,
+    "healthCheck": true
+  }
+}

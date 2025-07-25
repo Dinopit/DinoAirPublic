@@ -1,0 +1,38 @@
+[
+  {
+    "id": "example-1",
+    "title": "Python Data Analysis Script",
+    "type": "code",
+    "language": "python",
+    "description": "A sample Python script for data analysis using pandas",
+    "createdAt": "2024-01-15T10:30:00Z",
+    "tags": ["python", "data-analysis", "pandas"]
+  },
+  {
+    "id": "example-2",
+    "title": "React Component Template",
+    "type": "code",
+    "language": "tsx",
+    "description": "A reusable React component with TypeScript",
+    "createdAt": "2024-01-15T11:00:00Z",
+    "tags": ["react", "typescript", "component"]
+  },
+  {
+    "id": "example-3",
+    "title": "Project Documentation",
+    "type": "markdown",
+    "language": "markdown",
+    "description": "Example project documentation in Markdown format",
+    "createdAt": "2024-01-15T11:30:00Z",
+    "tags": ["documentation", "markdown", "guide"]
+  },
+  {
+    "id": "example-4",
+    "title": "API Configuration",
+    "type": "code",
+    "language": "json",
+    "description": "Sample API configuration file",
+    "createdAt": "2024-01-15T12:00:00Z",
+    "tags": ["api", "configuration", "json"]
+  }
+]
