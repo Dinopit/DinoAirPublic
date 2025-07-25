@@ -1,7 +1,10 @@
 /**
  * DinoAir Client-Side Logging System
  * Provides structured logging with remote transmission and local storage
+ * Enhanced with correlation ID support
  */
+
+import { getCurrentCorrelationId } from '../correlation/correlation-id';
 
 export enum LogLevel {
   DEBUG = 0,
@@ -16,6 +19,7 @@ export interface LogEntry {
   level: LogLevel;
   logger: string;
   message: string;
+  correlationId: string;
   context?: Record<string, any>;
   error?: {
     name: string;
@@ -167,6 +171,7 @@ export class Logger {
       level,
       logger: this.name,
       message,
+      correlationId: getCurrentCorrelationId(),
       context,
       error,
       sessionId: this.manager.getSessionId(),
@@ -252,7 +257,7 @@ export class LogManager {
   }
   
   private consoleLog(entry: LogEntry): void {
-    const prefix = `[${entry.timestamp}] [${entry.logger}]`;
+    const prefix = `[${entry.timestamp}] [${entry.correlationId}] [${entry.logger}]`;
     const message = `${prefix} ${entry.message}`;
     
     switch (entry.level) {

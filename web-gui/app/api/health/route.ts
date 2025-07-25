@@ -1,11 +1,19 @@
 import { NextRequest, NextResponse } from 'next/server';
+import { getCurrentCorrelationId } from '@/lib/correlation/correlation-id';
+import { getLogger } from '@/lib/logging/logger';
+
+const logger = getLogger('health-api');
 
 async function checkOllama(): Promise<boolean> {
+  const correlationId = getCurrentCorrelationId();
+  
   try {
     // Check if Ollama is responsive
     const ollamaUrl = process.env.NEXT_PUBLIC_OLLAMA_URL || 'http://localhost:11434';
     const controller = new AbortController();
     const timeoutId = setTimeout(() => controller.abort(), 5000); // 5 second timeout
+    
+    logger.debug('Checking Ollama health', { ollamaUrl, correlationId });
     
     const response = await fetch(`${ollamaUrl}/api/tags`, {
       signal: controller.signal,
@@ -13,18 +21,32 @@ async function checkOllama(): Promise<boolean> {
     }).catch(() => null);
     
     clearTimeout(timeoutId);
-    return response?.ok || false;
-  } catch {
+    
+    const isHealthy = response?.ok || false;
+    logger.info('Ollama health check completed', { 
+      ollamaUrl, 
+      isHealthy, 
+      status: response?.status,
+      correlationId 
+    });
+    
+    return isHealthy;
+  } catch (error) {
+    logger.error('Ollama health check failed', error, { correlationId });
     return false;
   }
 }
 
 async function checkComfyUI(): Promise<boolean> {
+  const correlationId = getCurrentCorrelationId();
+  
   try {
     // Check if ComfyUI backend is responsive
     const comfyUrl = process.env.COMFYUI_API_URL || 'http://localhost:8188';
     const controller = new AbortController();
     const timeoutId = setTimeout(() => controller.abort(), 5000); // 5 second timeout
+    
+    logger.debug('Checking ComfyUI health', { comfyUrl, correlationId });
     
     const response = await fetch(`${comfyUrl}/`, {
       signal: controller.signal,
@@ -32,14 +54,27 @@ async function checkComfyUI(): Promise<boolean> {
     }).catch(() => null);
     
     clearTimeout(timeoutId);
-    return response?.ok || false;
-  } catch {
+    
+    const isHealthy = response?.ok || false;
+    logger.info('ComfyUI health check completed', { 
+      comfyUrl, 
+      isHealthy, 
+      status: response?.status,
+      correlationId 
+    });
+    
+    return isHealthy;
+  } catch (error) {
+    logger.error('ComfyUI health check failed', error, { correlationId });
     return false;
   }
 }
 
 export async function GET(request: NextRequest) {
   const startTime = Date.now();
+  const correlationId = getCurrentCorrelationId();
+  
+  logger.info('Health check started', { correlationId });
   
   // Perform health checks
   const [ollamaHealthy, comfyUIHealthy] = await Promise.all([
@@ -60,6 +95,7 @@ export async function GET(request: NextRequest) {
     ready: isReady,
     timestamp: new Date().toISOString(),
     responseTime: `${responseTime}ms`,
+    correlationId,
     version: process.env.NEXT_PUBLIC_VERSION || '1.0.0',
     environment: process.env.NODE_ENV || 'development',
     deployment: {
@@ -91,6 +127,14 @@ export async function GET(request: NextRequest) {
       },
     },
   };
+  
+  logger.info('Health check completed', { 
+    correlationId,
+    allHealthy,
+    responseTime,
+    ollamaHealthy,
+    comfyUIHealthy
+  });
   
   // Return appropriate status code based on health
   const statusCode = allHealthy ? 200 : 503;
