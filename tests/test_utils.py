@@ -218,7 +218,7 @@ class TestDataFactory:
         return CircuitBreakerConfig(**defaults)
 
 
-class TestFileManager:
+class FileManager:
     """Helper for managing temporary files and directories in tests."""
     
     def __init__(self):
