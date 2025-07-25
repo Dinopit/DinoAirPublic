@@ -278,23 +278,11 @@ const fileValidation = {
 
 /**
  * Security middleware configuration
+ * Note: CSP is now handled by dedicated middleware in csp.js
  */
 const securityMiddleware = helmet({
-  contentSecurityPolicy: {
-    directives: {
-      defaultSrc: ["'self'"],
-      styleSrc: ["'self'", "'unsafe-inline'", "https://fonts.googleapis.com"],
-      fontSrc: ["'self'", "https://fonts.gstatic.com"],
-      imgSrc: ["'self'", "data:", "https:"],
-      scriptSrc: ["'self'"],
-      connectSrc: ["'self'", "ws:", "wss:"],
-      frameSrc: ["'none'"],
-      objectSrc: ["'none'"],
-      baseUri: ["'self'"],
-      formAction: ["'self'"]
-    }
-  },
-  crossOriginEmbedderPolicy: false, // Allow embedding for development
+  contentSecurityPolicy: false, // Handled by dedicated CSP middleware
+  crossOriginEmbedderPolicy: false,
   hsts: {
     maxAge: 31536000,
     includeSubDomains: true,
