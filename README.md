@@ -21,6 +21,7 @@
 - **Rate Limiting**: Configurable request throttling to prevent abuse
 - **Input Validation**: Request sanitization and validation middleware
 - **Process Isolation**: Each service runs with configurable resource limits
+- **CSP Consolidation**: Unified Content Security Policy configuration eliminates duplicate policies and prevents conflicts between server.js and validation.js middleware
 
 ### 💪 Stability Features
 - **Memory Management**: Automatic model unloading to prevent crashes
@@ -28,6 +29,8 @@
 - **Health Monitoring**: Automatic service restart on failure
 - **Error Recovery**: Multiple recovery strategies with automatic retry
 - **Graceful Shutdown**: Proper cleanup and state preservation
+- **Artifact Storage Limits**: Enforced limits of 1000 artifacts and 100MB total storage with automatic LRU cleanup to prevent memory exhaustion
+- **Authentication Race Conditions**: Request-level caching and locking mechanisms prevent concurrent authentication issues
 
 ### 📊 Operations & Monitoring
 - **Resource Monitoring**: Real-time tracking of CPU, memory, disk usage
@@ -371,6 +374,7 @@ Access the Swagger UI at `http://localhost:3000/api-docs` for:
 | `/api/chat` | POST | Send chat messages |
 | `/api/generate-image` | POST | Generate images |
 | `/api/artifacts` | GET/POST | Manage artifacts |
+| `/api/v1/artifacts/stats` | GET | Storage monitoring and utilization statistics |
 | `/api/health` | GET | Health check |
 | `/api/health/comfyui` | GET | ComfyUI status |
 | `/api/health/ollama` | GET | Ollama status |
@@ -392,6 +396,31 @@ cd web-gui
 npm test                  # Unit tests
 npm run test:e2e         # E2E tests
 npm run test:coverage    # Coverage report
+```
+
+### Stability Testing
+
+Test the implemented stability fixes:
+
+```bash
+# Start DinoAir locally
+python start.py
+
+# Test concurrent authentication (in separate terminal)
+for i in {1..20}; do
+  curl -H "X-API-Key: your-api-key" http://localhost:3000/api/health &
+done
+wait
+
+# Test artifact storage limits
+for i in {1..1005}; do
+  curl -X POST -H "Content-Type: application/json" \
+    -d '{"name":"test'$i'","type":"text","content":"test content"}' \
+    http://localhost:3000/api/v1/artifacts
+done
+
+# Monitor storage statistics
+curl http://localhost:3000/api/v1/artifacts/stats
 ```
 
 ### Test Structure
