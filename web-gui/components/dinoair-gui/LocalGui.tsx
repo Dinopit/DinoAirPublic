@@ -9,7 +9,7 @@ import { KeyboardShortcutsModal } from '../ui/keyboard-shortcuts-modal';
 import { OnboardingTutorial } from '../ui/onboarding-tutorial';
 import { SettingsPanel } from '../ui/settings-panel';
 import { ToastProvider, useToast } from '../ui/toast';
-import { Menu, X, Settings, Keyboard, Bug } from 'lucide-react';
+import { Menu, X, Settings, Keyboard, Bug, BarChart3 } from 'lucide-react';
 import { DebugProvider, useDebug } from '../../contexts/debug-context';
 import DebugPanel from '../ui/debug-panel';
 
@@ -80,6 +80,12 @@ const LocalGuiContent = () => {
 
   const handleOpenSettings = useCallback(() => {
     setShowSettings(true);
+    setIsMobileMenuOpen(false);
+  }, []);
+
+  const handleOpenMonitoring = useCallback(() => {
+    // Open monitoring dashboard in new tab
+    window.open('/monitoring', '_blank');
     setIsMobileMenuOpen(false);
   }, []);
 
@@ -155,6 +161,13 @@ const LocalGuiContent = () => {
       action: handleOpenSettings
     },
     {
+      key: 'm',
+      ctrl: true,
+      cmd: true,
+      description: 'Open monitoring dashboard',
+      action: handleOpenMonitoring
+    },
+    {
       key: 'Escape',
       description: 'Close modals/dialogs',
       action: () => {
@@ -225,6 +238,14 @@ const LocalGuiContent = () => {
             </button>
           )}
           <button
+            onClick={handleOpenMonitoring}
+            className="p-2 hover:bg-muted rounded-lg transition-colors"
+            aria-label="Monitoring dashboard"
+            title="Monitoring dashboard (Ctrl/Cmd + M)"
+          >
+            <BarChart3 className="w-5 h-5" />
+          </button>
+          <button
             onClick={() => setShowShortcutsModal(true)}
             className="p-2 hover:bg-muted rounded-lg transition-colors"
             aria-label="Keyboard shortcuts"
@@ -268,6 +289,14 @@ const LocalGuiContent = () => {
             onClick={() => handleTabChange('artifacts')}
           >
             Artifacts
+          </button>
+          <div className="border-t border-border my-1"></div>
+          <button
+            className="w-full px-6 py-3 text-left font-medium text-muted-foreground hover:bg-muted transition-colors"
+            onClick={handleOpenMonitoring}
+          >
+            <BarChart3 className="w-4 h-4 mr-2 inline" />
+            Monitoring
           </button>
         </div>
       )}

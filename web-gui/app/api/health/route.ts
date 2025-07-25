@@ -19,6 +19,23 @@ async function checkOllama(): Promise<boolean> {
   }
 }
 
+async function getMetricsOverview() {
+  try {
+    // Get basic metrics overview
+    const response = await fetch('http://localhost:3000/api/metrics/dashboard?widget=overview', {
+      method: 'GET',
+      signal: AbortSignal.timeout(2000),
+    }).catch(() => null);
+    
+    if (response?.ok) {
+      return await response.json();
+    }
+  } catch {
+    // Metrics not available, return null
+  }
+  return null;
+}
+
 async function checkComfyUI(): Promise<boolean> {
   try {
     // Check if ComfyUI backend is responsive
@@ -42,9 +59,10 @@ export async function GET(request: NextRequest) {
   const startTime = Date.now();
   
   // Perform health checks
-  const [ollamaHealthy, comfyUIHealthy] = await Promise.all([
+  const [ollamaHealthy, comfyUIHealthy, metricsData] = await Promise.all([
     checkOllama(),
     checkComfyUI(),
+    getMetricsOverview(),
   ]);
   
   const allHealthy = ollamaHealthy && comfyUIHealthy;
@@ -73,7 +91,18 @@ export async function GET(request: NextRequest) {
         status: 'healthy',
         seconds: process.uptime(),
       },
+      metrics: {
+        status: metricsData ? 'healthy' : 'unavailable',
+        enabled: !!metricsData,
+      },
     },
+    metrics: metricsData ? {
+      health_score: metricsData.health_score,
+      active_sessions: metricsData.active_sessions,
+      total_requests: metricsData.total_requests,
+      error_rate: metricsData.error_rate,
+      resources: metricsData.resources,
+    } : null,
   };
   
   // Return appropriate status code based on health
