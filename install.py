@@ -91,38 +91,61 @@ def find_npm_command():
     
     return None
 
-def check_nodejs():
-    """Checks if Node.js and npm are installed."""
+def check_node_installation():
+    """Check if Node.js is installed and return (success, version_info)."""
     try:
-        # Check Node.js
         node_cmd = shutil.which("node") or shutil.which("node.exe")
         if not node_cmd:
             print("Node.js not found in PATH.")
-            return False
+            return False, None
             
         node_result = subprocess.run([node_cmd, "--version"], capture_output=True, text=True)
         if node_result.returncode == 0:
             node_version = node_result.stdout.strip()
             print(f"Node.js {node_version} found.")
+            return True, (node_cmd, node_version)
         else:
-            return False
-        
-        # Find npm
+            return False, None
+    except Exception as e:
+        print(f"Error checking Node.js: {e}")
+        return False, None
+
+def check_npm_installation():
+    """Check if npm is installed and return (success, npm_path, version)."""
+    try:
         npm_cmd = find_npm_command()
         if not npm_cmd:
             print("npm not found. Searched common installation locations.")
             print("Please ensure Node.js and npm are properly installed.")
-            return False, None
+            return False, None, None
             
         # Check npm version
         npm_result = subprocess.run([npm_cmd, "--version"], capture_output=True, text=True)
         if npm_result.returncode == 0:
             npm_version = npm_result.stdout.strip()
             print(f"npm {npm_version} found at: {npm_cmd}")
-            return True, npm_cmd
+            return True, npm_cmd, npm_version
         else:
             print(f"npm found at {npm_cmd} but couldn't get version.")
+            return False, None, None
+    except Exception as e:
+        print(f"Error checking npm: {e}")
+        return False, None, None
+
+def check_nodejs():
+    """Checks if Node.js and npm are installed."""
+    try:
+        # Check Node.js first
+        node_success, node_info = check_node_installation()
+        if not node_success:
+            return False
+        
+        # Check npm
+        npm_success, npm_cmd, npm_version = check_npm_installation()
+        if not npm_success:
             return False, None
+            
+        return True, npm_cmd
             
     except Exception as e:
         print(f"Error checking Node.js/npm: {e}")
@@ -138,62 +161,78 @@ def confirm_installation():
         sys.exit(0)
     return True
 
+def check_comfyui_installation():
+    """Check if ComfyUI is already installed and valid. Returns (exists, valid)."""
+    comfyui_exists = os.path.exists("ComfyUI")
+    comfyui_valid = False
+    
+    if comfyui_exists:
+        # Check for essential files that indicate a proper installation
+        required_files = ["requirements.txt", "main.py", "server.py"]
+        comfyui_valid = all(os.path.exists(os.path.join("ComfyUI", f)) for f in required_files)
+        
+        if not comfyui_valid:
+            print("ComfyUI directory exists but is empty or incomplete. Removing and re-cloning...")
+            shutil.rmtree("ComfyUI", ignore_errors=True)
+            comfyui_exists = False
+    
+    return comfyui_exists, comfyui_valid
+
+def clone_comfyui_repository():
+    """Clone the ComfyUI repository with retry logic."""
+    print("Cloning ComfyUI repository...")
+    max_retries = 3
+    
+    for attempt in range(max_retries):
+        try:
+            subprocess.run(["git", "clone", "https://github.com/comfyanonymous/ComfyUI.git"],
+                         check=True, capture_output=True, text=True)
+            print("ComfyUI cloned successfully.")
+            return True
+        except subprocess.CalledProcessError as clone_error:
+            if attempt < max_retries - 1:
+                print(f"Clone attempt {attempt + 1} failed: {clone_error}")
+                print(f"Retrying in 5 seconds...")
+                import time
+                time.sleep(5)
+            else:
+                print(f"Failed to clone ComfyUI after {max_retries} attempts.")
+                print("\nError details:")
+                print(f"  {clone_error}")
+                print("\nPossible solutions:")
+                print("  1. Check your internet connection")
+                print("  2. Try again later if GitHub is having issues")
+                print("  3. Manually clone: git clone https://github.com/comfyanonymous/ComfyUI.git")
+                print("  4. Download ComfyUI manually from https://github.com/comfyanonymous/ComfyUI/archive/refs/heads/master.zip")
+                print("     and extract it to a 'ComfyUI' folder")
+                raise clone_error
+    
+    return False
+
+def install_comfyui_dependencies():
+    """Install ComfyUI dependencies if requirements.txt exists."""
+    if os.path.exists("ComfyUI/requirements.txt"):
+        pip_args = [sys.executable, "-m", "pip", "install", "-r", "ComfyUI/requirements.txt"]
+        subprocess.run(pip_args, check=True)
+        print("ComfyUI dependencies installed successfully.")
+    else:
+        print("Warning: ComfyUI/requirements.txt not found. Skipping dependency installation.")
+        print("You may need to install dependencies manually.")
+
 def install_comfyui():
     """Clones ComfyUI and installs its dependencies."""
     print("Installing ComfyUI...")
     try:
-        # Check if ComfyUI directory exists and contains required files
-        comfyui_exists = os.path.exists("ComfyUI")
-        comfyui_valid = False
-        
-        if comfyui_exists:
-            # Check for essential files that indicate a proper installation
-            required_files = ["requirements.txt", "main.py", "server.py"]
-            comfyui_valid = all(os.path.exists(os.path.join("ComfyUI", f)) for f in required_files)
-            
-            if not comfyui_valid:
-                print("ComfyUI directory exists but is empty or incomplete. Removing and re-cloning...")
-                shutil.rmtree("ComfyUI", ignore_errors=True)
-                comfyui_exists = False
+        comfyui_exists, comfyui_valid = check_comfyui_installation()
         
         # Clone if directory doesn't exist or was removed
         if not comfyui_exists:
-            print("Cloning ComfyUI repository...")
-            max_retries = 3
-            for attempt in range(max_retries):
-                try:
-                    subprocess.run(["git", "clone", "https://github.com/comfyanonymous/ComfyUI.git"],
-                                 check=True, capture_output=True, text=True)
-                    print("ComfyUI cloned successfully.")
-                    break
-                except subprocess.CalledProcessError as clone_error:
-                    if attempt < max_retries - 1:
-                        print(f"Clone attempt {attempt + 1} failed: {clone_error}")
-                        print(f"Retrying in 5 seconds...")
-                        import time
-                        time.sleep(5)
-                    else:
-                        print(f"Failed to clone ComfyUI after {max_retries} attempts.")
-                        print("\nError details:")
-                        print(f"  {clone_error}")
-                        print("\nPossible solutions:")
-                        print("  1. Check your internet connection")
-                        print("  2. Try again later if GitHub is having issues")
-                        print("  3. Manually clone: git clone https://github.com/comfyanonymous/ComfyUI.git")
-                        print("  4. Download ComfyUI manually from https://github.com/comfyanonymous/ComfyUI/archive/refs/heads/master.zip")
-                        print("     and extract it to a 'ComfyUI' folder")
-                        raise clone_error
+            clone_comfyui_repository()
         else:
             print("ComfyUI already exists with valid installation.")
         
         # Install dependencies
-        if os.path.exists("ComfyUI/requirements.txt"):
-            pip_args = [sys.executable, "-m", "pip", "install", "-r", "ComfyUI/requirements.txt"]
-            subprocess.run(pip_args, check=True)
-            print("ComfyUI dependencies installed successfully.")
-        else:
-            print("Warning: ComfyUI/requirements.txt not found. Skipping dependency installation.")
-            print("You may need to install dependencies manually.")
+        install_comfyui_dependencies()
         
         print("ComfyUI installation process completed.")
     except (subprocess.CalledProcessError, FileNotFoundError) as e:
@@ -396,31 +435,39 @@ def print_summary(models_downloaded=False, web_gui_installed=False):
     print("\nNote: You can easily swap in another SDXL model by placing the model file in the `ComfyUI/models/checkpoints` directory.")
 
 
-def main():
-    """Main function to run the installer."""
-    # Parse command line arguments
+def parse_command_line_args():
+    """Parse and return command line arguments."""
     parser = argparse.ArgumentParser(description="DinoAir Free Tier Installer")
     parser.add_argument("--no-models", action="store_true",
                        help="Skip downloading SDXL and Ollama models")
-    args = parser.parse_args()
-    
+    return parser.parse_args()
+
+def print_installation_banner(skip_models=False):
+    """Print the installation banner."""
     print("="*60)
     print("DinoAir Free Tier Installation")
     print("="*60)
     
-    if args.no_models:
+    if skip_models:
         print("\n--no-models flag detected: Will skip model downloads")
 
+def validate_system_prerequisites(skip_models=False):
+    """Validate system prerequisites and return True if all checks pass."""
     check_python_version()
     check_pip_version()
     
+    # Check Ollama if models are needed
     if not check_ollama():
-        if not args.no_models:
+        if not skip_models:
             print("\nError: Ollama is required when --no-models flag is not used.")
             sys.exit(1)
         else:
             print("\nWarning: Ollama not found, but skipping due to --no-models flag.")
     
+    return True
+
+def check_and_setup_nodejs():
+    """Check Node.js availability and return (available, npm_cmd)."""
     nodejs_result = check_nodejs()
     if isinstance(nodejs_result, tuple):
         nodejs_available, npm_cmd = nodejs_result
@@ -431,28 +478,54 @@ def main():
     if not nodejs_available:
         print("\nWarning: Node.js/npm not found. Web GUI will not be installed.")
         print("You can install Node.js later and run this installer again.\n")
+    
+    return nodejs_available, npm_cmd
+
+def install_core_components():
+    """Install core DinoAir components."""
+    install_comfyui()
+    copy_comfyui_workflows()
+
+def install_models_if_requested(skip_models=False):
+    """Install models if not skipping them. Returns True if models were downloaded."""
+    if skip_models:
+        print("\nSkipping Ollama model pull due to --no-models flag")
+        print("Skipping SDXL model download due to --no-models flag")
+        return False
+    
+    pull_ollama_models()
+    return download_sdxl_models()
+
+def install_web_gui_if_available(nodejs_available, npm_cmd):
+    """Install Web GUI if Node.js is available. Returns True if installed."""
+    if nodejs_available and npm_cmd:
+        return install_web_gui(npm_cmd)
+    return False
+
+def finalize_installation(models_downloaded, web_gui_installed):
+    """Generate logs and print installation summary."""
+    generate_dependency_log()
+    print_summary(models_downloaded, web_gui_installed)
+
+def main():
+    """Main function to run the installer."""
+    args = parse_command_line_args()
+    
+    print_installation_banner(args.no_models)
+    
+    validate_system_prerequisites(args.no_models)
+    
+    nodejs_available, npm_cmd = check_and_setup_nodejs()
         
     confirm_installation()
 
-    install_comfyui()
-    copy_comfyui_workflows()
+    install_core_components()
     
-    # Skip model downloads if --no-models flag is set
-    models_downloaded = False
-    if not args.no_models:
-        pull_ollama_models()
-        models_downloaded = download_sdxl_models()
-    else:
-        print("\nSkipping Ollama model pull due to --no-models flag")
-        print("Skipping SDXL model download due to --no-models flag")
+    models_downloaded = install_models_if_requested(args.no_models)
     
-    # Install Web GUI if Node.js is available
-    web_gui_installed = False
-    if nodejs_available and npm_cmd:
-        web_gui_installed = install_web_gui(npm_cmd)
+    web_gui_installed = install_web_gui_if_available(nodejs_available, npm_cmd)
     
-    generate_dependency_log()
-    print_summary(models_downloaded, web_gui_installed)
+    finalize_installation(models_downloaded, web_gui_installed)
 
 if __name__ == "__main__":
     main()
