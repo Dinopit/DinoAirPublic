@@ -97,6 +97,23 @@ async function checkOllama(): Promise<ServiceHealthCheck> {
   }
 }
 
+async function getMetricsOverview() {
+  try {
+    // Get basic metrics overview
+    const response = await fetch('http://localhost:3000/api/metrics/dashboard?widget=overview', {
+      method: 'GET',
+      signal: AbortSignal.timeout(2000),
+    }).catch(() => null);
+    
+    if (response?.ok) {
+      return await response.json();
+    }
+  } catch {
+    // Metrics not available, return null
+  }
+  return null;
+}
+
 async function checkComfyUI(): Promise<ServiceHealthCheck> {
   const startTime = Date.now();
   const correlationId = getCurrentCorrelationId();
@@ -185,10 +202,11 @@ export async function GET(request: NextRequest) {
   
   logger.info('Health check started', { correlationId });
   
-  // Perform comprehensive health checks
-  const [ollamaHealth, comfyUIHealth] = await Promise.all([
+  // Perform comprehensive health checks with metrics
+  const [ollamaHealth, comfyUIHealth, metricsData] = await Promise.all([
     checkOllama(),
     checkComfyUI(),
+    getMetricsOverview(),
   ]);
   
   // Calculate overall system health
@@ -268,7 +286,11 @@ export async function GET(request: NextRequest) {
         status: 'healthy',
         seconds: Math.round(process.uptime()),
         human_readable: formatUptime(process.uptime()),
-      }
+      },
+      metrics: {
+        status: metricsData ? 'healthy' : 'unavailable',
+        enabled: !!metricsData,
+      },
     },
     dependencies: {
       ollama: {
@@ -288,7 +310,14 @@ export async function GET(request: NextRequest) {
         ollama: `${ollamaHealth.responseTime}ms`,
         comfyui: `${comfyUIHealth.responseTime}ms`
       }
-    }
+    },
+    metrics: metricsData ? {
+      health_score: metricsData.health_score,
+      active_sessions: metricsData.active_sessions,
+      total_requests: metricsData.total_requests,
+      error_rate: metricsData.error_rate,
+      resources: metricsData.resources,
+    } : null,
   };
   
   logger.info('Health check completed', { 
