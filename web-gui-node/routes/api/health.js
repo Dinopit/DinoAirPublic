@@ -5,6 +5,10 @@
 
 const express = require('express');
 const fetch = require('node-fetch');
+const { resourceManager } = require('../../lib/resource-manager');
+const { rateLimits } = require('../../middleware/validation');
+const { ollamaBreaker, comfyuiBreaker } = require('../../lib/circuit-breaker');
+const { withRetry, isRetryableError } = require('../../lib/retry');
 const router = express.Router();
 
 // Configuration
@@ -141,7 +145,7 @@ async function performDeepServiceCheck(serviceName, baseUrl, timeout = CONFIG.he
 }
 
 // GET /api/health - Enhanced main health check endpoint
-router.get('/', async (req, res) => {
+router.get('/', rateLimits.api, async (req, res) => {
   const startTime = Date.now();
   
   try {
@@ -263,7 +267,7 @@ router.get('/', async (req, res) => {
 });
 
 // GET /api/health/detailed - Comprehensive health information with deep diagnostics
-router.get('/detailed', async (req, res) => {
+router.get('/detailed', rateLimits.api, async (req, res) => {
   const startTime = Date.now();
   
   try {
@@ -445,7 +449,7 @@ router.get('/detailed', async (req, res) => {
 });
 
 // GET /api/health/ping - Simple ping endpoint with basic metrics
-router.get('/ping', (req, res) => {
+router.get('/ping', rateLimits.api, (req, res) => {
   const timestamp = new Date().toISOString();
   const uptime = process.uptime();
   
@@ -461,12 +465,18 @@ router.get('/ping', (req, res) => {
 });
 
 // GET /api/health/status - Lightweight status check
-router.get('/status', async (req, res) => {
+router.get('/status', rateLimits.api, async (req, res) => {
   try {
-    // Quick check of critical services
+    // Quick check of critical services with circuit breaker
     const [ollamaOk, comfyOk] = await Promise.allSettled([
-      fetch(`${CONFIG.ollamaUrl}/api/tags`, { timeout: 3000 }).then(r => r.ok),
-      fetch(`${CONFIG.comfyuiUrl}/`, { timeout: 3000, method: 'HEAD' }).then(r => r.ok)
+      ollamaBreaker.call(() => withRetry(() => 
+        fetch(`${CONFIG.ollamaUrl}/api/tags`, { timeout: 3000 }).then(r => r.ok), 
+        { maxRetries: 1, retryCondition: isRetryableError }
+      )),
+      comfyuiBreaker.call(() => withRetry(() => 
+        fetch(`${CONFIG.comfyuiUrl}/`, { timeout: 3000, method: 'HEAD' }).then(r => r.ok), 
+        { maxRetries: 1, retryCondition: isRetryableError }
+      ))
     ]);
     
     const ollamaHealthy = ollamaOk.status === 'fulfilled' && ollamaOk.value;
@@ -497,7 +507,7 @@ router.get('/status', async (req, res) => {
 });
 
 // GET /api/health/metrics - Performance and system metrics
-router.get('/metrics', (req, res) => {
+router.get('/metrics', rateLimits.api, (req, res) => {
   const memoryUsage = process.memoryUsage();
   const cpuUsage = process.cpuUsage();
   

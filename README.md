@@ -1,15 +1,15 @@
 # DinoAir 🦕✨
 
-![Version](https://img.shields.io/badge/version-1.1.0-blue.svg)
+![Version](https://img.shields.io/badge/version-1.2.0-blue.svg)
 ![Build Status](https://img.shields.io/badge/build-passing-brightgreen.svg)
 ![Test Coverage](https://img.shields.io/badge/coverage-85%25-green.svg)
 ![License](https://img.shields.io/badge/license-MIT-orange.svg)
 
 > A powerful, self-contained AI platform combining local language models with image generation capabilities. Built with modern web technologies and enterprise-grade features.
 
-## 🔒 SECURITY UPDATE v1.1.0 🔒
+## 🔒 STABILITY RELEASE v1.2.0 🔒
 
-**Major stability and security improvements have been implemented:**
+**Major stability and reliability improvements have been implemented:**
 
 ### ✅ Installation & Reliability
 - **Fixed**: Node.js/npm detection issues on Windows systems
@@ -23,11 +23,23 @@
 - **Process Isolation**: Each service runs with configurable resource limits
 - **CSP Consolidation**: Unified Content Security Policy configuration eliminates duplicate policies and prevents conflicts between server.js and validation.js middleware
 
-### 💪 Stability Features
+### 💪 Stability Features (v1.2.0)
+- **Circuit Breaker Protection**: Comprehensive circuit breaker implementation for all external service calls (Ollama, ComfyUI)
+  - Configurable failure thresholds and automatic recovery
+  - Real-time statistics and monitoring at `/api/system/circuit-breakers`
+  - Prevents cascading failures when services are unavailable
+- **Enhanced Input Validation**: Rate limiting added to all previously unprotected API routes
+  - Health endpoints (`/api/health/*`)
+  - System endpoints (`/api/system/*`) 
+  - User management endpoints (`/users/*`)
+- **Error Recovery & Retry Logic**: Intelligent retry mechanism with exponential backoff and jitter
+  - Smart error categorization (network errors, timeouts, 5xx responses)
+  - Integration with circuit breaker for comprehensive fault tolerance
+  - Prevents thundering herd problems
+- **Centralized Error Handling**: Structured error responses and proper HTTP status codes
+- **Model Download Integrity**: Enhanced download process with checksum verification and resume capability
 - **Memory Management**: Automatic model unloading to prevent crashes
-- **Circuit Breakers**: Prevents cascading failures in external services
-- **Health Monitoring**: Automatic service restart on failure
-- **Error Recovery**: Multiple recovery strategies with automatic retry
+- **Health Monitoring**: Automatic service restart on failure with circuit breaker integration
 - **Graceful Shutdown**: Proper cleanup and state preservation
 - **Artifact Storage Limits**: Enforced limits of 1000 artifacts and 100MB total storage with automatic LRU cleanup to prevent memory exhaustion
 - **Authentication Race Conditions**: Request-level caching and locking mechanisms prevent concurrent authentication issues

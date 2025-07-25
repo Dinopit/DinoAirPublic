@@ -1,11 +1,13 @@
 const express = require('express');
 const { anyAuth } = require('../../middleware/auth-middleware');
 const { resourceManager } = require('../../lib/resource-manager');
+const { rateLimits, sanitizeInput } = require('../../middleware/validation');
 const { memoryMonitor } = require('../../lib/memory-monitor');
+const { CircuitBreakerStats } = require('../../lib/circuit-breaker-stats');
 
 const router = express.Router();
 
-router.get('/stats', anyAuth, (req, res) => {
+router.get('/stats', rateLimits.api, anyAuth, (req, res) => {
   try {
     const memUsage = process.memoryUsage();
     const resourceStats = resourceManager.getStats();
@@ -33,7 +35,7 @@ router.get('/stats', anyAuth, (req, res) => {
   }
 });
 
-router.post('/gc', anyAuth, (req, res) => {
+router.post('/gc', rateLimits.api, sanitizeInput, anyAuth, (req, res) => {
   try {
     if (global.gc && typeof global.gc === 'function') {
       const beforeMem = process.memoryUsage();
@@ -63,13 +65,51 @@ router.post('/gc', anyAuth, (req, res) => {
   }
 });
 
-router.get('/resources', anyAuth, (req, res) => {
+router.get('/resources', rateLimits.api, anyAuth, (req, res) => {
   try {
     const stats = resourceManager.getStats();
     res.json(stats);
   } catch (error) {
     console.error('Error getting resource stats:', error);
     res.status(500).json({ error: 'Failed to get resource stats' });
+  }
+});
+
+
+router.get('/circuit-breakers', rateLimits.api, anyAuth, async (req, res) => {
+  try {
+    const stats = CircuitBreakerStats.getAllStats();
+    const health = CircuitBreakerStats.getHealthStatus();
+    
+    res.json({
+      success: true,
+      stats: stats,
+      health: health,
+      timestamp: new Date().toISOString()
+    });
+  } catch (error) {
+    console.error('Error getting circuit breaker stats:', error);
+    res.status(500).json({
+      success: false,
+      error: 'Failed to get circuit breaker statistics'
+    });
+  }
+});
+
+router.post('/circuit-breakers/reset', rateLimits.api, anyAuth, async (req, res) => {
+  try {
+    const result = CircuitBreakerStats.resetAll();
+    
+    res.json({
+      success: true,
+      ...result
+    });
+  } catch (error) {
+    console.error('Error resetting circuit breakers:', error);
+    res.status(500).json({
+      success: false,
+      error: 'Failed to reset circuit breakers'
+    });
   }
 });
 
