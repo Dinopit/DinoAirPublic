@@ -222,58 +222,81 @@ class ManagedService:
         }
         return stats
     
+    def _check_process_status(self):
+        """Check if process is still running and handle restart if needed."""
+        if self.process.poll() is not None:
+            self.logger.error(f"{self.config.name} has stopped unexpectedly")
+            self.status = ServiceStatus.FAILED
+            
+            # Handle restart
+            if self.config.restart_on_failure and self.restart_count < self.config.max_restart_attempts:
+                self.restart_count += 1
+                self.logger.info(f"Attempting restart {self.restart_count}/{self.config.max_restart_attempts}")
+                self.restart()
+            return False  # Process has stopped
+        return True  # Process is still running
+    
+    def _collect_resource_metrics(self):
+        """Collect CPU and memory usage metrics for the process."""
+        try:
+            proc = psutil.Process(self.process.pid)
+            
+            # CPU usage
+            cpu_percent = proc.cpu_percent(interval=1)
+            self._update_metric_history(self.cpu_usage_history, cpu_percent)
+            
+            # Memory usage
+            memory_info = proc.memory_info()
+            memory_mb = memory_info.rss / (1024 * 1024)
+            self._update_metric_history(self.memory_usage_history, memory_mb)
+            
+            return cpu_percent, memory_mb
+            
+        except psutil.NoSuchProcess:
+            return None, None
+    
+    def _update_metric_history(self, history_list, new_value):
+        """Update a metric history list, keeping only the last 60 samples."""
+        history_list.append(new_value)
+        if len(history_list) > 60:  # Keep last 60 samples
+            history_list.pop(0)
+    
+    def _check_resource_limits(self, cpu_percent, memory_mb):
+        """Check if resource usage exceeds configured limits and log warnings."""
+        if memory_mb and memory_mb > self.config.max_memory_mb:
+            self.logger.warning(
+                f"{self.config.name} exceeds memory limit: "
+                f"{memory_mb:.1f}MB > {self.config.max_memory_mb}MB"
+            )
+            # Could implement automatic model unloading here
+            
+        if cpu_percent and cpu_percent > self.config.max_cpu_percent:
+            self.logger.warning(
+                f"{self.config.name} exceeds CPU limit: "
+                f"{cpu_percent:.1f}% > {self.config.max_cpu_percent}%"
+            )
+    
+    def _should_perform_health_check(self):
+        """Determine if a health check should be performed now."""
+        return (self.config.health_check_cmd and 
+                time.time() % self.config.health_check_interval < 1)
+
     def _monitor_process(self):
         """Monitor process health and resource usage"""
         while not self._stop_event.is_set() and self.process:
             try:
                 # Check if process is still running
-                if self.process.poll() is not None:
-                    self.logger.error(f"{self.config.name} has stopped unexpectedly")
-                    self.status = ServiceStatus.FAILED
-                    
-                    # Handle restart
-                    if self.config.restart_on_failure and self.restart_count < self.config.max_restart_attempts:
-                        self.restart_count += 1
-                        self.logger.info(f"Attempting restart {self.restart_count}/{self.config.max_restart_attempts}")
-                        self.restart()
+                if not self._check_process_status():
                     break
                 
                 # Monitor resource usage
-                try:
-                    proc = psutil.Process(self.process.pid)
-                    
-                    # CPU usage
-                    cpu_percent = proc.cpu_percent(interval=1)
-                    self.cpu_usage_history.append(cpu_percent)
-                    if len(self.cpu_usage_history) > 60:  # Keep last 60 samples
-                        self.cpu_usage_history.pop(0)
-                    
-                    # Memory usage
-                    memory_info = proc.memory_info()
-                    memory_mb = memory_info.rss / (1024 * 1024)
-                    self.memory_usage_history.append(memory_mb)
-                    if len(self.memory_usage_history) > 60:
-                        self.memory_usage_history.pop(0)
-                    
-                    # Check resource limits
-                    if memory_mb > self.config.max_memory_mb:
-                        self.logger.warning(
-                            f"{self.config.name} exceeds memory limit: "
-                            f"{memory_mb:.1f}MB > {self.config.max_memory_mb}MB"
-                        )
-                        # Could implement automatic model unloading here
-                        
-                    if cpu_percent > self.config.max_cpu_percent:
-                        self.logger.warning(
-                            f"{self.config.name} exceeds CPU limit: "
-                            f"{cpu_percent:.1f}% > {self.config.max_cpu_percent}%"
-                        )
-                    
-                except psutil.NoSuchProcess:
-                    pass
+                cpu_percent, memory_mb = self._collect_resource_metrics()
                 
-                # Perform health check
-                if self.config.health_check_cmd and time.time() % self.config.health_check_interval < 1:
+                # Check resource limits
+                self._check_resource_limits(cpu_percent, memory_mb)
+                
+                # Perform health check if needed
+                if self._should_perform_health_check():
                     self._perform_health_check()
                 
                 # Read stdout/stderr
@@ -448,6 +471,27 @@ class ProcessManager:
         
         return self.services[name].restart()
     
+    def _start_service_with_dependencies(self, name: str, started: set) -> bool:
+        """Start a service and its dependencies recursively."""
+        if name in started:
+            return True
+        
+        service = self.services.get(name)
+        if not service:
+            return False
+        
+        # Start dependencies first
+        if service.config.depends_on:
+            for dep in service.config.depends_on:
+                if not self._start_service_with_dependencies(dep, started):
+                    return False
+        
+        # Start service
+        if self.start_service(name):
+            started.add(name)
+            return True
+        return False
+
     def start_all(self):
         """Start all services in dependency order"""
         self.logger.info("Starting all services...")
@@ -455,28 +499,8 @@ class ProcessManager:
         # Build dependency graph and start in order
         started = set()
         
-        def start_with_deps(name: str):
-            if name in started:
-                return True
-            
-            service = self.services.get(name)
-            if not service:
-                return False
-            
-            # Start dependencies first
-            if service.config.depends_on:
-                for dep in service.config.depends_on:
-                    if not start_with_deps(dep):
-                        return False
-            
-            # Start service
-            if self.start_service(name):
-                started.add(name)
-                return True
-            return False
-        
         for name in self.services:
-            start_with_deps(name)
+            self._start_service_with_dependencies(name, started)
     
     def stop_all(self):
         """Stop all services in reverse dependency order"""
@@ -505,6 +529,26 @@ class ProcessManager:
         
         return status
     
+    def _process_command_queue(self):
+        """Process any pending commands from the command queue."""
+        try:
+            cmd = self._command_queue.get(timeout=1)
+            self._handle_command(cmd)
+        except queue.Empty:
+            pass
+    
+    def _monitor_system_resources(self):
+        """Monitor system-wide resource usage and log warnings."""
+        memory = psutil.virtual_memory()
+        if memory.percent > 90:
+            self.logger.warning(f"System memory critical: {memory.percent}%")
+            # Could implement automatic model unloading here
+    
+    def _perform_periodic_tasks(self):
+        """Perform periodic maintenance tasks like saving status."""
+        if int(time.time()) % 60 == 0:
+            self._save_status()
+
     def run(self):
         """Main run loop"""
         self.running = True
@@ -517,21 +561,13 @@ class ProcessManager:
         while self.running:
             try:
                 # Check for commands
-                try:
-                    cmd = self._command_queue.get(timeout=1)
-                    self._handle_command(cmd)
-                except queue.Empty:
-                    pass
+                self._process_command_queue()
                 
                 # Monitor system resources
-                memory = psutil.virtual_memory()
-                if memory.percent > 90:
-                    self.logger.warning(f"System memory critical: {memory.percent}%")
-                    # Could implement automatic model unloading here
+                self._monitor_system_resources()
                 
-                # Save status periodically
-                if int(time.time()) % 60 == 0:
-                    self._save_status()
+                # Perform periodic tasks
+                self._perform_periodic_tasks()
                 
             except Exception as e:
                 self.logger.error(f"Main loop error: {e}")
