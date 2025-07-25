@@ -301,21 +301,27 @@ def open_browser():
     else:
         print("\nWeb GUI did not start in time. Please open http://localhost:3000 manually.")
 
-def main():
-    """Main function to start all services."""
+def print_startup_banner():
+    """Print the DinoAir startup banner."""
     print("="*60)
     print("DinoAir Free Tier Launcher")
     print("="*60)
-    
-    # Check and start Ollama
+
+def validate_prerequisites():
+    """Validate that all required prerequisites are available."""
     if not check_ollama():
         print("\nCannot proceed without Ollama. Exiting...")
         sys.exit(1)
+
+def start_services():
+    """Start all DinoAir services and return True if any were started."""
+    services_started = False
     
     # Start ComfyUI
     comfyui_process = start_comfyui()
     if comfyui_process:
         running_processes.append(comfyui_process)
+        services_started = True
     
     # Give ComfyUI time to start
     time.sleep(3)
@@ -324,15 +330,12 @@ def main():
     web_gui_process = start_web_gui()
     if web_gui_process:
         running_processes.append(web_gui_process)
+        services_started = True
     
-    if not running_processes:
-        print("\nNo services were started. They may already be running.")
-        print("You can access the Web GUI at http://localhost:3000")
-        sys.exit(0)
-    
-    # Open browser
-    open_browser()
-    
+    return services_started
+
+def print_running_banner():
+    """Print the banner showing services are running."""
     print("\n" + "="*60)
     print("DinoAir Free Tier is running!")
     print("="*60)
@@ -342,7 +345,9 @@ def main():
     print("  - Ollama: Running in background")
     print("\nPress Ctrl+C to stop all services.")
     print("="*60)
-    
+
+def monitor_services():
+    """Monitor running services and exit when all have stopped."""
     try:
         # Keep the script running
         while True:
@@ -358,6 +363,26 @@ def main():
                 
     except KeyboardInterrupt:
         pass
+
+def main():
+    """Main function to start all services."""
+    print_startup_banner()
+    
+    validate_prerequisites()
+    
+    services_started = start_services()
+    
+    if not services_started:
+        print("\nNo services were started. They may already be running.")
+        print("You can access the Web GUI at http://localhost:3000")
+        sys.exit(0)
+    
+    # Open browser
+    open_browser()
+    
+    print_running_banner()
+    
+    monitor_services()
 
 if __name__ == "__main__":
     main()
