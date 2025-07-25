@@ -1,0 +1,26 @@
+# Pact generated files
+/pacts/*.json
+
+# Logs
+*.log
+pact.log
+
+# Coverage reports
+coverage/
+
+# Node modules (if any)
+node_modules/
+
+# OS generated files
+.DS_Store
+Thumbs.db
+
+# Editor files
+.vscode/
+.idea/
+*.swp
+*.swo
+
+# Temporary files
+tmp/
+temp/

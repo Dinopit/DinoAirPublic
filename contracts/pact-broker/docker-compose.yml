@@ -1,0 +1,37 @@
+version: '3.8'
+
+services:
+  pact-broker:
+    image: pactfoundation/pact-broker:2.111.0
+    container_name: dinoair-pact-broker
+    ports:
+      - "9292:9292"
+    environment:
+      PACT_BROKER_DATABASE_URL: postgresql://pact_broker:pact_broker@postgres:5432/pact_broker
+      PACT_BROKER_BASIC_AUTH_USERNAME: pact_broker
+      PACT_BROKER_BASIC_AUTH_PASSWORD: pact_broker
+      PACT_BROKER_ALLOW_PUBLIC_READ: "true"
+      PACT_BROKER_PUBLIC_HEARTBEAT: "true"
+    depends_on:
+      - postgres
+    networks:
+      - pact-network
+
+  postgres:
+    image: postgres:15-alpine
+    container_name: dinoair-pact-postgres
+    environment:
+      POSTGRES_USER: pact_broker
+      POSTGRES_PASSWORD: pact_broker
+      POSTGRES_DB: pact_broker
+    volumes:
+      - pact_postgres_data:/var/lib/postgresql/data
+    networks:
+      - pact-network
+
+networks:
+  pact-network:
+    driver: bridge
+
+volumes:
+  pact_postgres_data:

@@ -93,6 +93,14 @@ webpack-stats.json
 analyze.html
 stats.json
 
+# Security scanning (sensitive information)
+security-reports
+.trivy
+scripts/security-scan.sh
+*.sarif
+trivy-*.json
+npm-audit-*.json
+
 # Uploads (will be volume mounted)
 uploads/*
 !uploads/.gitkeep

@@ -6,6 +6,19 @@ from importlib import import_module
 import platform
 import argparse
 import shutil
+import time
+import traceback
+
+# Add current directory to path for telemetry module
+sys.path.insert(0, os.path.dirname(__file__))
+
+# Import telemetry system (with fallback if not available)
+try:
+    from telemetry import create_telemetry_system
+    TELEMETRY_AVAILABLE = True
+except ImportError:
+    TELEMETRY_AVAILABLE = False
+    print("Note: Telemetry system not available. Installation will continue without telemetry.")
 
 def check_python_version():
     """Checks if the Python version is 3.11 or higher."""
@@ -434,12 +447,13 @@ def print_summary(models_downloaded=False, web_gui_installed=False):
     
     print("\nNote: You can easily swap in another SDXL model by placing the model file in the `ComfyUI/models/checkpoints` directory.")
 
-
 def parse_command_line_args():
     """Parse and return command line arguments."""
     parser = argparse.ArgumentParser(description="DinoAir Free Tier Installer")
     parser.add_argument("--no-models", action="store_true",
                        help="Skip downloading SDXL and Ollama models")
+    parser.add_argument("--disable-telemetry", action="store_true",
+                       help="Disable telemetry for this installation")
     return parser.parse_args()
 
 def print_installation_banner(skip_models=False):
@@ -451,81 +465,322 @@ def print_installation_banner(skip_models=False):
     if skip_models:
         print("\n--no-models flag detected: Will skip model downloads")
 
-def validate_system_prerequisites(skip_models=False):
+def validate_system_prerequisites(skip_models=False, telemetry_collector=None):
     """Validate system prerequisites and return True if all checks pass."""
-    check_python_version()
-    check_pip_version()
+    # Step 1: Python version check
+    try:
+        if telemetry_collector:
+            telemetry_collector.record_installation_step("python_version_check", "started")
+        check_python_version()
+        if telemetry_collector:
+            telemetry_collector.record_installation_step("python_version_check", "completed")
+    except Exception as e:
+        if telemetry_collector:
+            telemetry_collector.record_installation_step("python_version_check", "failed", {"error": str(e)})
+            telemetry_collector.record_error(e, {"step": "python_version_check"}, "python_version_check")
+        raise
     
-    # Check Ollama if models are needed
-    if not check_ollama():
-        if not skip_models:
-            print("\nError: Ollama is required when --no-models flag is not used.")
-            sys.exit(1)
+    # Step 2: Pip version check
+    try:
+        if telemetry_collector:
+            telemetry_collector.record_installation_step("pip_version_check", "started")
+        check_pip_version()
+        if telemetry_collector:
+            telemetry_collector.record_installation_step("pip_version_check", "completed")
+    except Exception as e:
+        if telemetry_collector:
+            telemetry_collector.record_installation_step("pip_version_check", "failed", {"error": str(e)})
+            telemetry_collector.record_error(e, {"step": "pip_version_check"}, "pip_version_check")
+        raise
+    
+    # Step 3: Ollama check
+    ollama_available = False
+    try:
+        if telemetry_collector:
+            telemetry_collector.record_installation_step("ollama_check", "started")
+        ollama_available = check_ollama()
+        if ollama_available:
+            if telemetry_collector:
+                telemetry_collector.record_installation_step("ollama_check", "completed")
         else:
-            print("\nWarning: Ollama not found, but skipping due to --no-models flag.")
+            if telemetry_collector:
+                telemetry_collector.record_installation_step("ollama_check", "failed", {"reason": "not_found"})
+            if not skip_models:
+                print("\nError: Ollama is required when --no-models flag is not used.")
+                sys.exit(1)
+            else:
+                print("\nWarning: Ollama not found, but skipping due to --no-models flag.")
+    except Exception as e:
+        if telemetry_collector:
+            telemetry_collector.record_installation_step("ollama_check", "failed", {"error": str(e)})
+            telemetry_collector.record_error(e, {"step": "ollama_check"}, "ollama_check")
+        raise
     
-    return True
+    return ollama_available
 
-def check_and_setup_nodejs():
+def check_and_setup_nodejs(telemetry_collector=None):
     """Check Node.js availability and return (available, npm_cmd)."""
-    nodejs_result = check_nodejs()
-    if isinstance(nodejs_result, tuple):
-        nodejs_available, npm_cmd = nodejs_result
-    else:
-        nodejs_available = nodejs_result
-        npm_cmd = None
+    # Step 4: Node.js check
+    nodejs_available = False
+    npm_cmd = None
+    try:
+        if telemetry_collector:
+            telemetry_collector.record_installation_step("nodejs_check", "started")
+        nodejs_result = check_nodejs()
+        if isinstance(nodejs_result, tuple):
+            nodejs_available, npm_cmd = nodejs_result
+        else:
+            nodejs_available = nodejs_result
+            npm_cmd = None
         
-    if not nodejs_available:
-        print("\nWarning: Node.js/npm not found. Web GUI will not be installed.")
-        print("You can install Node.js later and run this installer again.\n")
+        if nodejs_available:
+            if telemetry_collector:
+                telemetry_collector.record_installation_step("nodejs_check", "completed", {"npm_path": "<sanitized>"})
+        else:
+            if telemetry_collector:
+                telemetry_collector.record_installation_step("nodejs_check", "failed", {"reason": "not_found"})
+            print("\nWarning: Node.js/npm not found. Web GUI will not be installed.")
+            print("You can install Node.js later and run this installer again.\n")
+    except Exception as e:
+        if telemetry_collector:
+            telemetry_collector.record_installation_step("nodejs_check", "failed", {"error": str(e)})
+            telemetry_collector.record_error(e, {"step": "nodejs_check"}, "nodejs_check")
+        # Don't raise for Node.js errors, just warn
+        print(f"Warning: Error checking Node.js: {e}")
     
     return nodejs_available, npm_cmd
 
-def install_core_components():
-    """Install core DinoAir components."""
-    install_comfyui()
-    copy_comfyui_workflows()
+def get_user_confirmation(telemetry_collector=None):
+    """Get user confirmation for installation."""
+    # User confirmation
+    try:
+        if telemetry_collector:
+            telemetry_collector.record_installation_step("user_confirmation", "started")
+        confirm_installation()
+        if telemetry_collector:
+            telemetry_collector.record_installation_step("user_confirmation", "completed")
+    except SystemExit:
+        if telemetry_collector:
+            telemetry_collector.record_installation_step("user_confirmation", "failed", {"reason": "user_cancelled"})
+        raise
+    except Exception as e:
+        if telemetry_collector:
+            telemetry_collector.record_installation_step("user_confirmation", "failed", {"error": str(e)})
+            telemetry_collector.record_error(e, {"step": "user_confirmation"}, "user_confirmation")
+        raise
 
-def install_models_if_requested(skip_models=False):
+def install_core_components(telemetry_collector=None):
+    """Install core DinoAir components."""
+    # Step 5: ComfyUI installation
+    try:
+        if telemetry_collector:
+            telemetry_collector.record_installation_step("comfyui_install", "started")
+        install_comfyui()
+        if telemetry_collector:
+            telemetry_collector.record_installation_step("comfyui_install", "completed")
+    except Exception as e:
+        if telemetry_collector:
+            telemetry_collector.record_installation_step("comfyui_install", "failed", {"error": str(e)})
+            telemetry_collector.record_error(e, {"step": "comfyui_install"}, "comfyui_install")
+        raise
+    
+    # Step 6: Copy workflows
+    try:
+        if telemetry_collector:
+            telemetry_collector.record_installation_step("copy_workflows", "started")
+        copy_comfyui_workflows()
+        if telemetry_collector:
+            telemetry_collector.record_installation_step("copy_workflows", "completed")
+    except Exception as e:
+        if telemetry_collector:
+            telemetry_collector.record_installation_step("copy_workflows", "failed", {"error": str(e)})
+            telemetry_collector.record_error(e, {"step": "copy_workflows"}, "copy_workflows")
+        # Don't fail installation for workflow copy errors
+        print(f"Warning: Error copying workflows: {e}")
+
+def install_models_if_requested(skip_models=False, telemetry_collector=None):
     """Install models if not skipping them. Returns True if models were downloaded."""
-    if skip_models:
+    models_downloaded = False
+    if not skip_models:
+        # Step 7: Pull Ollama models
+        try:
+            if telemetry_collector:
+                telemetry_collector.record_installation_step("ollama_models", "started")
+            pull_ollama_models()
+            if telemetry_collector:
+                telemetry_collector.record_installation_step("ollama_models", "completed")
+        except Exception as e:
+            if telemetry_collector:
+                telemetry_collector.record_installation_step("ollama_models", "failed", {"error": str(e)})
+                telemetry_collector.record_error(e, {"step": "ollama_models"}, "ollama_models")
+            raise
+        
+        # Step 8: Download SDXL models
+        try:
+            if telemetry_collector:
+                telemetry_collector.record_installation_step("sdxl_models", "started")
+            models_downloaded = download_sdxl_models()
+            status = "completed" if models_downloaded else "skipped"
+            if telemetry_collector:
+                telemetry_collector.record_installation_step("sdxl_models", status, {"downloaded": models_downloaded})
+        except Exception as e:
+            if telemetry_collector:
+                telemetry_collector.record_installation_step("sdxl_models", "failed", {"error": str(e)})
+                telemetry_collector.record_error(e, {"step": "sdxl_models"}, "sdxl_models")
+            # Don't fail installation for model download errors
+            print(f"Warning: Error downloading SDXL models: {e}")
+    else:
+        if telemetry_collector:
+            telemetry_collector.record_installation_step("ollama_models", "skipped", {"reason": "no_models_flag"})
+            telemetry_collector.record_installation_step("sdxl_models", "skipped", {"reason": "no_models_flag"})
         print("\nSkipping Ollama model pull due to --no-models flag")
         print("Skipping SDXL model download due to --no-models flag")
-        return False
     
-    pull_ollama_models()
-    return download_sdxl_models()
+    return models_downloaded
 
-def install_web_gui_if_available(nodejs_available, npm_cmd):
+def install_web_gui_if_available(nodejs_available, npm_cmd, telemetry_collector=None):
     """Install Web GUI if Node.js is available. Returns True if installed."""
+    web_gui_installed = False
     if nodejs_available and npm_cmd:
-        return install_web_gui(npm_cmd)
-    return False
+        try:
+            if telemetry_collector:
+                telemetry_collector.record_installation_step("web_gui", "started")
+            web_gui_installed = install_web_gui(npm_cmd)
+            status = "completed" if web_gui_installed else "failed"
+            if telemetry_collector:
+                telemetry_collector.record_installation_step("web_gui", status, {"installed": web_gui_installed})
+        except Exception as e:
+            if telemetry_collector:
+                telemetry_collector.record_installation_step("web_gui", "failed", {"error": str(e)})
+                telemetry_collector.record_error(e, {"step": "web_gui"}, "web_gui")
+            # Don't fail installation for web GUI errors
+            print(f"Warning: Error installing Web GUI: {e}")
+    else:
+        if telemetry_collector:
+            telemetry_collector.record_installation_step("web_gui", "skipped", {"reason": "nodejs_not_available"})
+    
+    return web_gui_installed
 
-def finalize_installation(models_downloaded, web_gui_installed):
+def finalize_installation(models_downloaded, web_gui_installed, telemetry_collector=None):
     """Generate logs and print installation summary."""
-    generate_dependency_log()
+    # Step 10: Generate dependency log
+    try:
+        if telemetry_collector:
+            telemetry_collector.record_installation_step("dependency_log", "started")
+        generate_dependency_log()
+        if telemetry_collector:
+            telemetry_collector.record_installation_step("dependency_log", "completed")
+    except Exception as e:
+        if telemetry_collector:
+            telemetry_collector.record_installation_step("dependency_log", "failed", {"error": str(e)})
+            telemetry_collector.record_error(e, {"step": "dependency_log"}, "dependency_log")
+        # Don't fail installation for log generation errors
+        print(f"Warning: Error generating dependency log: {e}")
+    
     print_summary(models_downloaded, web_gui_installed)
 
 def main():
     """Main function to run the installer."""
-    args = parse_command_line_args()
+    global TELEMETRY_AVAILABLE
+    start_time = time.time()
+    telemetry_config = None
+    telemetry_collector = None
+    crash_reporter = None
     
-    print_installation_banner(args.no_models)
+    # Initialize telemetry system if available
+    if TELEMETRY_AVAILABLE:
+        try:
+            telemetry_config, telemetry_collector, crash_reporter = create_telemetry_system()
+        except Exception as e:
+            print(f"Warning: Could not initialize telemetry system: {e}")
+            TELEMETRY_AVAILABLE = False
     
-    validate_system_prerequisites(args.no_models)
-    
-    nodejs_available, npm_cmd = check_and_setup_nodejs()
+    try:
+        # Parse command line arguments
+        args = parse_command_line_args()
         
-    confirm_installation()
+        # Handle telemetry disable flag
+        if args.disable_telemetry and telemetry_config:
+            telemetry_config.disable_telemetry()
+            print("Telemetry disabled for this installation.")
+        
+        # Get user consent for telemetry if needed and not disabled
+        if TELEMETRY_AVAILABLE and telemetry_config and not args.disable_telemetry:
+            telemetry_config.get_user_consent()
+        
+        # Record installation start
+        if telemetry_collector:
+            telemetry_collector.record_installation_start({
+                "no_models": args.no_models,
+                "disable_telemetry": args.disable_telemetry
+            })
+        
+        print_installation_banner(args.no_models)
+        
+        ollama_available = validate_system_prerequisites(args.no_models, telemetry_collector)
+        
+        nodejs_available, npm_cmd = check_and_setup_nodejs(telemetry_collector)
+        
+        get_user_confirmation(telemetry_collector)
 
-    install_core_components()
-    
-    models_downloaded = install_models_if_requested(args.no_models)
-    
-    web_gui_installed = install_web_gui_if_available(nodejs_available, npm_cmd)
-    
-    finalize_installation(models_downloaded, web_gui_installed)
+        install_core_components(telemetry_collector)
+        
+        models_downloaded = install_models_if_requested(args.no_models, telemetry_collector)
+        
+        web_gui_installed = install_web_gui_if_available(nodejs_available, npm_cmd, telemetry_collector)
+        
+        # Installation completed successfully
+        duration = time.time() - start_time
+        if telemetry_collector:
+            telemetry_collector.record_installation_complete(True, duration, {
+                "models_downloaded": models_downloaded,
+                "web_gui_installed": web_gui_installed,
+                "ollama_available": ollama_available,
+                "nodejs_available": nodejs_available
+            })
+        
+        finalize_installation(models_downloaded, web_gui_installed, telemetry_collector)
+        
+    except KeyboardInterrupt:
+        # Handle user cancellation
+        if crash_reporter:
+            crash_reporter.report_crash(KeyboardInterrupt("Installation cancelled by user"), {
+                "step": "user_cancellation",
+                "duration": time.time() - start_time
+            })
+        print("\nInstallation cancelled by user.")
+        sys.exit(1)
+    except SystemExit as e:
+        # Handle system exit (from confirm_installation or other places)
+        if e.code != 0 and crash_reporter:
+            crash_reporter.report_crash(e, {
+                "step": "system_exit",
+                "exit_code": e.code,
+                "duration": time.time() - start_time
+            })
+        raise
+    except Exception as e:
+        # Handle unexpected errors
+        duration = time.time() - start_time
+        if crash_reporter:
+            crash_reporter.report_crash(e, {
+                "step": "unexpected_error",
+                "duration": duration
+            })
+        if telemetry_collector:
+            telemetry_collector.record_installation_complete(False, duration, {
+                "error_type": type(e).__name__,
+                "error_message": str(e)
+            })
+        
+        print(f"\nInstallation failed with error: {e}")
+        print("Stack trace:")
+        traceback.print_exc()
+        
+        if telemetry_config and telemetry_config.is_error_reporting_enabled():
+            print("\nError details have been collected for analysis to improve future installations.")
+        
+        sys.exit(1)
 
 if __name__ == "__main__":
     main()

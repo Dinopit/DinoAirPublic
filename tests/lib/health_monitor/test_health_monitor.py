@@ -171,7 +171,7 @@ class TestServiceHealth:
 
 @pytest.fixture
 def mock_process_manager():
-    """Mock SafeProcessManager for testing."""
+    """Mock ProcessManager for testing."""
     mock_pm = Mock()
     mock_pm.start_process.return_value = True
     mock_pm.stop_process.return_value = True

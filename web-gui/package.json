@@ -19,7 +19,16 @@
     "test:e2e": "playwright test",
     "test:e2e:headed": "playwright test --headed",
     "test:e2e:ui": "playwright test --ui",
-    "clean": "rm -rf .next out coverage",
+    "test:visual": "playwright test e2e/visual-regression.spec.ts e2e/responsive-visual.spec.ts",
+    "test:visual:update": "playwright test e2e/visual-regression.spec.ts e2e/responsive-visual.spec.ts --update-snapshots",
+    "test:visual:headed": "playwright test e2e/visual-regression.spec.ts e2e/responsive-visual.spec.ts --headed",
+    "test:visual:ui": "playwright test e2e/visual-regression.spec.ts e2e/responsive-visual.spec.ts --ui",
+    "setup:visual-testing": "scripts/setup-visual-testing.sh",
+    "security:scan": "./scripts/security-scan.sh",
+    "security:scan:deps": "./scripts/security-scan.sh --dependencies",
+    "security:scan:secrets": "./scripts/security-scan.sh --secrets",
+    "security:audit": "npm audit && ./scripts/security-scan.sh --dependencies --secrets",
+    "clean": "rm -rf .next out coverage security-reports",
     "postinstall": "npm run type-check"
   },
   "dependencies": {
@@ -45,11 +54,12 @@
     "swagger-ui-react": "^5.27.0",
     "tailwind-merge": "^2.2.0",
     "tailwindcss-animate": "^1.0.7",
-    "zod": "^4.0.5",
+    "zod": "^4.0.10",
     "zustand": "^4.4.7"
   },
   "devDependencies": {
     "@next/bundle-analyzer": "^15.4.2",
+    "@pact-foundation/pact": "^13.1.0",
     "@playwright/test": "^1.54.1",
     "@tailwindcss/typography": "^0.5.10",
     "@testing-library/jest-dom": "^6.6.3",
