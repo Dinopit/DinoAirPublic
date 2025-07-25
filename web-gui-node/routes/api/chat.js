@@ -9,6 +9,7 @@ const fetch = require('node-fetch');
 const { v4: uuidv4 } = require('uuid');
 const { chatSessions, chatMessages, chatMetrics } = require('../../lib/supabase');
 const { rateLimits, chatValidation, sanitizeInput } = require('../../middleware/validation');
+const { resourceManager } = require('../../lib/resource-manager');
 const router = express.Router();
 
 // In-memory fallback metrics (if Supabase is not available)
@@ -126,6 +127,8 @@ router.post('/', rateLimits.chat, sanitizeInput, chatValidation.chat, async (req
       'Connection': 'keep-alive'
     });
 
+    resourceManager.registerStream(res);
+
     try {
       // Track API response time
       const apiStartTime = Date.now();
@@ -206,6 +209,7 @@ router.post('/', rateLimits.chat, sanitizeInput, chatValidation.chat, async (req
 
       response.body.on('error', (error) => {
         console.error('Streaming error:', error);
+        resourceManager.closeStream(res);
         if (!res.headersSent) {
           res.status(500).json({ error: 'Streaming error occurred' });
         } else {
@@ -214,6 +218,7 @@ router.post('/', rateLimits.chat, sanitizeInput, chatValidation.chat, async (req
       });
 
       response.body.on('end', () => {
+        resourceManager.closeStream(res);
         if (!res.finished) {
           res.end();
         }

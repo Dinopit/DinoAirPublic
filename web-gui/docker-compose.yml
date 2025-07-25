@@ -1,12 +1,14 @@
 version: '3.8'
 
 services:
-  # DinoAir Web GUI Service
+  # DinoAir Web GUI Service - Enhanced multi-stage build
   web-gui:
     build:
       context: .
       dockerfile: Dockerfile
       target: runner
+      cache_from:
+        - dinoair-web-gui:latest
       args:
         NODE_ENV: ${NODE_ENV:-production}
     image: dinoair-web-gui:latest
@@ -58,22 +60,26 @@ services:
       retries: 3
       start_period: 40s
 
-  # ComfyUI Service (backend)
+  # ComfyUI Service (backend) - Optimized multi-stage build
   comfyui:
-    image: python:3.11-slim
+    build:
+      context: ..
+      dockerfile: comfyui.Dockerfile
+      target: runtime
+      cache_from:
+        - dinoair-comfyui:latest
+    image: dinoair-comfyui:latest
     container_name: dinoair-comfyui
-    working_dir: /app
     ports:
       - "8188:8188"
     volumes:
-      - ../:/app
       - ./models:/app/models
-      - ./output:/app/output
+      - ./output:/app/output  
       - ./input:/app/input
       - ./custom_nodes:/app/custom_nodes
     environment:
       - PYTHONPATH=/app
-    command: python main.py --listen 0.0.0.0 --port 8188
+      - PYTHONUNBUFFERED=1
     networks:
       - dinoair-network
     restart: unless-stopped
@@ -83,6 +89,60 @@ services:
       timeout: 10s
       retries: 3
       start_period: 60s
+
+  # DinoAir Web GUI Node.js Backend (Alternative backend)
+  web-gui-node:
+    build:
+      context: ../web-gui-node
+      dockerfile: Dockerfile
+      target: runtime
+      cache_from:
+        - dinoair-web-gui-node:latest
+    image: dinoair-web-gui-node:latest
+    container_name: dinoair-web-gui-node
+    ports:
+      - "3001:3000"  # Different port to avoid conflict
+    environment:
+      - NODE_ENV=${NODE_ENV:-production}
+      - PORT=3000
+      - API_BASE_URL=${API_BASE_URL:-http://comfyui:8188}
+      - CORS_ORIGIN=${CORS_ORIGIN:-*}
+    volumes:
+      - ./uploads:/app/uploads
+    networks:
+      - dinoair-network
+    depends_on:
+      - comfyui
+    restart: unless-stopped
+    healthcheck:
+      test: ["CMD", "curl", "-f", "http://localhost:3000/api/health"]
+      interval: 30s
+      timeout: 10s
+      retries: 3
+      start_period: 30s
+
+  # Main DinoAir Python Application
+  dinoair-main:
+    build:
+      context: ..
+      dockerfile: Dockerfile
+      target: runtime
+      cache_from:
+        - dinoair-main:latest
+    image: dinoair-main:latest
+    container_name: dinoair-main
+    volumes:
+      - ./models:/app/models
+      - ./output:/app/output
+      - ./config:/app/config
+    environment:
+      - PYTHONPATH=/app
+      - PYTHONUNBUFFERED=1
+    networks:
+      - dinoair-network
+    restart: unless-stopped
+    profiles:
+      - standalone  # Only start when 'standalone' profile is used
 
   # Development database (optional, for future use)
   # postgres:

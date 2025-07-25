@@ -9,11 +9,12 @@ import { KeyboardShortcutsModal } from '../ui/keyboard-shortcuts-modal';
 import { OnboardingTutorial } from '../ui/onboarding-tutorial';
 import { SettingsPanel } from '../ui/settings-panel';
 import { ToastProvider, useToast } from '../ui/toast';
-import { Menu, X, Settings, Keyboard, Bug, BarChart3 } from 'lucide-react';
+import { Menu, X, Settings, Keyboard, Bug, BarChart3, Puzzle } from 'lucide-react';
 import { DebugProvider, useDebug } from '../../contexts/debug-context';
 import DebugPanel from '../ui/debug-panel';
+import { PluginManager } from '../plugins';
 
-type Tab = 'chat' | 'artifacts';
+type Tab = 'chat' | 'artifacts' | 'plugins';
 
 const LocalGuiContent = () => {
   const [activeTab, setActiveTab] = useState<Tab>('chat');
@@ -106,6 +107,27 @@ const LocalGuiContent = () => {
       cmd: true,
       description: 'Focus on chat input',
       action: handleFocusChatInput
+    },
+    {
+      key: '1',
+      ctrl: true,
+      cmd: true,
+      description: 'Switch to Chat tab',
+      action: () => setActiveTab('chat')
+    },
+    {
+      key: '2',
+      ctrl: true,
+      cmd: true,
+      description: 'Switch to Artifacts tab',
+      action: () => setActiveTab('artifacts')
+    },
+    {
+      key: '3',
+      ctrl: true,
+      cmd: true,
+      description: 'Switch to Plugins tab',
+      action: () => setActiveTab('plugins')
     },
     {
       key: '/',
@@ -222,6 +244,17 @@ const LocalGuiContent = () => {
             >
               Artifacts
             </button>
+            <button
+              className={`px-6 py-3 font-medium transition-colors flex items-center gap-2 ${
+                activeTab === 'plugins'
+                  ? 'border-b-2 border-primary text-primary'
+                  : 'text-muted-foreground hover:text-foreground'
+              }`}
+              onClick={() => handleTabChange('plugins')}
+            >
+              <Puzzle className="w-4 h-4" />
+              Plugins
+            </button>
           </div>
         </div>
 
@@ -290,6 +323,17 @@ const LocalGuiContent = () => {
           >
             Artifacts
           </button>
+          <button
+            className={`w-full px-6 py-3 text-left font-medium transition-colors flex items-center gap-2 ${
+              activeTab === 'plugins'
+                ? 'bg-muted text-primary'
+                : 'text-muted-foreground hover:bg-muted'
+            }`}
+            onClick={() => handleTabChange('plugins')}
+          >
+            <Puzzle className="w-4 h-4" />
+            Plugins
+          </button>
           <div className="border-t border-border my-1"></div>
           <button
             className="w-full px-6 py-3 text-left font-medium text-muted-foreground hover:bg-muted transition-colors"
@@ -303,7 +347,15 @@ const LocalGuiContent = () => {
 
       {/* Main content */}
       <div className="flex-grow overflow-hidden">
-        {activeTab === 'chat' ? <LocalChatView /> : <LocalArtifactsView />}
+        {activeTab === 'chat' ? (
+          <LocalChatView />
+        ) : activeTab === 'artifacts' ? (
+          <LocalArtifactsView />
+        ) : (
+          <div className="h-full overflow-auto p-6">
+            <PluginManager />
+          </div>
+        )}
       </div>
 
       {/* Keyboard shortcuts modal */}

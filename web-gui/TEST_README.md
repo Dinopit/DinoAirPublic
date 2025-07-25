@@ -20,6 +20,7 @@ The DinoAir web GUI uses a comprehensive testing strategy with three levels of t
 - **Unit Tests**: Test individual components and hooks in isolation
 - **Integration Tests**: Test API routes and service interactions
 - **E2E Tests**: Test complete user workflows in a real browser
+- **Visual Regression Tests**: Test UI appearance and prevent visual bugs
 
 ### Testing Stack
 
@@ -107,6 +108,9 @@ npm run test:e2e -- --project=chromium
 ```bash
 # Run unit tests followed by E2E tests
 npm test && npm run test:e2e
+
+# Run all tests including visual regression
+npm test && npm run test:e2e && npm run test:visual
 ```
 
 ## Test Categories
@@ -144,6 +148,8 @@ Located in `e2e/`
 - **app-load.spec.ts**: Tests application loading and basic UI
 - **model-personality-selection.spec.ts**: Tests AI configuration
 - **chat-interaction.spec.ts**: Tests chat functionality
+- **visual-regression.spec.ts**: Tests UI visual appearance
+- **responsive-visual.spec.ts**: Tests responsive design breakpoints
 
 ## Writing Tests
 
@@ -292,4 +298,6 @@ When adding new features:
 - [Jest Documentation](https://jestjs.io/docs/getting-started)
 - [React Testing Library](https://testing-library.com/docs/react-testing-library/intro/)
 - [Playwright Documentation](https://playwright.dev/docs/intro)
+- [Visual Testing with Playwright](https://playwright.dev/docs/test-screenshots)
 - [Testing Best Practices](https://testingjavascript.com/)
+- [Visual Testing Guide](./docs/VISUAL_TESTING.md)

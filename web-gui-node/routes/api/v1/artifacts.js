@@ -6,6 +6,8 @@
 const express = require('express');
 const multer = require('multer');
 const JSZip = require('jszip');
+const { LRUCache } = require('lru-cache');
+const { resourceManager } = require('../../../lib/resource-manager');
 const router = express.Router();
 
 // Configure multer for file uploads
@@ -37,7 +39,17 @@ const MAX_ARTIFACTS = 1000;
 const MAX_TOTAL_SIZE = 100 * 1024 * 1024; // 100MB
 const CLEANUP_INTERVAL = 5 * 60 * 1000; // 5 minutes
 
-// In-memory artifact storage (in production, use database)
+// In-memory artifact storage with LRU cache (in production, use database)
+const artifactsCache = new LRUCache({
+  max: 1000,
+  ttl: 1000 * 60 * 60 * 24, // 24 hours
+  updateAgeOnGet: true,
+  updateAgeOnHas: true,
+  dispose: (value, key) => {
+    console.log(`Artifact ${key} disposed from cache`);
+  }
+});
+
 let artifacts = [
   {
     id: '1',
@@ -176,17 +188,9 @@ function getStorageStats() {
   };
 }
 
-const cleanupTimer = setInterval(cleanupArtifacts, CLEANUP_INTERVAL);
-
-process.on('SIGINT', () => {
-  clearInterval(cleanupTimer);
-  console.log('Artifact cleanup timer stopped');
-});
-
-process.on('SIGTERM', () => {
-  clearInterval(cleanupTimer);
-  console.log('Artifact cleanup timer stopped');
-});
+const cleanupTimer = resourceManager.registerInterval(
+  setInterval(cleanupArtifacts, CLEANUP_INTERVAL)
+);
 
 // GET /api/v1/artifacts - Get all artifacts
 router.get('/', (req, res) => {
