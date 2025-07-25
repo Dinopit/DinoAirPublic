@@ -12,6 +12,9 @@ const helmet = require('helmet');
 const compression = require('compression');
 require('dotenv').config();
 
+const { resourceManager } = require('./lib/resource-manager');
+const { memoryMonitor } = require('./lib/memory-monitor');
+
 // Import route modules
 const apiRoutes = require('./routes/api');
 const pageRoutes = require('./routes/pages');
@@ -62,6 +65,7 @@ app.use((req, res, next) => {
 
 // Routes
 app.use('/api', apiRoutes);
+app.use('/api/system', require('./routes/api/system'));
 app.use('/', pageRoutes);
 
 // Socket.io connection handling
@@ -134,6 +138,19 @@ server.listen(PORT, () => {
   console.log(`DinoAir Web GUI Server running on port ${PORT}`);
   console.log(`Environment: ${NODE_ENV}`);
   console.log(`Access the application at: http://localhost:${PORT}`);
+  
+  memoryMonitor.start();
+  console.log('🧠 Memory monitoring enabled');
+});
+
+// Register server for graceful shutdown
+resourceManager.registerResource('server', server, (server) => {
+  return new Promise((resolve) => {
+    server.close(() => {
+      console.log('HTTP server closed');
+      resolve();
+    });
+  });
 });
 
 module.exports = { app, server, io };
