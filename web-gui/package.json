@@ -19,9 +19,13 @@
     "test:e2e": "playwright test",
     "test:e2e:headed": "playwright test --headed",
     "test:e2e:ui": "playwright test --ui",
-    "test:contracts:consumer": "jest --config jest.contracts.config.js",
-    "contracts:publish": "npx pact-broker publish ../contracts/pacts --consumer-app-version=${npm_package_version} --broker-base-url=${PACT_BROKER_BASE_URL:-http://localhost:9292} --broker-username=${PACT_BROKER_USERNAME:-pact_broker} --broker-password=${PACT_BROKER_PASSWORD:-pact_broker}",
-    "clean": "rm -rf .next out coverage",
+
+    "security:scan": "./scripts/security-scan.sh",
+    "security:scan:deps": "./scripts/security-scan.sh --dependencies",
+    "security:scan:secrets": "./scripts/security-scan.sh --secrets",
+    "security:audit": "npm audit && ./scripts/security-scan.sh --dependencies --secrets",
+    "clean": "rm -rf .next out coverage security-reports",
+   
     "postinstall": "npm run type-check"
   },
   "dependencies": {
