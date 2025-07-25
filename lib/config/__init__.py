@@ -22,7 +22,22 @@ from .config_validator import (
     CONFIG_TEMPLATE
 )
 
+from .config_export_import import (
+    ConfigExportImportManager,
+    ExportFormat,
+    ConfigSection,
+    ConfigVersionInfo,
+    ConfigExportError,
+    ConfigImportError,
+    ConfigBackupError,
+    export_config,
+    import_config,
+    backup_config,
+    validate_config_file
+)
+
 __all__ = [
+    # Core config classes
     'ConfigError',
     'ConfigValueType',
     'ConfigField',
@@ -38,8 +53,21 @@ __all__ = [
     'LoggingConfig',
     'MonitoringConfig',
     'load_config',
-    'CONFIG_TEMPLATE'
+    'CONFIG_TEMPLATE',
+    
+    # Export/Import functionality
+    'ConfigExportImportManager',
+    'ExportFormat',
+    'ConfigSection',
+    'ConfigVersionInfo',
+    'ConfigExportError',
+    'ConfigImportError',
+    'ConfigBackupError',
+    'export_config',
+    'import_config',
+    'backup_config',
+    'validate_config_file'
 ]
 
 # Module version
-__version__ = '1.0.0'
+__version__ = '1.1.0'
