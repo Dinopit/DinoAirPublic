@@ -1,4 +1,4 @@
-import React, { useEffect, useRef, useState, useCallback } from 'react';
+import React, { useEffect, useRef, useState, useCallback, ComponentType } from 'react';
 import { apiClient } from '@/lib/api/enhanced-client';
 import { requestDeduplication } from '@/lib/api/request-deduplication';
 
