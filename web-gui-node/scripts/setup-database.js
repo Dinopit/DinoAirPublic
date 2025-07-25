@@ -55,6 +55,27 @@ const createTablesSQL = {
       metadata JSONB DEFAULT '{}'::jsonb,
       CONSTRAINT chat_metrics_model_check CHECK (char_length(model) > 0)
     );
+  `,
+
+  // Artifacts Table (independent table for artifact storage)
+  artifacts: `
+    CREATE TABLE IF NOT EXISTS artifacts (
+      id UUID PRIMARY KEY DEFAULT gen_random_uuid(),
+      name TEXT NOT NULL,
+      type TEXT NOT NULL,
+      content TEXT NOT NULL,
+      size INTEGER NOT NULL CHECK (size >= 0),
+      user_id TEXT,
+      version INTEGER NOT NULL DEFAULT 1 CHECK (version > 0),
+      parent_id UUID,
+      tags TEXT[] DEFAULT '{}',
+      metadata JSONB DEFAULT '{}'::jsonb,
+      created_at TIMESTAMPTZ DEFAULT NOW(),
+      updated_at TIMESTAMPTZ DEFAULT NOW(),
+      CONSTRAINT artifacts_name_check CHECK (char_length(name) > 0),
+      CONSTRAINT artifacts_type_check CHECK (char_length(type) > 0),
+      CONSTRAINT artifacts_content_check CHECK (char_length(content) > 0)
+    );
   `
 };
 
@@ -80,6 +101,17 @@ const createIndexesSQL = {
     CREATE INDEX IF NOT EXISTS idx_chat_metrics_session_id ON chat_metrics(session_id);
     CREATE INDEX IF NOT EXISTS idx_chat_metrics_created_at ON chat_metrics(created_at);
     CREATE INDEX IF NOT EXISTS idx_chat_metrics_model ON chat_metrics(model);
+  `,
+  artifacts: `
+    CREATE INDEX IF NOT EXISTS idx_artifacts_user_id ON artifacts(user_id);
+    CREATE INDEX IF NOT EXISTS idx_artifacts_created_at ON artifacts(created_at);
+    CREATE INDEX IF NOT EXISTS idx_artifacts_updated_at ON artifacts(updated_at);
+    CREATE INDEX IF NOT EXISTS idx_artifacts_type ON artifacts(type);
+    CREATE INDEX IF NOT EXISTS idx_artifacts_name ON artifacts(name);
+    CREATE INDEX IF NOT EXISTS idx_artifacts_parent_id ON artifacts(parent_id);
+    CREATE INDEX IF NOT EXISTS idx_artifacts_version ON artifacts(version);
+    CREATE INDEX IF NOT EXISTS idx_artifacts_tags ON artifacts USING GIN(tags);
+    CREATE INDEX IF NOT EXISTS idx_artifacts_metadata ON artifacts USING GIN(metadata);
   `
 };
 
@@ -96,6 +128,11 @@ const createConstraintsSQL = {
     ALTER TABLE chat_metrics 
     ADD CONSTRAINT IF NOT EXISTS fk_chat_metrics_session_id 
     FOREIGN KEY (session_id) REFERENCES chat_sessions(id) ON DELETE CASCADE;
+  `,
+  artifacts: `
+    ALTER TABLE artifacts 
+    ADD CONSTRAINT IF NOT EXISTS fk_artifacts_parent_id 
+    FOREIGN KEY (parent_id) REFERENCES artifacts(id) ON DELETE SET NULL;
   `
 };
 
@@ -169,6 +206,32 @@ const createRLSPolicies = {
     -- Policy: Service role can access all metrics
     CREATE POLICY IF NOT EXISTS "Service role can access all metrics" ON chat_metrics
       FOR ALL USING (auth.role() = 'service_role');
+  `,
+
+  artifacts: `
+    -- Enable RLS
+    ALTER TABLE artifacts ENABLE ROW LEVEL SECURITY;
+    
+    -- Policy: Users can access their own artifacts
+    CREATE POLICY IF NOT EXISTS "Users can access own artifacts" ON artifacts
+      FOR ALL USING (
+        user_id IS NULL OR user_id = auth.uid()::text
+      );
+    
+    -- Policy: Anonymous users can access public artifacts (where user_id is NULL)
+    CREATE POLICY IF NOT EXISTS "Anonymous can access public artifacts" ON artifacts
+      FOR SELECT USING (user_id IS NULL);
+    
+    -- Policy: Authenticated users can create artifacts
+    CREATE POLICY IF NOT EXISTS "Authenticated users can create artifacts" ON artifacts
+      FOR INSERT WITH CHECK (
+        auth.role() = 'authenticated' AND 
+        (user_id IS NULL OR user_id = auth.uid()::text)
+      );
+    
+    -- Policy: Service role can access all artifacts
+    CREATE POLICY IF NOT EXISTS "Service role can access all artifacts" ON artifacts
+      FOR ALL USING (auth.role() = 'service_role');
   `
 };
 
@@ -231,6 +294,7 @@ async function createTables() {
     await executeSQLStatement(createTablesSQL.chat_sessions, 'Create chat_sessions table');
     await executeSQLStatement(createTablesSQL.chat_messages, 'Create chat_messages table');
     await executeSQLStatement(createTablesSQL.chat_metrics, 'Create chat_metrics table');
+    await executeSQLStatement(createTablesSQL.artifacts, 'Create artifacts table');
 
     // Step 2: Create indexes for better performance
     console.log('\n🔧 Creating indexes...\n');
@@ -238,11 +302,13 @@ async function createTables() {
     await executeSQLStatement(createIndexesSQL.chat_sessions, 'Create indexes for chat_sessions');
     await executeSQLStatement(createIndexesSQL.chat_messages, 'Create indexes for chat_messages');
     await executeSQLStatement(createIndexesSQL.chat_metrics, 'Create indexes for chat_metrics');
+    await executeSQLStatement(createIndexesSQL.artifacts, 'Create indexes for artifacts');
 
     // Step 3: Add foreign key constraints
     console.log('\n🔧 Adding foreign key constraints...\n');
     await executeSQLStatement(createConstraintsSQL.chat_messages, 'Add foreign key constraint for chat_messages');
     await executeSQLStatement(createConstraintsSQL.chat_metrics, 'Add foreign key constraint for chat_metrics');
+    await executeSQLStatement(createConstraintsSQL.artifacts, 'Add foreign key constraint for artifacts');
 
     console.log('\n✅ All tables, indexes, and constraints created successfully!');
   } catch (error) {
@@ -258,9 +324,11 @@ async function setupRLS() {
   console.log('\n🔒 Setting up Row Level Security policies...\n');
 
   try {
+    await executeSQLStatement(createRLSPolicies.DinoAI, 'Setup RLS for DinoAI');
     await executeSQLStatement(createRLSPolicies.chat_sessions, 'Setup RLS for chat_sessions');
     await executeSQLStatement(createRLSPolicies.chat_messages, 'Setup RLS for chat_messages');
     await executeSQLStatement(createRLSPolicies.chat_metrics, 'Setup RLS for chat_metrics');
+    await executeSQLStatement(createRLSPolicies.artifacts, 'Setup RLS for artifacts');
 
     console.log('\n✅ Row Level Security policies configured successfully!');
   } catch (error) {
@@ -275,7 +343,7 @@ async function setupRLS() {
 async function verifyTables() {
   console.log('\n🔍 Verifying table creation...\n');
 
-  const tables = ['DinoAI', 'chat_sessions', 'chat_messages', 'chat_metrics'];
+  const tables = ['DinoAI', 'chat_sessions', 'chat_messages', 'chat_metrics', 'artifacts'];
   
   for (const table of tables) {
     try {

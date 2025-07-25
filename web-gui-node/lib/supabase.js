@@ -352,6 +352,276 @@ const chatMetrics = {
   }
 };
 
+/**
+ * Artifacts Operations
+ */
+const artifacts = {
+  /**
+   * Create a new artifact
+   * @param {Object} artifactData - Artifact data
+   * @param {string} artifactData.name - Artifact name
+   * @param {string} artifactData.type - Artifact type
+   * @param {string} artifactData.content - Artifact content
+   * @param {string} [artifactData.user_id] - User ID (optional for public artifacts)
+   * @param {string[]} [artifactData.tags] - Tags array
+   * @param {Object} [artifactData.metadata] - Additional metadata
+   * @returns {Promise<Object>} Created artifact data
+   */
+  async create(artifactData) {
+    const size = Buffer.byteLength(artifactData.content, 'utf8');
+    
+    const { data, error } = await supabase
+      .from('artifacts')
+      .insert({
+        name: artifactData.name,
+        type: artifactData.type,
+        content: artifactData.content,
+        size: size,
+        user_id: artifactData.user_id || null,
+        tags: artifactData.tags || [],
+        metadata: artifactData.metadata || {},
+        created_at: new Date().toISOString(),
+        updated_at: new Date().toISOString()
+      })
+      .select()
+      .single();
+
+    if (error) {
+      throw new Error(`Failed to create artifact: ${error.message}`);
+    }
+
+    return data;
+  },
+
+  /**
+   * Get artifact by ID
+   * @param {string} id - Artifact ID
+   * @returns {Promise<Object|null>} Artifact data or null if not found
+   */
+  async getById(id) {
+    const { data, error } = await supabase
+      .from('artifacts')
+      .select('*')
+      .eq('id', id)
+      .single();
+
+    if (error) {
+      if (error.code === 'PGRST116') {
+        return null; // Not found
+      }
+      throw new Error(`Failed to get artifact: ${error.message}`);
+    }
+
+    return data;
+  },
+
+  /**
+   * Get all artifacts with optional filtering
+   * @param {Object} options - Query options
+   * @param {string} [options.user_id] - Filter by user ID
+   * @param {string} [options.type] - Filter by type
+   * @param {string[]} [options.tags] - Filter by tags
+   * @param {number} [options.limit] - Limit results
+   * @param {number} [options.offset] - Offset for pagination
+   * @param {string} [options.search] - Search in name and content
+   * @returns {Promise<Array>} Array of artifacts
+   */
+  async getAll(options = {}) {
+    let query = supabase
+      .from('artifacts')
+      .select('*');
+
+    // Apply filters
+    if (options.user_id !== undefined) {
+      if (options.user_id === null) {
+        query = query.is('user_id', null);
+      } else {
+        query = query.eq('user_id', options.user_id);
+      }
+    }
+
+    if (options.type) {
+      query = query.eq('type', options.type);
+    }
+
+    if (options.tags && options.tags.length > 0) {
+      query = query.overlaps('tags', options.tags);
+    }
+
+    if (options.search) {
+      query = query.or(`name.ilike.%${options.search}%,content.ilike.%${options.search}%`);
+    }
+
+    // Apply ordering
+    query = query.order('updated_at', { ascending: false });
+
+    // Apply pagination
+    if (options.limit) {
+      query = query.limit(options.limit);
+    }
+
+    if (options.offset) {
+      query = query.range(options.offset, options.offset + (options.limit || 50) - 1);
+    }
+
+    const { data, error } = await query;
+
+    if (error) {
+      throw new Error(`Failed to get artifacts: ${error.message}`);
+    }
+
+    return data || [];
+  },
+
+  /**
+   * Update an artifact
+   * @param {string} id - Artifact ID
+   * @param {Object} updates - Updates to apply
+   * @returns {Promise<Object>} Updated artifact data
+   */
+  async update(id, updates) {
+    const updateData = {
+      ...updates,
+      updated_at: new Date().toISOString()
+    };
+
+    // Recalculate size if content is updated
+    if (updates.content) {
+      updateData.size = Buffer.byteLength(updates.content, 'utf8');
+    }
+
+    const { data, error } = await supabase
+      .from('artifacts')
+      .update(updateData)
+      .eq('id', id)
+      .select()
+      .single();
+
+    if (error) {
+      throw new Error(`Failed to update artifact: ${error.message}`);
+    }
+
+    return data;
+  },
+
+  /**
+   * Create a new version of an artifact
+   * @param {string} parentId - Parent artifact ID
+   * @param {Object} artifactData - New version data
+   * @returns {Promise<Object>} Created artifact version
+   */
+  async createVersion(parentId, artifactData) {
+    // Get parent artifact to inherit properties
+    const parent = await this.getById(parentId);
+    if (!parent) {
+      throw new Error('Parent artifact not found');
+    }
+
+    const size = Buffer.byteLength(artifactData.content, 'utf8');
+    const newVersion = parent.version + 1;
+
+    const { data, error } = await supabase
+      .from('artifacts')
+      .insert({
+        name: artifactData.name || parent.name,
+        type: artifactData.type || parent.type,
+        content: artifactData.content,
+        size: size,
+        user_id: parent.user_id,
+        version: newVersion,
+        parent_id: parentId,
+        tags: artifactData.tags || parent.tags,
+        metadata: { ...parent.metadata, ...artifactData.metadata },
+        created_at: new Date().toISOString(),
+        updated_at: new Date().toISOString()
+      })
+      .select()
+      .single();
+
+    if (error) {
+      throw new Error(`Failed to create artifact version: ${error.message}`);
+    }
+
+    return data;
+  },
+
+  /**
+   * Get all versions of an artifact
+   * @param {string} artifactId - Artifact ID (can be any version)
+   * @returns {Promise<Array>} Array of artifact versions
+   */
+  async getVersions(artifactId) {
+    // First, get the artifact to determine if it's a parent or child
+    const artifact = await this.getById(artifactId);
+    if (!artifact) {
+      throw new Error('Artifact not found');
+    }
+
+    // Find the root parent
+    const rootId = artifact.parent_id || artifactId;
+
+    // Get all versions (root + all children)
+    const { data, error } = await supabase
+      .from('artifacts')
+      .select('*')
+      .or(`id.eq.${rootId},parent_id.eq.${rootId}`)
+      .order('version', { ascending: true });
+
+    if (error) {
+      throw new Error(`Failed to get artifact versions: ${error.message}`);
+    }
+
+    return data || [];
+  },
+
+  /**
+   * Delete an artifact
+   * @param {string} id - Artifact ID
+   * @returns {Promise<boolean>} True if successful
+   */
+  async delete(id) {
+    const { error } = await supabase
+      .from('artifacts')
+      .delete()
+      .eq('id', id);
+
+    if (error) {
+      throw new Error(`Failed to delete artifact: ${error.message}`);
+    }
+
+    return true;
+  },
+
+  /**
+   * Get artifacts count and total size for a user
+   * @param {string} [userId] - User ID (null for public artifacts)
+   * @returns {Promise<Object>} Count and size statistics
+   */
+  async getStats(userId = null) {
+    let query = supabase
+      .from('artifacts')
+      .select('size');
+
+    if (userId === null) {
+      query = query.is('user_id', null);
+    } else {
+      query = query.eq('user_id', userId);
+    }
+
+    const { data, error } = await query;
+
+    if (error) {
+      throw new Error(`Failed to get artifact stats: ${error.message}`);
+    }
+
+    const artifacts = data || [];
+    const count = artifacts.length;
+    const totalSize = artifacts.reduce((sum, artifact) => sum + artifact.size, 0);
+
+    return { count, totalSize };
+  }
+};
+
 module.exports = {
   supabase,
   supabaseAdmin,
@@ -359,5 +629,6 @@ module.exports = {
   initializeTables,
   chatSessions,
   chatMessages,
-  chatMetrics
+  chatMetrics,
+  artifacts
 };

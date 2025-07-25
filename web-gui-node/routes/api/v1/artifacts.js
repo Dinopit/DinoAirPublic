@@ -6,7 +6,7 @@
 const express = require('express');
 const multer = require('multer');
 const JSZip = require('jszip');
-const { LRUCache } = require('lru-cache');
+const { artifacts } = require('../../../lib/supabase');
 const { resourceManager } = require('../../../lib/resource-manager');
 const router = express.Router();
 
@@ -35,255 +35,132 @@ const upload = multer({
   }
 });
 
+// Configuration constants
 const MAX_ARTIFACTS = 1000;
 const MAX_TOTAL_SIZE = 100 * 1024 * 1024; // 100MB
-const CLEANUP_INTERVAL = 5 * 60 * 1000; // 5 minutes
-
-// In-memory artifact storage with LRU cache (in production, use database)
-const artifactsCache = new LRUCache({
-  max: 1000,
-  ttl: 1000 * 60 * 60 * 24, // 24 hours
-  updateAgeOnGet: true,
-  updateAgeOnHas: true,
-  dispose: (value, key) => {
-    console.log(`Artifact ${key} disposed from cache`);
-  }
-});
-
-let artifacts = [
-  {
-    id: '1',
-    name: 'Sample React Component',
-    type: 'javascript',
-    content: `import React from 'react';
-
-const SampleComponent = ({ title, children }) => {
-  return (
-    <div className="sample-component">
-      <h2>{title}</h2>
-      <div className="content">
-        {children}
-      </div>
-    </div>
-  );
-};
-
-export default SampleComponent;`,
-    createdAt: new Date('2025-01-20T10:00:00Z'),
-    updatedAt: new Date('2025-01-20T10:00:00Z'),
-    size: 245,
-    tags: ['react', 'component', 'sample'],
-    metadata: {
-      language: 'javascript',
-      framework: 'react',
-      author: 'DinoAir AI'
-    }
-  },
-  {
-    id: '2',
-    name: 'Python Data Analysis Script',
-    type: 'python',
-    content: `import pandas as pd
-import numpy as np
-import matplotlib.pyplot as plt
-
-def analyze_data(file_path):
-    """
-    Analyze data from CSV file and generate insights
-    """
-    # Load data
-    df = pd.read_csv(file_path)
-    
-    # Basic statistics
-    stats = df.describe()
-    
-    # Generate visualization
-    plt.figure(figsize=(10, 6))
-    df.hist(bins=20, alpha=0.7)
-    plt.title('Data Distribution')
-    plt.tight_layout()
-    plt.show()
-    
-    return stats
-
-if __name__ == "__main__":
-    results = analyze_data("data.csv")
-    print(results)`,
-    createdAt: new Date('2025-01-19T15:30:00Z'),
-    updatedAt: new Date('2025-01-19T15:30:00Z'),
-    size: 512,
-    tags: ['python', 'data-analysis', 'pandas'],
-    metadata: {
-      language: 'python',
-      libraries: ['pandas', 'numpy', 'matplotlib'],
-      author: 'DinoAir AI'
-    }
-  }
-];
-
-let nextId = 3;
 
 /**
- * Cleanup artifacts to prevent memory exhaustion
- * Implements LRU eviction policy based on creation time and size
+ * Get current storage statistics from database
  */
-function cleanupArtifacts() {
-  const startTime = Date.now();
-  let cleaned = false;
-
-  if (artifacts.length > MAX_ARTIFACTS) {
-    console.log(`Artifact count (${artifacts.length}) exceeds limit (${MAX_ARTIFACTS}). Cleaning up...`);
-    
-    artifacts.sort((a, b) => new Date(a.createdAt) - new Date(b.createdAt));
-    const toRemove = artifacts.length - MAX_ARTIFACTS;
-    artifacts = artifacts.slice(toRemove);
-    
-    console.log(`Removed ${toRemove} oldest artifacts. Current count: ${artifacts.length}`);
-    cleaned = true;
-  }
-
-  const totalSize = artifacts.reduce((sum, artifact) => sum + artifact.size, 0);
-  if (totalSize > MAX_TOTAL_SIZE) {
-    console.log(`Total size (${Math.round(totalSize / 1024 / 1024)}MB) exceeds limit (${Math.round(MAX_TOTAL_SIZE / 1024 / 1024)}MB). Cleaning up...`);
-    
-    artifacts.sort((a, b) => b.size - a.size);
-    
-    let currentSize = 0;
-    const filteredArtifacts = [];
-    
-    for (const artifact of artifacts) {
-      if (currentSize + artifact.size <= MAX_TOTAL_SIZE) {
-        filteredArtifacts.push(artifact);
-        currentSize += artifact.size;
+async function getStorageStats(userId = null) {
+  try {
+    const stats = await artifacts.getStats(userId);
+    return {
+      count: stats.count,
+      maxCount: MAX_ARTIFACTS,
+      totalSize: stats.totalSize,
+      maxSize: MAX_TOTAL_SIZE,
+      utilizationPercent: {
+        count: Math.round((stats.count / MAX_ARTIFACTS) * 100),
+        size: Math.round((stats.totalSize / MAX_TOTAL_SIZE) * 100)
       }
-    }
-    
-    const removedCount = artifacts.length - filteredArtifacts.length;
-    artifacts = filteredArtifacts;
-    
-    console.log(`Removed ${removedCount} largest artifacts. Current size: ${Math.round(currentSize / 1024 / 1024)}MB`);
-    cleaned = true;
-  }
-
-  if (cleaned) {
-    const duration = Date.now() - startTime;
-    console.log(`Artifact cleanup completed in ${duration}ms. Current stats: ${artifacts.length} artifacts, ${Math.round(totalSize / 1024 / 1024)}MB`);
+    };
+  } catch (error) {
+    console.error('Error getting storage stats:', error);
+    return {
+      count: 0,
+      maxCount: MAX_ARTIFACTS,
+      totalSize: 0,
+      maxSize: MAX_TOTAL_SIZE,
+      utilizationPercent: { count: 0, size: 0 }
+    };
   }
 }
-
-/**
- * Get current storage statistics
- */
-function getStorageStats() {
-  const totalSize = artifacts.reduce((sum, artifact) => sum + artifact.size, 0);
-  return {
-    count: artifacts.length,
-    maxCount: MAX_ARTIFACTS,
-    totalSize,
-    maxSize: MAX_TOTAL_SIZE,
-    utilizationPercent: {
-      count: Math.round((artifacts.length / MAX_ARTIFACTS) * 100),
-      size: Math.round((totalSize / MAX_TOTAL_SIZE) * 100)
-    }
-  };
-}
-
-const cleanupTimer = resourceManager.registerInterval(
-  setInterval(cleanupArtifacts, CLEANUP_INTERVAL)
-);
 
 // GET /api/v1/artifacts - Get all artifacts
-router.get('/', (req, res) => {
-  const { 
-    page = 1, 
-    limit = 10, 
-    type, 
-    search, 
-    sortBy = 'createdAt', 
-    sortOrder = 'desc' 
-  } = req.query;
+router.get('/', async (req, res) => {
+  try {
+    const { 
+      page = 1, 
+      limit = 10, 
+      type, 
+      search, 
+      tags,
+      user_id
+    } = req.query;
 
-  let filteredArtifacts = [...artifacts];
-
-  // Filter by type
-  if (type) {
-    filteredArtifacts = filteredArtifacts.filter(artifact => 
-      artifact.type.toLowerCase() === type.toLowerCase()
-    );
-  }
-
-  // Search in name and content
-  if (search) {
-    const searchLower = search.toLowerCase();
-    filteredArtifacts = filteredArtifacts.filter(artifact =>
-      artifact.name.toLowerCase().includes(searchLower) ||
-      artifact.content.toLowerCase().includes(searchLower) ||
-      artifact.tags.some(tag => tag.toLowerCase().includes(searchLower))
-    );
-  }
-
-  // Sort artifacts
-  filteredArtifacts.sort((a, b) => {
-    let aValue = a[sortBy];
-    let bValue = b[sortBy];
-    
-    if (sortBy === 'createdAt' || sortBy === 'updatedAt') {
-      aValue = new Date(aValue);
-      bValue = new Date(bValue);
-    }
-    
-    if (sortOrder === 'desc') {
-      return bValue > aValue ? 1 : -1;
-    } else {
-      return aValue > bValue ? 1 : -1;
-    }
-  });
-
-  // Pagination
-  const startIndex = (page - 1) * limit;
-  const endIndex = startIndex + parseInt(limit);
-  const paginatedArtifacts = filteredArtifacts.slice(startIndex, endIndex);
-
-  res.json({
-    success: true,
-    artifacts: paginatedArtifacts,
-    pagination: {
-      page: parseInt(page),
+    const offset = (page - 1) * limit;
+    const options = {
       limit: parseInt(limit),
-      total: filteredArtifacts.length,
-      pages: Math.ceil(filteredArtifacts.length / limit)
-    },
-    filters: {
+      offset: offset,
       type,
       search,
-      sortBy,
-      sortOrder
+      user_id
+    };
+
+    // Parse tags if provided
+    if (tags) {
+      options.tags = Array.isArray(tags) ? tags : tags.split(',');
     }
-  });
+
+    // Get artifacts from database
+    const artifactsList = await artifacts.getAll(options);
+    
+    // Get total count for pagination (simplified - in production, use a separate count query)
+    const allArtifacts = await artifacts.getAll({ user_id });
+    const total = allArtifacts.length;
+
+    // Get storage stats
+    const stats = await getStorageStats(user_id);
+
+    res.json({
+      success: true,
+      artifacts: artifactsList,
+      pagination: {
+        page: parseInt(page),
+        limit: parseInt(limit),
+        total: total,
+        pages: Math.ceil(total / limit)
+      },
+      filters: {
+        type,
+        search,
+        tags,
+        user_id
+      },
+      stats
+    });
+  } catch (error) {
+    console.error('Error getting artifacts:', error);
+    res.status(500).json({
+      success: false,
+      error: 'Failed to retrieve artifacts',
+      message: error.message
+    });
+  }
 });
 
 // GET /api/v1/artifacts/:id - Get specific artifact
-router.get('/:id', (req, res) => {
-  const { id } = req.params;
-  const artifact = artifacts.find(a => a.id === id);
+router.get('/:id', async (req, res) => {
+  try {
+    const { id } = req.params;
+    const artifact = await artifacts.getById(id);
 
-  if (!artifact) {
-    return res.status(404).json({
+    if (!artifact) {
+      return res.status(404).json({
+        success: false,
+        error: 'Artifact not found'
+      });
+    }
+
+    res.json({
+      success: true,
+      artifact
+    });
+  } catch (error) {
+    console.error('Error getting artifact:', error);
+    res.status(500).json({
       success: false,
-      error: 'Artifact not found'
+      error: 'Failed to retrieve artifact',
+      message: error.message
     });
   }
-
-  res.json({
-    success: true,
-    artifact
-  });
 });
 
 // POST /api/v1/artifacts - Create new artifact
-router.post('/', (req, res) => {
+router.post('/', async (req, res) => {
   try {
-    const { name, type, content, tags = [], metadata = {} } = req.body;
+    const { name, type, content, tags = [], metadata = {}, user_id } = req.body;
 
     if (!name || !type || !content) {
       return res.status(400).json({
@@ -292,8 +169,8 @@ router.post('/', (req, res) => {
       });
     }
 
-    const artifactSize = content.length;
-    const currentStats = getStorageStats();
+    const artifactSize = Buffer.byteLength(content, 'utf8');
+    const currentStats = await getStorageStats(user_id);
     
     if (currentStats.count >= MAX_ARTIFACTS) {
       return res.status(413).json({
@@ -320,35 +197,29 @@ router.post('/', (req, res) => {
       });
     }
 
-    const newArtifact = {
-      id: nextId.toString(),
+    // Create artifact in database
+    const newArtifact = await artifacts.create({
       name,
       type,
       content,
-      createdAt: new Date(),
-      updatedAt: new Date(),
-      size: artifactSize,
+      user_id: user_id || null,
       tags: Array.isArray(tags) ? tags : [],
       metadata: {
         author: 'User',
         ...metadata
       }
-    };
+    });
 
-    artifacts.push(newArtifact);
-    nextId++;
-
-    if (currentStats.utilizationPercent.count > 80 || currentStats.utilizationPercent.size > 80) {
-      console.log('Storage utilization high, triggering cleanup...');
-      setImmediate(cleanupArtifacts);
-    }
+    // Get updated storage stats
+    const updatedStats = await getStorageStats(user_id);
 
     res.status(201).json({
       success: true,
       artifact: newArtifact,
-      storageStats: getStorageStats()
+      storageStats: updatedStats
     });
   } catch (error) {
+    console.error('Error creating artifact:', error);
     res.status(500).json({
       success: false,
       error: 'Failed to create artifact',
@@ -358,38 +229,37 @@ router.post('/', (req, res) => {
 });
 
 // PUT /api/v1/artifacts/:id - Update artifact
-router.put('/:id', (req, res) => {
+router.put('/:id', async (req, res) => {
   try {
     const { id } = req.params;
     const { name, type, content, tags, metadata } = req.body;
 
-    const artifactIndex = artifacts.findIndex(a => a.id === id);
-    if (artifactIndex === -1) {
+    // Check if artifact exists
+    const existingArtifact = await artifacts.getById(id);
+    if (!existingArtifact) {
       return res.status(404).json({
         success: false,
         error: 'Artifact not found'
       });
     }
 
-    const artifact = artifacts[artifactIndex];
-    
-    // Update fields
-    if (name !== undefined) artifact.name = name;
-    if (type !== undefined) artifact.type = type;
-    if (content !== undefined) {
-      artifact.content = content;
-      artifact.size = content.length;
-    }
-    if (tags !== undefined) artifact.tags = Array.isArray(tags) ? tags : [];
-    if (metadata !== undefined) artifact.metadata = { ...artifact.metadata, ...metadata };
-    
-    artifact.updatedAt = new Date();
+    // Prepare update data
+    const updates = {};
+    if (name !== undefined) updates.name = name;
+    if (type !== undefined) updates.type = type;
+    if (content !== undefined) updates.content = content;
+    if (tags !== undefined) updates.tags = Array.isArray(tags) ? tags : [];
+    if (metadata !== undefined) updates.metadata = { ...existingArtifact.metadata, ...metadata };
+
+    // Update artifact in database
+    const updatedArtifact = await artifacts.update(id, updates);
 
     res.json({
       success: true,
-      artifact
+      artifact: updatedArtifact
     });
   } catch (error) {
+    console.error('Error updating artifact:', error);
     res.status(500).json({
       success: false,
       error: 'Failed to update artifact',
@@ -399,28 +269,111 @@ router.put('/:id', (req, res) => {
 });
 
 // DELETE /api/v1/artifacts/:id - Delete artifact
-router.delete('/:id', (req, res) => {
-  const { id } = req.params;
-  const artifactIndex = artifacts.findIndex(a => a.id === id);
+router.delete('/:id', async (req, res) => {
+  try {
+    const { id } = req.params;
 
-  if (artifactIndex === -1) {
-    return res.status(404).json({
+    // Check if artifact exists
+    const existingArtifact = await artifacts.getById(id);
+    if (!existingArtifact) {
+      return res.status(404).json({
+        success: false,
+        error: 'Artifact not found'
+      });
+    }
+
+    // Delete artifact from database
+    await artifacts.delete(id);
+
+    res.json({
+      success: true,
+      message: 'Artifact deleted successfully',
+      artifact: existingArtifact
+    });
+  } catch (error) {
+    console.error('Error deleting artifact:', error);
+    res.status(500).json({
       success: false,
-      error: 'Artifact not found'
+      error: 'Failed to delete artifact',
+      message: error.message
     });
   }
+});
 
-  const deletedArtifact = artifacts.splice(artifactIndex, 1)[0];
+// POST /api/v1/artifacts/:id/versions - Create new version of artifact
+router.post('/:id/versions', async (req, res) => {
+  try {
+    const { id } = req.params;
+    const { name, type, content, tags, metadata } = req.body;
 
-  res.json({
-    success: true,
-    message: 'Artifact deleted successfully',
-    artifact: deletedArtifact
-  });
+    if (!content) {
+      return res.status(400).json({
+        success: false,
+        error: 'Content is required for new version'
+      });
+    }
+
+    // Create new version
+    const newVersion = await artifacts.createVersion(id, {
+      name,
+      type,
+      content,
+      tags,
+      metadata
+    });
+
+    res.status(201).json({
+      success: true,
+      artifact: newVersion,
+      message: 'New artifact version created successfully'
+    });
+  } catch (error) {
+    console.error('Error creating artifact version:', error);
+    if (error.message === 'Parent artifact not found') {
+      return res.status(404).json({
+        success: false,
+        error: 'Parent artifact not found'
+      });
+    }
+    res.status(500).json({
+      success: false,
+      error: 'Failed to create artifact version',
+      message: error.message
+    });
+  }
+});
+
+// GET /api/v1/artifacts/:id/versions - Get all versions of artifact
+router.get('/:id/versions', async (req, res) => {
+  try {
+    const { id } = req.params;
+
+    const versions = await artifacts.getVersions(id);
+
+    if (versions.length === 0) {
+      return res.status(404).json({
+        success: false,
+        error: 'Artifact not found'
+      });
+    }
+
+    res.json({
+      success: true,
+      versions: versions,
+      total: versions.length
+    });
+  } catch (error) {
+    console.error('Error getting artifact versions:', error);
+    res.status(500).json({
+      success: false,
+      error: 'Failed to retrieve artifact versions',
+      message: error.message
+    });
+  }
 });
 
 // POST /api/v1/artifacts/bulk-import - Import multiple artifacts
-router.post('/bulk-import', upload.array('files', 10), (req, res) => {
+router.post('/bulk-import', upload.array('files', 10), async (req, res) => {
   try {
     if (!req.files || req.files.length === 0) {
       return res.status(400).json({
@@ -429,36 +382,35 @@ router.post('/bulk-import', upload.array('files', 10), (req, res) => {
       });
     }
 
+    const { user_id } = req.body;
     const importedArtifacts = [];
     const errors = [];
 
-    req.files.forEach((file, index) => {
+    // Map file extensions to types
+    const typeMap = {
+      'js': 'javascript',
+      'jsx': 'javascriptreact',
+      'ts': 'typescript',
+      'tsx': 'typescriptreact',
+      'py': 'python',
+      'html': 'html',
+      'css': 'css',
+      'json': 'json',
+      'md': 'markdown',
+      'txt': 'text'
+    };
+
+    // Process each file
+    for (const file of req.files) {
       try {
         const content = file.buffer.toString('utf8');
         const fileExtension = file.originalname.split('.').pop().toLowerCase();
-        
-        // Map file extensions to types
-        const typeMap = {
-          'js': 'javascript',
-          'jsx': 'javascriptreact',
-          'ts': 'typescript',
-          'tsx': 'typescriptreact',
-          'py': 'python',
-          'html': 'html',
-          'css': 'css',
-          'json': 'json',
-          'md': 'markdown',
-          'txt': 'text'
-        };
 
-        const artifact = {
-          id: nextId.toString(),
+        const artifactData = {
           name: file.originalname,
           type: typeMap[fileExtension] || 'text',
           content,
-          createdAt: new Date(),
-          updatedAt: new Date(),
-          size: content.length,
+          user_id: user_id || null,
           tags: ['imported'],
           metadata: {
             author: 'Import',
@@ -467,16 +419,16 @@ router.post('/bulk-import', upload.array('files', 10), (req, res) => {
           }
         };
 
-        artifacts.push(artifact);
-        importedArtifacts.push(artifact);
-        nextId++;
+        // Create artifact in database
+        const createdArtifact = await artifacts.create(artifactData);
+        importedArtifacts.push(createdArtifact);
       } catch (error) {
         errors.push({
           file: file.originalname,
           error: error.message
         });
       }
-    });
+    }
 
     res.json({
       success: true,
@@ -485,6 +437,7 @@ router.post('/bulk-import', upload.array('files', 10), (req, res) => {
       errors
     });
   } catch (error) {
+    console.error('Error importing artifacts:', error);
     res.status(500).json({
       success: false,
       error: 'Failed to import artifacts',
@@ -494,37 +447,46 @@ router.post('/bulk-import', upload.array('files', 10), (req, res) => {
 });
 
 // GET /api/v1/artifacts/export/single/:id - Export single artifact
-router.get('/export/single/:id', (req, res) => {
-  const { id } = req.params;
-  const artifact = artifacts.find(a => a.id === id);
+router.get('/export/single/:id', async (req, res) => {
+  try {
+    const { id } = req.params;
+    const artifact = await artifacts.getById(id);
 
-  if (!artifact) {
-    return res.status(404).json({
+    if (!artifact) {
+      return res.status(404).json({
+        success: false,
+        error: 'Artifact not found'
+      });
+    }
+
+    // Determine file extension
+    const extensionMap = {
+      'javascript': '.js',
+      'javascriptreact': '.jsx',
+      'typescript': '.ts',
+      'typescriptreact': '.tsx',
+      'python': '.py',
+      'html': '.html',
+      'css': '.css',
+      'json': '.json',
+      'markdown': '.md',
+      'text': '.txt'
+    };
+
+    const extension = extensionMap[artifact.type] || '.txt';
+    const filename = artifact.name.endsWith(extension) ? artifact.name : artifact.name + extension;
+
+    res.setHeader('Content-Type', 'application/octet-stream');
+    res.setHeader('Content-Disposition', `attachment; filename="${filename}"`);
+    res.send(artifact.content);
+  } catch (error) {
+    console.error('Error exporting artifact:', error);
+    res.status(500).json({
       success: false,
-      error: 'Artifact not found'
+      error: 'Failed to export artifact',
+      message: error.message
     });
   }
-
-  // Determine file extension
-  const extensionMap = {
-    'javascript': '.js',
-    'javascriptreact': '.jsx',
-    'typescript': '.ts',
-    'typescriptreact': '.tsx',
-    'python': '.py',
-    'html': '.html',
-    'css': '.css',
-    'json': '.json',
-    'markdown': '.md',
-    'text': '.txt'
-  };
-
-  const extension = extensionMap[artifact.type] || '.txt';
-  const filename = artifact.name.endsWith(extension) ? artifact.name : artifact.name + extension;
-
-  res.setHeader('Content-Type', 'application/octet-stream');
-  res.setHeader('Content-Disposition', `attachment; filename="${filename}"`);
-  res.send(artifact.content);
 });
 
 // POST /api/v1/artifacts/export/bulk - Export multiple artifacts as ZIP
@@ -539,7 +501,18 @@ router.post('/export/bulk', async (req, res) => {
       });
     }
 
-    const selectedArtifacts = artifacts.filter(a => artifactIds.includes(a.id));
+    // Fetch artifacts from database
+    const selectedArtifacts = [];
+    for (const id of artifactIds) {
+      try {
+        const artifact = await artifacts.getById(id);
+        if (artifact) {
+          selectedArtifacts.push(artifact);
+        }
+      } catch (error) {
+        console.error(`Error fetching artifact ${id}:`, error);
+      }
+    }
 
     if (selectedArtifacts.length === 0) {
       return res.status(404).json({
@@ -604,53 +577,69 @@ router.post('/export/bulk', async (req, res) => {
 });
 
 // GET /api/v1/artifacts/stats - Get artifact statistics
-router.get('/stats', (req, res) => {
-  const storageStats = getStorageStats();
-  const stats = {
-    total: artifacts.length,
-    byType: {},
-    totalSize: storageStats.totalSize,
-    averageSize: 0,
-    recentCount: 0,
-    storage: {
-      limits: {
-        maxArtifacts: MAX_ARTIFACTS,
-        maxTotalSize: MAX_TOTAL_SIZE,
-        maxTotalSizeMB: Math.round(MAX_TOTAL_SIZE / 1024 / 1024)
-      },
-      current: {
-        artifacts: storageStats.count,
-        totalSize: storageStats.totalSize,
-        totalSizeMB: Math.round(storageStats.totalSize / 1024 / 1024)
-      },
-      utilization: storageStats.utilizationPercent,
-      status: storageStats.utilizationPercent.count > 90 || storageStats.utilizationPercent.size > 90 
-        ? 'critical' 
-        : storageStats.utilizationPercent.count > 70 || storageStats.utilizationPercent.size > 70 
-        ? 'warning' 
-        : 'healthy'
-    }
-  };
-
-  const oneWeekAgo = new Date();
-  oneWeekAgo.setDate(oneWeekAgo.getDate() - 7);
-
-  artifacts.forEach(artifact => {
-    // Count by type
-    stats.byType[artifact.type] = (stats.byType[artifact.type] || 0) + 1;
+router.get('/stats', async (req, res) => {
+  try {
+    const { user_id } = req.query;
     
-    // Recent artifacts (last week)
-    if (new Date(artifact.createdAt) > oneWeekAgo) {
-      stats.recentCount++;
-    }
-  });
+    // Get storage stats from database
+    const storageStats = await getStorageStats(user_id);
+    
+    // Get all artifacts to calculate detailed stats
+    const allArtifacts = await artifacts.getAll({ user_id });
+    
+    const stats = {
+      total: allArtifacts.length,
+      byType: {},
+      totalSize: storageStats.totalSize,
+      averageSize: 0,
+      recentCount: 0,
+      storage: {
+        limits: {
+          maxArtifacts: MAX_ARTIFACTS,
+          maxTotalSize: MAX_TOTAL_SIZE,
+          maxTotalSizeMB: Math.round(MAX_TOTAL_SIZE / 1024 / 1024)
+        },
+        current: {
+          artifacts: storageStats.count,
+          totalSize: storageStats.totalSize,
+          totalSizeMB: Math.round(storageStats.totalSize / 1024 / 1024)
+        },
+        utilization: storageStats.utilizationPercent,
+        status: storageStats.utilizationPercent.count > 90 || storageStats.utilizationPercent.size > 90 
+          ? 'critical' 
+          : storageStats.utilizationPercent.count > 70 || storageStats.utilizationPercent.size > 70 
+          ? 'warning' 
+          : 'healthy'
+      }
+    };
 
-  stats.averageSize = artifacts.length > 0 ? Math.round(stats.totalSize / artifacts.length) : 0;
+    const oneWeekAgo = new Date();
+    oneWeekAgo.setDate(oneWeekAgo.getDate() - 7);
 
-  res.json({
-    success: true,
-    stats
-  });
+    allArtifacts.forEach(artifact => {
+      // Count by type
+      stats.byType[artifact.type] = (stats.byType[artifact.type] || 0) + 1;
+      
+      // Recent artifacts (last week)
+      if (new Date(artifact.created_at) > oneWeekAgo) {
+        stats.recentCount++;
+      }
+    });
+
+    stats.averageSize = allArtifacts.length > 0 ? Math.round(stats.totalSize / allArtifacts.length) : 0;
+
+    res.json({
+      success: true,
+      stats
+    });
+  } catch (error) {
+    console.error('Error getting artifact stats:', error);
+    res.status(500).json({
+      success: false,
+      error: 'Failed to retrieve artifact statistics',
+      message: error.message
+    });
+  }
 });
 
 module.exports = router;
