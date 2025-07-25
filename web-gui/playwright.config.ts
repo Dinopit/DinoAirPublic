@@ -31,6 +31,19 @@ export default defineConfig({
 
     /* Screenshot on failure */
     screenshot: 'only-on-failure',
+
+    /* Visual testing configuration */
+    /* Wait for fonts and animations to complete before taking screenshots */
+    actionTimeout: 10000,
+  },
+
+  /* Visual testing configuration */
+  expect: {
+    /* Animation handling for stable screenshots */
+    toHaveScreenshot: {
+      threshold: 0.2,
+      animations: 'disabled'
+    }
   },
 
   /* Configure projects for major browsers */
@@ -51,14 +64,22 @@ export default defineConfig({
     },
 
     /* Test against mobile viewports. */
-    // {
-    //   name: 'Mobile Chrome',
-    //   use: { ...devices['Pixel 5'] },
-    // },
-    // {
-    //   name: 'Mobile Safari',
-    //   use: { ...devices['iPhone 12'] },
-    // },
+    {
+      name: 'Mobile Chrome',
+      use: { ...devices['Pixel 5'] },
+    },
+    {
+      name: 'Mobile Safari',
+      use: { ...devices['iPhone 12'] },
+    },
+
+    /* Tablet viewport for responsive testing */
+    {
+      name: 'Tablet',
+      use: { 
+        ...devices['iPad Pro'],
+      },
+    },
 
     /* Test against branded browsers. */
     // {
