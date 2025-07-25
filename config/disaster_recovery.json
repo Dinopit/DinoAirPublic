@@ -1,0 +1,235 @@
+{
+  "complete_system_failure": [
+    {
+      "name": "Complete System Recovery",
+      "description": "Full system restoration from complete failure",
+      "estimated_duration": "2-4 hours",
+      "prerequisites": [
+        "Access to backup storage",
+        "New system or restored hardware",
+        "Network connectivity",
+        "Database credentials",
+        "System administrator access"
+      ],
+      "steps": [
+        {
+          "step": "assessment",
+          "title": "Assess System State",
+          "description": "Evaluate the extent of system damage and available resources",
+          "commands": [
+            "df -h",
+            "free -m",
+            "systemctl status"
+          ],
+          "manual_tasks": [
+            "Verify hardware functionality",
+            "Check network connectivity",
+            "Confirm backup accessibility"
+          ]
+        },
+        {
+          "step": "backup_verification",
+          "title": "Verify Backup Integrity",
+          "description": "Ensure backups are available and uncorrupted",
+          "automated": true,
+          "function": "verify_backups"
+        },
+        {
+          "step": "system_preparation",
+          "title": "Prepare System Environment",
+          "description": "Set up basic system requirements",
+          "commands": [
+            "sudo apt update",
+            "sudo apt install -y python3 python3-pip nodejs npm postgresql-client"
+          ],
+          "manual_tasks": [
+            "Create necessary directories",
+            "Set up user accounts and permissions"
+          ]
+        },
+        {
+          "step": "database_recovery",
+          "title": "Restore Database",
+          "description": "Restore database from latest backup",
+          "automated": true,
+          "function": "restore_database"
+        },
+        {
+          "step": "file_recovery",
+          "title": "Restore File System",
+          "description": "Restore application files and configurations",
+          "automated": true,
+          "function": "restore_files"
+        },
+        {
+          "step": "configuration_recovery",
+          "title": "Restore Configuration",
+          "description": "Apply configuration files and environment settings",
+          "manual_tasks": [
+            "Verify configuration files",
+            "Update environment variables",
+            "Check file permissions"
+          ]
+        },
+        {
+          "step": "service_restart",
+          "title": "Start Services",
+          "description": "Start all DinoAir services",
+          "commands": [
+            "cd /path/to/dinoair && python start.py"
+          ],
+          "manual_tasks": [
+            "Monitor service startup logs",
+            "Verify port availability"
+          ]
+        },
+        {
+          "step": "verification",
+          "title": "Verify System Operation",
+          "description": "Confirm all systems are functioning correctly",
+          "automated": true,
+          "function": "verify_system_health"
+        }
+      ],
+      "verification_checks": [
+        {
+          "name": "Database Connectivity",
+          "description": "Verify database connection and basic queries",
+          "automated": true,
+          "function": "test_database_connection"
+        },
+        {
+          "name": "Web Interface",
+          "description": "Verify web interface is accessible",
+          "url": "http://localhost:8000",
+          "expected_status": 200
+        },
+        {
+          "name": "API Endpoints",
+          "description": "Test critical API endpoints",
+          "endpoints": [
+            "/api/v1/health",
+            "/api/v1/models",
+            "/api/v1/chat"
+          ]
+        },
+        {
+          "name": "File System Integrity",
+          "description": "Verify critical files and directories",
+          "paths": [
+            "./config",
+            "./ComfyUI",
+            "./web-gui"
+          ]
+        }
+      ],
+      "rollback_steps": []
+    }
+  ],
+  "database_corruption": [
+    {
+      "name": "Database Recovery",
+      "description": "Restore database from corruption or data loss",
+      "estimated_duration": "30-60 minutes",
+      "prerequisites": [
+        "Database backup access",
+        "Database administrator credentials",
+        "Service downtime window"
+      ],
+      "steps": [
+        {
+          "step": "assessment",
+          "title": "Assess Database Damage",
+          "description": "Evaluate extent of database corruption",
+          "automated": true,
+          "function": "assess_database_health"
+        },
+        {
+          "step": "backup_verification",
+          "title": "Verify Database Backups",
+          "description": "Ensure database backups are available and valid",
+          "automated": true,
+          "function": "verify_database_backups"
+        },
+        {
+          "step": "system_preparation",
+          "title": "Stop Services",
+          "description": "Stop all services using the database",
+          "commands": [
+            "systemctl stop dinoair"
+          ],
+          "manual_tasks": [
+            "Ensure all database connections are closed"
+          ]
+        },
+        {
+          "step": "database_recovery",
+          "title": "Restore Database",
+          "description": "Restore from latest valid backup",
+          "automated": true,
+          "function": "restore_database_from_backup"
+        },
+        {
+          "step": "verification",
+          "title": "Verify Database Integrity",
+          "description": "Run database integrity checks",
+          "automated": true,
+          "function": "verify_database_integrity"
+        },
+        {
+          "step": "service_restart",
+          "title": "Restart Services",
+          "description": "Restart all DinoAir services",
+          "commands": [
+            "systemctl start dinoair"
+          ]
+        }
+      ],
+      "verification_checks": [],
+      "rollback_steps": []
+    }
+  ],
+  "file_system_corruption": [
+    {
+      "name": "File System Recovery",
+      "description": "Restore corrupted or deleted files",
+      "estimated_duration": "1-2 hours",
+      "prerequisites": [
+        "File system backup access",
+        "Write permissions to target directories"
+      ],
+      "steps": [
+        {
+          "step": "assessment",
+          "title": "Assess File System Damage",
+          "description": "Identify corrupted or missing files",
+          "automated": true,
+          "function": "assess_file_system_health"
+        },
+        {
+          "step": "backup_verification",
+          "title": "Verify File Backups",
+          "description": "Ensure file backups are available",
+          "automated": true,
+          "function": "verify_file_backups"
+        },
+        {
+          "step": "file_recovery",
+          "title": "Restore Files",
+          "description": "Restore files from backup",
+          "automated": true,
+          "function": "restore_files_selective"
+        },
+        {
+          "step": "verification",
+          "title": "Verify File Integrity",
+          "description": "Check restored files",
+          "automated": true,
+          "function": "verify_file_integrity"
+        }
+      ],
+      "verification_checks": [],
+      "rollback_steps": []
+    }
+  ]
+}

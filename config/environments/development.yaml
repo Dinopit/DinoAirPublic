@@ -1,0 +1,59 @@
+# DinoAir Development Environment Configuration
+app_name: DinoAir
+environment: development
+debug: true
+
+server:
+  host: 127.0.0.1
+  port: 8000
+  workers: 1
+  timeout: 120
+  cors_origins:
+    - http://localhost:3000
+    - http://127.0.0.1:3000
+
+database:
+  type: sqlite
+  name: dinoair_dev.db
+  connection_pool_size: 5
+
+security:
+  secret_key: ${DINOAIR_SECRET_KEY:-dev-secret-key-minimum-32-characters-long}
+  jwt_algorithm: HS256
+  jwt_expiry_hours: 24
+  allowed_hosts:
+    - localhost
+    - 127.0.0.1
+  rate_limit_requests: 1000  # More lenient for development
+  rate_limit_window: 60
+
+comfyui:
+  enabled: true
+  host: localhost
+  port: 8188
+  api_timeout: 60
+
+ollama:
+  enabled: true
+  host: localhost
+  port: 11434
+  default_model: llama2
+  temperature: 0.8  # Higher creativity for dev
+
+resources:
+  max_memory_mb: 4096  # Lower for development
+  max_cpu_percent: 70.0
+  max_concurrent_requests: 10
+
+logging:
+  level: DEBUG
+  format: text
+  file_path: ./logs/dinoair_dev.log
+  max_file_size_mb: 5
+  backup_count: 3
+  console_output: true
+
+monitoring:
+  enabled: true
+  health_check_interval: 60
+  metrics_interval: 120

@@ -21,7 +21,7 @@ import os
 # Add parent directory to path for imports
 sys.path.append(str(Path(__file__).parent.parent.parent))
 
-from lib.process_manager.safe_process_manager import SafeProcessManager, ProcessConfig
+from lib.process_manager.safe_process_manager import ProcessManager, ServiceConfig
 from lib.circuit_breaker.circuit_breaker import CircuitBreaker, CircuitBreakerConfig
 
 class ServiceStatus(Enum):
@@ -98,8 +98,8 @@ class HealthMonitor:
     Central health monitoring system for DinoAir
     """
     
-    def __init__(self, process_manager: Optional[SafeProcessManager] = None):
-        self.process_manager = process_manager or SafeProcessManager()
+    def __init__(self, process_manager: Optional[ProcessManager] = None):
+        self.process_manager = process_manager or ProcessManager()
         self.services: Dict[str, ServiceHealth] = {}
         self.check_configs: Dict[str, HealthCheckConfig] = {}
         self.check_threads: Dict[str, threading.Thread] = {}

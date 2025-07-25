@@ -1,0 +1,76 @@
+# DinoAir Production Environment Configuration
+app_name: DinoAir
+environment: production
+debug: false
+
+server:
+  host: 0.0.0.0
+  port: 8000
+  workers: 4
+  timeout: 300
+  cors_origins:
+    - https://dinoair.app
+    - https://api.dinoair.app
+
+database:
+  type: postgresql
+  host: ${DINOAIR_DB_HOST}
+  port: ${DINOAIR_DB_PORT:-5432}
+  name: ${DINOAIR_DB_NAME:-dinoair}
+  user: ${DINOAIR_DB_USER:-dinoair}
+  password: ${DINOAIR_DB_PASSWORD}
+  connection_pool_size: 15
+  connection_timeout: 30
+
+security:
+  secret_key: ${DINOAIR_SECRET_KEY}
+  jwt_algorithm: HS256
+  jwt_expiry_hours: 8
+  allowed_hosts:
+    - dinoair.app
+    - api.dinoair.app
+  rate_limit_requests: 100
+  rate_limit_window: 60
+  session_timeout: 1800
+
+comfyui:
+  enabled: true
+  host: ${COMFYUI_HOST:-localhost}
+  port: ${COMFYUI_PORT:-8188}
+  api_timeout: 120
+  max_queue_size: 200
+  workflow_timeout: 900
+
+ollama:
+  enabled: true
+  host: ${OLLAMA_HOST:-localhost}
+  port: ${OLLAMA_PORT:-11434}
+  default_model: ${OLLAMA_MODEL:-llama2}
+  max_context_length: 4096
+  temperature: 0.7
+
+resources:
+  max_memory_mb: 8192
+  max_cpu_percent: 80.0
+  max_disk_usage_gb: 100
+  max_concurrent_requests: 50
+  max_models_loaded: 3
+
+logging:
+  level: INFO
+  format: json
+  file_path: ./logs/dinoair.log
+  max_file_size_mb: 50
+  backup_count: 30
+  console_output: false
+  syslog_enabled: true
+  syslog_host: ${SYSLOG_HOST:-localhost}
+
+monitoring:
+  enabled: true
+  health_check_interval: 30
+  metrics_interval: 60
+  alert_email: ${ALERT_EMAIL}
+  webhook_url: ${WEBHOOK_URL}
+  prometheus_enabled: true
+  prometheus_port: 9090
