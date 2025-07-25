@@ -33,6 +33,10 @@ const upload = multer({
   }
 });
 
+const MAX_ARTIFACTS = 1000;
+const MAX_TOTAL_SIZE = 100 * 1024 * 1024; // 100MB
+const CLEANUP_INTERVAL = 5 * 60 * 1000; // 5 minutes
+
 // In-memory artifact storage (in production, use database)
 let artifacts = [
   {
@@ -106,6 +110,83 @@ if __name__ == "__main__":
 ];
 
 let nextId = 3;
+
+/**
+ * Cleanup artifacts to prevent memory exhaustion
+ * Implements LRU eviction policy based on creation time and size
+ */
+function cleanupArtifacts() {
+  const startTime = Date.now();
+  let cleaned = false;
+
+  if (artifacts.length > MAX_ARTIFACTS) {
+    console.log(`Artifact count (${artifacts.length}) exceeds limit (${MAX_ARTIFACTS}). Cleaning up...`);
+    
+    artifacts.sort((a, b) => new Date(a.createdAt) - new Date(b.createdAt));
+    const toRemove = artifacts.length - MAX_ARTIFACTS;
+    artifacts = artifacts.slice(toRemove);
+    
+    console.log(`Removed ${toRemove} oldest artifacts. Current count: ${artifacts.length}`);
+    cleaned = true;
+  }
+
+  const totalSize = artifacts.reduce((sum, artifact) => sum + artifact.size, 0);
+  if (totalSize > MAX_TOTAL_SIZE) {
+    console.log(`Total size (${Math.round(totalSize / 1024 / 1024)}MB) exceeds limit (${Math.round(MAX_TOTAL_SIZE / 1024 / 1024)}MB). Cleaning up...`);
+    
+    artifacts.sort((a, b) => b.size - a.size);
+    
+    let currentSize = 0;
+    const filteredArtifacts = [];
+    
+    for (const artifact of artifacts) {
+      if (currentSize + artifact.size <= MAX_TOTAL_SIZE) {
+        filteredArtifacts.push(artifact);
+        currentSize += artifact.size;
+      }
+    }
+    
+    const removedCount = artifacts.length - filteredArtifacts.length;
+    artifacts = filteredArtifacts;
+    
+    console.log(`Removed ${removedCount} largest artifacts. Current size: ${Math.round(currentSize / 1024 / 1024)}MB`);
+    cleaned = true;
+  }
+
+  if (cleaned) {
+    const duration = Date.now() - startTime;
+    console.log(`Artifact cleanup completed in ${duration}ms. Current stats: ${artifacts.length} artifacts, ${Math.round(totalSize / 1024 / 1024)}MB`);
+  }
+}
+
+/**
+ * Get current storage statistics
+ */
+function getStorageStats() {
+  const totalSize = artifacts.reduce((sum, artifact) => sum + artifact.size, 0);
+  return {
+    count: artifacts.length,
+    maxCount: MAX_ARTIFACTS,
+    totalSize,
+    maxSize: MAX_TOTAL_SIZE,
+    utilizationPercent: {
+      count: Math.round((artifacts.length / MAX_ARTIFACTS) * 100),
+      size: Math.round((totalSize / MAX_TOTAL_SIZE) * 100)
+    }
+  };
+}
+
+const cleanupTimer = setInterval(cleanupArtifacts, CLEANUP_INTERVAL);
+
+process.on('SIGINT', () => {
+  clearInterval(cleanupTimer);
+  console.log('Artifact cleanup timer stopped');
+});
+
+process.on('SIGTERM', () => {
+  clearInterval(cleanupTimer);
+  console.log('Artifact cleanup timer stopped');
+});
 
 // GET /api/v1/artifacts - Get all artifacts
 router.get('/', (req, res) => {
@@ -207,6 +288,34 @@ router.post('/', (req, res) => {
       });
     }
 
+    const artifactSize = content.length;
+    const currentStats = getStorageStats();
+    
+    if (currentStats.count >= MAX_ARTIFACTS) {
+      return res.status(413).json({
+        success: false,
+        error: 'Maximum artifact count reached',
+        details: {
+          current: currentStats.count,
+          maximum: MAX_ARTIFACTS,
+          message: 'Please delete some artifacts before creating new ones'
+        }
+      });
+    }
+
+    if (currentStats.totalSize + artifactSize > MAX_TOTAL_SIZE) {
+      return res.status(413).json({
+        success: false,
+        error: 'Maximum storage size would be exceeded',
+        details: {
+          currentSize: Math.round(currentStats.totalSize / 1024 / 1024),
+          artifactSize: Math.round(artifactSize / 1024 / 1024),
+          maximumSize: Math.round(MAX_TOTAL_SIZE / 1024 / 1024),
+          message: 'Artifact too large or storage nearly full'
+        }
+      });
+    }
+
     const newArtifact = {
       id: nextId.toString(),
       name,
@@ -214,7 +323,7 @@ router.post('/', (req, res) => {
       content,
       createdAt: new Date(),
       updatedAt: new Date(),
-      size: content.length,
+      size: artifactSize,
       tags: Array.isArray(tags) ? tags : [],
       metadata: {
         author: 'User',
@@ -225,9 +334,15 @@ router.post('/', (req, res) => {
     artifacts.push(newArtifact);
     nextId++;
 
+    if (currentStats.utilizationPercent.count > 80 || currentStats.utilizationPercent.size > 80) {
+      console.log('Storage utilization high, triggering cleanup...');
+      setImmediate(cleanupArtifacts);
+    }
+
     res.status(201).json({
       success: true,
-      artifact: newArtifact
+      artifact: newArtifact,
+      storageStats: getStorageStats()
     });
   } catch (error) {
     res.status(500).json({
@@ -486,12 +601,31 @@ router.post('/export/bulk', async (req, res) => {
 
 // GET /api/v1/artifacts/stats - Get artifact statistics
 router.get('/stats', (req, res) => {
+  const storageStats = getStorageStats();
   const stats = {
     total: artifacts.length,
     byType: {},
-    totalSize: 0,
+    totalSize: storageStats.totalSize,
     averageSize: 0,
-    recentCount: 0
+    recentCount: 0,
+    storage: {
+      limits: {
+        maxArtifacts: MAX_ARTIFACTS,
+        maxTotalSize: MAX_TOTAL_SIZE,
+        maxTotalSizeMB: Math.round(MAX_TOTAL_SIZE / 1024 / 1024)
+      },
+      current: {
+        artifacts: storageStats.count,
+        totalSize: storageStats.totalSize,
+        totalSizeMB: Math.round(storageStats.totalSize / 1024 / 1024)
+      },
+      utilization: storageStats.utilizationPercent,
+      status: storageStats.utilizationPercent.count > 90 || storageStats.utilizationPercent.size > 90 
+        ? 'critical' 
+        : storageStats.utilizationPercent.count > 70 || storageStats.utilizationPercent.size > 70 
+        ? 'warning' 
+        : 'healthy'
+    }
   };
 
   const oneWeekAgo = new Date();
@@ -500,9 +634,6 @@ router.get('/stats', (req, res) => {
   artifacts.forEach(artifact => {
     // Count by type
     stats.byType[artifact.type] = (stats.byType[artifact.type] || 0) + 1;
-    
-    // Total size
-    stats.totalSize += artifact.size;
     
     // Recent artifacts (last week)
     if (new Date(artifact.createdAt) > oneWeekAgo) {
