@@ -1,5 +1,6 @@
 // User routes for Supabase integration
 const express = require('express');
+const { rateLimits, sanitizeInput } = require('../middleware/validation');
 const router = express.Router();
 const auth = require('../lib/auth');
 const db = require('../lib/db');
@@ -22,7 +23,7 @@ const requireAuth = async (req, res, next) => {
 };
 
 // Get user profile
-router.get('/profile', requireAuth, async (req, res) => {
+router.get('/profile', rateLimits.api, requireAuth, async (req, res) => {
   try {
     const userData = await db.getUserById(req.user.id);
 
@@ -38,7 +39,7 @@ router.get('/profile', requireAuth, async (req, res) => {
 });
 
 // Update user profile
-router.put('/profile', requireAuth, async (req, res) => {
+router.put('/profile', rateLimits.api, sanitizeInput, requireAuth, async (req, res) => {
   try {
     const { name, bio, preferences } = req.body;
 
@@ -62,7 +63,7 @@ router.put('/profile', requireAuth, async (req, res) => {
 });
 
 // Get user chat history
-router.get('/chat-history', requireAuth, async (req, res) => {
+router.get('/chat-history', rateLimits.api, requireAuth, async (req, res) => {
   try {
     const chatHistory = await db.getUserChatHistory(req.user.id);
     return res.status(200).json({ chatHistory });

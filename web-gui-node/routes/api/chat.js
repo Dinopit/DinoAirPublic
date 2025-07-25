@@ -10,6 +10,8 @@ const { v4: uuidv4 } = require('uuid');
 const { chatSessions, chatMessages, chatMetrics } = require('../../lib/supabase');
 const { rateLimits, chatValidation, sanitizeInput } = require('../../middleware/validation');
 const { resourceManager } = require('../../lib/resource-manager');
+const { ollamaBreaker } = require('../../lib/circuit-breaker');
+const { withRetry, isRetryableError } = require('../../lib/retry');
 const router = express.Router();
 
 // In-memory fallback metrics (if Supabase is not available)
@@ -133,17 +135,30 @@ router.post('/', rateLimits.chat, sanitizeInput, chatValidation.chat, async (req
       // Track API response time
       const apiStartTime = Date.now();
       
-      // Call Ollama API
-      const response = await fetch('http://localhost:11434/api/generate', {
-        method: 'POST',
-        headers: {
-          'Content-Type': 'application/json',
-        },
-        body: JSON.stringify({
-          model: selectedModel,
-          prompt: prompt,
-          stream: true,
-        }),
+      // Call Ollama API with circuit breaker and retry protection
+      const response = await ollamaBreaker.call(async () => {
+        return await withRetry(async () => {
+          const response = await fetch('http://localhost:11434/api/generate', {
+            method: 'POST',
+            headers: {
+              'Content-Type': 'application/json',
+            },
+            body: JSON.stringify({
+              model: selectedModel,
+              prompt: prompt,
+              stream: true,
+            }),
+          });
+          
+          if (!response.ok) {
+            throw new Error(`Ollama API error: ${response.status} ${response.statusText}`);
+          }
+          
+          return response;
+        }, {
+          maxRetries: 2,
+          retryCondition: isRetryableError
+        });
       });
 
       if (!response.ok) {
@@ -296,11 +311,20 @@ router.get('/metrics', async (req, res) => {
 // GET /api/chat/models - Get available models (proxy to Ollama)
 router.get('/models', async (req, res) => {
   try {
-    const response = await fetch('http://localhost:11434/api/tags');
-    
-    if (!response.ok) {
-      throw new Error(`Ollama API error: ${response.statusText}`);
-    }
+    const response = await ollamaBreaker.call(async () => {
+      return await withRetry(async () => {
+        const response = await fetch('http://localhost:11434/api/tags');
+        
+        if (!response.ok) {
+          throw new Error(`Ollama API error: ${response.statusText}`);
+        }
+        
+        return response;
+      }, {
+        maxRetries: 1,
+        retryCondition: isRetryableError
+      });
+    });
     
     const data = await response.json();
     res.json(data);
