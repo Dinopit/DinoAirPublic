@@ -1,10 +1,7 @@
 import type { Metadata } from 'next'
-import { Inter } from 'next/font/google'
 import { ThemeProvider } from '@/components/ui/theme-provider'
 import { ToastNotifications } from '@/components/ui/toast-notifications'
 import './globals.css'
-
-const inter = Inter({ subsets: ['latin'] })
 
 export const metadata: Metadata = {
   title: 'DinoAir Free Tier',
@@ -34,7 +31,7 @@ export default function RootLayout({
         <meta name="apple-mobile-web-app-status-bar-style" content="default" />
         <meta name="apple-mobile-web-app-title" content="DinoAir" />
       </head>
-      <body className={inter.className}>
+      <body className="font-sans antialiased">
         <ThemeProvider>
           <div id="root">
             {children}
