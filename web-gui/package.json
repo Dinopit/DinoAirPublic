@@ -19,6 +19,8 @@
     "test:e2e": "playwright test",
     "test:e2e:headed": "playwright test --headed",
     "test:e2e:ui": "playwright test --ui",
+    "test:contracts:consumer": "jest --config jest.contracts.config.js",
+    "contracts:publish": "npx pact-broker publish ../contracts/pacts --consumer-app-version=${npm_package_version} --broker-base-url=${PACT_BROKER_BASE_URL:-http://localhost:9292} --broker-username=${PACT_BROKER_USERNAME:-pact_broker} --broker-password=${PACT_BROKER_PASSWORD:-pact_broker}",
     "clean": "rm -rf .next out coverage",
     "postinstall": "npm run type-check"
   },
@@ -50,6 +52,7 @@
   },
   "devDependencies": {
     "@next/bundle-analyzer": "^15.4.2",
+    "@pact-foundation/pact": "^13.1.0",
     "@playwright/test": "^1.54.1",
     "@tailwindcss/typography": "^0.5.10",
     "@testing-library/jest-dom": "^6.6.3",
