@@ -1,0 +1,36 @@
+{
+  "name": "dinoair-installer-cli",
+  "version": "1.0.0",
+  "description": "DinoAir Progressive Mode System CLI Installer",
+  "main": "index.js",
+  "bin": {
+    "dinoair-install": "./index.js"
+  },
+  "scripts": {
+    "start": "node index.js",
+    "dev": "node index.js --dev",
+    "test": "node test/test-installer.js"
+  },
+  "author": "DinoAir Team",
+  "license": "MIT",
+  "dependencies": {
+    "inquirer": "^9.2.12",
+    "chalk": "^4.1.2",
+    "ora": "^5.4.1",
+    "cli-progress": "^3.12.0",
+    "node-machine-id": "^1.1.12"
+  },
+  "devDependencies": {
+    "jest": "^29.7.0"
+  },
+  "engines": {
+    "node": ">=14.0.0"
+  },
+  "keywords": [
+    "dinoair",
+    "installer",
+    "cli",
+    "ai-assistant",
+    "progressive-mode"
+  ]
+}

@@ -1,0 +1,362 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+  <meta charset="UTF-8">
+  <meta name="viewport" content="width=device-width, initial-scale=1.0">
+  <title><%= title %></title>
+  <link rel="stylesheet" href="/css/styles.css">
+</head>
+<body>
+  <div class="container">
+    <header class="header">
+      <h1>DinoAir Profile</h1>
+      <nav>
+        <ul>
+          <li><a href="/">Home</a></li>
+          <li><a href="/chat">Chat</a></li>
+          <li class="active"><a href="/profile">Profile</a></li>
+          <li><a href="#" id="sign-out-btn">Sign Out</a></li>
+        </ul>
+      </nav>
+    </header>
+
+    <main>
+      <div id="loading" class="loading-indicator">Loading profile data...</div>
+
+      <div id="profile-container" class="profile-container hidden">
+        <div class="profile-header">
+          <h2>User Profile</h2>
+        </div>
+
+        <div class="profile-content">
+          <div class="profile-section">
+            <h3>Personal Information</h3>
+            <form id="profile-form">
+              <div class="form-group">
+                <label for="name">Name</label>
+                <input type="text" id="name" name="name">
+              </div>
+
+              <div class="form-group">
+                <label for="email">Email Address</label>
+                <input type="email" id="email" name="email" disabled>
+              </div>
+
+              <div class="form-group">
+                <label for="bio">Bio</label>
+                <textarea id="bio" name="bio" rows="4"></textarea>
+              </div>
+
+              <button type="submit" class="btn btn-primary">Save Changes</button>
+            </form>
+          </div>
+
+          <div class="profile-section">
+            <h3>API Keys</h3>
+            <div id="api-keys-container">
+              <div id="api-keys-list"></div>
+
+              <div class="api-key-form">
+                <h4>Create New API Key</h4>
+                <form id="api-key-form">
+                  <div class="form-group">
+                    <label for="key-name">Key Name</label>
+                    <input type="text" id="key-name" name="key-name" placeholder="e.g., Development, Production">
+                  </div>
+
+                  <button type="submit" class="btn btn-secondary">Generate Key</button>
+                </form>
+              </div>
+            </div>
+          </div>
+
+          <div class="profile-section">
+            <h3>Chat History</h3>
+            <div id="chat-history-container"></div>
+          </div>
+        </div>
+      </div>
+
+      <div id="not-authenticated" class="auth-message hidden">
+        <h2>Not Logged In</h2>
+        <p>You need to log in to view your profile.</p>
+        <div class="auth-buttons">
+          <a href="/login" class="btn btn-primary">Sign In</a>
+          <a href="/signup" class="btn btn-secondary">Create Account</a>
+        </div>
+      </div>
+    </main>
+  </div>
+
+  <script>
+    document.addEventListener('DOMContentLoaded', () => {
+      const loadingIndicator = document.getElementById('loading');
+      const profileContainer = document.getElementById('profile-container');
+      const notAuthenticated = document.getElementById('not-authenticated');
+      const profileForm = document.getElementById('profile-form');
+      const apiKeyForm = document.getElementById('api-key-form');
+      const apiKeysList = document.getElementById('api-keys-list');
+      const chatHistoryContainer = document.getElementById('chat-history-container');
+      const signOutBtn = document.getElementById('sign-out-btn');
+
+      // Fetch user profile data
+      async function fetchProfile() {
+        try {
+          const response = await fetch('/api/users/profile', {
+            method: 'GET',
+            headers: {
+              'Content-Type': 'application/json'
+            }
+          });
+
+          if (response.status === 401) {
+            loadingIndicator.classList.add('hidden');
+            notAuthenticated.classList.remove('hidden');
+            return;
+          }
+
+          const data = await response.json();
+
+          if (!response.ok) {
+            throw new Error(data.error || 'Failed to load profile');
+          }
+
+          // Populate form with profile data
+          document.getElementById('name').value = data.profile.name || '';
+          document.getElementById('email').value = data.profile.email || '';
+          document.getElementById('bio').value = data.profile.bio || '';
+
+          // Show profile container
+          loadingIndicator.classList.add('hidden');
+          profileContainer.classList.remove('hidden');
+
+          // Fetch API keys and chat history
+          fetchApiKeys();
+          fetchChatHistory();
+
+        } catch (error) {
+          console.error('Error fetching profile:', error);
+          loadingIndicator.classList.add('hidden');
+          notAuthenticated.classList.remove('hidden');
+        }
+      }
+
+      // Fetch user API keys
+      async function fetchApiKeys() {
+        try {
+          const response = await fetch('/api/users/api-keys', {
+            method: 'GET',
+            headers: {
+              'Content-Type': 'application/json'
+            }
+          });
+
+          if (!response.ok) {
+            throw new Error('Failed to load API keys');
+          }
+
+          const data = await response.json();
+
+          // Render API keys
+          apiKeysList.innerHTML = '';
+
+          if (data.apiKeys && data.apiKeys.length > 0) {
+            data.apiKeys.forEach(key => {
+              const keyElement = document.createElement('div');
+              keyElement.className = 'api-key-item';
+              keyElement.innerHTML = `
+                <div class="api-key-details">
+                  <h4>${key.name}</h4>
+                  <p class="api-key-value">${key.key}</p>
+                  <p class="api-key-created">Created: ${new Date(key.created_at).toLocaleDateString()}</p>
+                </div>
+                <button class="btn btn-danger btn-small delete-key" data-key-id="${key.id}">Revoke</button>
+              `;
+              apiKeysList.appendChild(keyElement);
+            });
+          } else {
+            apiKeysList.innerHTML = '<p>No API keys found. Create your first key below.</p>';
+          }
+
+        } catch (error) {
+          console.error('Error fetching API keys:', error);
+          apiKeysList.innerHTML = '<p>Failed to load API keys.</p>';
+        }
+      }
+
+      // Fetch user chat history
+      async function fetchChatHistory() {
+        try {
+          const response = await fetch('/api/users/chat-history', {
+            method: 'GET',
+            headers: {
+              'Content-Type': 'application/json'
+            }
+          });
+
+          if (!response.ok) {
+            throw new Error('Failed to load chat history');
+          }
+
+          const data = await response.json();
+
+          // Render chat history
+          chatHistoryContainer.innerHTML = '';
+
+          if (data.chatHistory && data.chatHistory.length > 0) {
+            const historyList = document.createElement('div');
+            historyList.className = 'chat-history-list';
+
+            data.chatHistory.forEach(chat => {
+              const chatItem = document.createElement('div');
+              chatItem.className = 'chat-history-item';
+              chatItem.innerHTML = `
+                <div class="chat-history-date">${new Date(chat.created_at).toLocaleString()}</div>
+                <div class="chat-history-message">
+                  <strong>You:</strong> ${chat.message}
+                </div>
+                <div class="chat-history-response">
+                  <strong>DinoAir:</strong> ${chat.response}
+                </div>
+              `;
+              historyList.appendChild(chatItem);
+            });
+
+            chatHistoryContainer.appendChild(historyList);
+          } else {
+            chatHistoryContainer.innerHTML = '<p>No chat history found. Start a conversation in the Chat section.</p>';
+          }
+
+        } catch (error) {
+          console.error('Error fetching chat history:', error);
+          chatHistoryContainer.innerHTML = '<p>Failed to load chat history.</p>';
+        }
+      }
+
+      // Update profile
+      profileForm.addEventListener('submit', async (e) => {
+        e.preventDefault();
+
+        const name = document.getElementById('name').value;
+        const bio = document.getElementById('bio').value;
+
+        try {
+          const response = await fetch('/api/users/profile', {
+            method: 'PUT',
+            headers: {
+              'Content-Type': 'application/json'
+            },
+            body: JSON.stringify({ name, bio })
+          });
+
+          const data = await response.json();
+
+          if (!response.ok) {
+            throw new Error(data.error || 'Failed to update profile');
+          }
+
+          alert('Profile updated successfully!');
+
+        } catch (error) {
+          console.error('Error updating profile:', error);
+          alert(`Error: ${error.message}`);
+        }
+      });
+
+      // Create new API key
+      apiKeyForm.addEventListener('submit', async (e) => {
+        e.preventDefault();
+
+        const name = document.getElementById('key-name').value;
+
+        if (!name) {
+          alert('Please enter a name for your API key');
+          return;
+        }
+
+        try {
+          const response = await fetch('/api/auth/api-keys', {
+            method: 'POST',
+            headers: {
+              'Content-Type': 'application/json'
+            },
+            body: JSON.stringify({ name })
+          });
+
+          const data = await response.json();
+
+          if (!response.ok) {
+            throw new Error(data.error || 'Failed to create API key');
+          }
+
+          // Clear form and refresh keys
+          document.getElementById('key-name').value = '';
+          fetchApiKeys();
+
+        } catch (error) {
+          console.error('Error creating API key:', error);
+          alert(`Error: ${error.message}`);
+        }
+      });
+
+      // Handle API key deletion
+      apiKeysList.addEventListener('click', async (e) => {
+        if (e.target.classList.contains('delete-key')) {
+          const keyId = e.target.dataset.keyId;
+
+          if (confirm('Are you sure you want to revoke this API key? This action cannot be undone.')) {
+            try {
+              const response = await fetch(`/api/users/api-keys/${keyId}`, {
+                method: 'DELETE',
+                headers: {
+                  'Content-Type': 'application/json'
+                }
+              });
+
+              if (!response.ok) {
+                const data = await response.json();
+                throw new Error(data.error || 'Failed to revoke API key');
+              }
+
+              fetchApiKeys();
+
+            } catch (error) {
+              console.error('Error revoking API key:', error);
+              alert(`Error: ${error.message}`);
+            }
+          }
+        }
+      });
+
+      // Handle sign out
+      signOutBtn.addEventListener('click', async (e) => {
+        e.preventDefault();
+
+        try {
+          const response = await fetch('/api/auth/signout', {
+            method: 'POST',
+            headers: {
+              'Content-Type': 'application/json'
+            }
+          });
+
+          if (!response.ok) {
+            const data = await response.json();
+            throw new Error(data.error || 'Sign out failed');
+          }
+
+          // Redirect to home page
+          window.location.href = '/';
+
+        } catch (error) {
+          console.error('Error signing out:', error);
+          alert(`Error: ${error.message}`);
+        }
+      });
+
+      // Initialize - fetch profile data
+      fetchProfile();
+    });
+  </script>
+</body>
+</html>

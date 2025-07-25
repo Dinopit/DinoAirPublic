@@ -1,17 +1,30 @@
 import { DinoAirError, ErrorType } from '../services/error-handler';
 
-// Retry configuration interface
+/**
+ * Configuration interface for retry operations
+ * @interface RetryConfig
+ */
 export interface RetryConfig {
+  /** Maximum number of retry attempts */
   maxAttempts: number;
+  /** Initial delay in milliseconds before first retry */
   initialDelay: number;
+  /** Maximum delay in milliseconds between retries */
   maxDelay: number;
+  /** Multiplication factor for exponential backoff (default: 2) */
   factor?: number;
+  /** Whether to add random jitter to delays (default: true) */
   jitter?: boolean;
+  /** Array of error types that should trigger retries */
   retryableErrors?: ErrorType[];
+  /** Callback function called on each retry attempt */
   onRetry?: (error: Error, attempt: number) => void;
 }
 
-// Default retry configuration
+/**
+ * Default retry configuration with conservative settings
+ * @constant
+ */
 export const DEFAULT_RETRY_CONFIG: RetryConfig = {
   maxAttempts: 2, // Reduced from 3 to prevent excessive retries
   initialDelay: 1000,
@@ -27,19 +40,33 @@ export const DEFAULT_RETRY_CONFIG: RetryConfig = {
   ]
 };
 
-// Circuit breaker states
+/**
+ * Circuit breaker states enumeration
+ * @enum {string}
+ */
 export enum CircuitState {
+  /** Circuit is closed, requests flow normally */
   CLOSED = 'CLOSED',
+  /** Circuit is open, requests are blocked */
   OPEN = 'OPEN',
+  /** Circuit is half-open, testing if service has recovered */
   HALF_OPEN = 'HALF_OPEN'
 }
 
-// Circuit breaker configuration
+/**
+ * Configuration interface for circuit breaker behavior
+ * @interface CircuitBreakerConfig
+ */
 export interface CircuitBreakerConfig {
+  /** Number of failures required to open the circuit */
   failureThreshold: number;
+  /** Time in milliseconds before attempting to close an open circuit */
   resetTimeout: number;
+  /** Number of requests allowed in half-open state */
   halfOpenRequests: number;
+  /** Time period in milliseconds for monitoring failures */
   monitoringPeriod: number;
+  /** Callback function called when circuit state changes */
   onStateChange?: (oldState: CircuitState, newState: CircuitState) => void;
 }
 

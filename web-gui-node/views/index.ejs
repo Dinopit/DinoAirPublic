@@ -1,0 +1,142 @@
+<!-- Chat Interface -->
+<div class="chat-container">
+    <!-- Chat Messages Area -->
+    <div class="chat-messages" id="chat-messages">
+        <div class="welcome-message">
+            <div class="welcome-content">
+                <h3>Welcome to DinoAir Chat</h3>
+                <p>Start a conversation with AI. Type your message below and press Enter or click Send.</p>
+                <div class="model-info">
+                    <span class="model-label">Current Model:</span>
+                    <span class="model-name" id="current-model">Loading...</span>
+                    <button class="btn btn-sm btn-secondary" id="change-model-btn">Change</button>
+                </div>
+            </div>
+        </div>
+    </div>
+
+    <!-- Chat Input Area -->
+    <div class="chat-input-container">
+        <form class="chat-form" id="chat-form">
+            <div class="input-group">
+                <textarea 
+                    id="chat-input" 
+                    class="chat-input" 
+                    placeholder="Type your message here..." 
+                    rows="1"
+                    maxlength="4000"
+                ></textarea>
+                <div class="input-actions">
+                    <button type="button" class="btn btn-icon" id="attach-btn" title="Attach file">
+                        📎
+                    </button>
+                    <button type="submit" class="btn btn-primary" id="send-btn" disabled>
+                        <span class="btn-text">Send</span>
+                        <span class="btn-loading hidden">
+                            <span class="spinner-sm"></span>
+                        </span>
+                    </button>
+                </div>
+            </div>
+            <div class="input-footer">
+                <div class="char-counter">
+                    <span id="char-count">0</span>/4000
+                </div>
+                <div class="input-options">
+                    <label class="checkbox-label">
+                        <input type="checkbox" id="stream-response" checked>
+                        <span class="checkmark"></span>
+                        Stream response
+                    </label>
+                </div>
+            </div>
+        </form>
+    </div>
+</div>
+
+<!-- Model Selection Modal -->
+<div class="modal" id="model-modal">
+    <div class="modal-content">
+        <div class="modal-header">
+            <h3>Select AI Model</h3>
+            <button class="btn btn-icon modal-close" id="modal-close-btn">×</button>
+        </div>
+        <div class="modal-body">
+            <div class="model-list" id="model-list">
+                <div class="loading-state">
+                    <div class="spinner"></div>
+                    <p>Loading available models...</p>
+                </div>
+            </div>
+        </div>
+        <div class="modal-footer">
+            <button class="btn btn-secondary" id="cancel-model-btn">Cancel</button>
+            <button class="btn btn-primary" id="select-model-btn" disabled>Select Model</button>
+        </div>
+    </div>
+</div>
+
+<!-- System Prompt Modal -->
+<div class="modal" id="system-prompt-modal">
+    <div class="modal-content">
+        <div class="modal-header">
+            <h3>System Prompt</h3>
+            <button class="btn btn-icon modal-close">×</button>
+        </div>
+        <div class="modal-body">
+            <div class="form-group">
+                <label for="system-prompt-input">Custom system prompt (optional):</label>
+                <textarea 
+                    id="system-prompt-input" 
+                    class="form-control" 
+                    rows="4" 
+                    placeholder="Enter a system prompt to customize the AI's behavior..."
+                ></textarea>
+            </div>
+            <div class="prompt-presets">
+                <h4>Quick Presets:</h4>
+                <div class="preset-buttons">
+                    <button class="btn btn-sm btn-outline" data-preset="helpful">Helpful Assistant</button>
+                    <button class="btn btn-sm btn-outline" data-preset="creative">Creative Writer</button>
+                    <button class="btn btn-sm btn-outline" data-preset="technical">Technical Expert</button>
+                    <button class="btn btn-sm btn-outline" data-preset="casual">Casual Chat</button>
+                </div>
+            </div>
+        </div>
+        <div class="modal-footer">
+            <button class="btn btn-secondary" id="clear-prompt-btn">Clear</button>
+            <button class="btn btn-primary" id="save-prompt-btn">Save</button>
+        </div>
+    </div>
+</div>
+
+<!-- Chat Actions Toolbar -->
+<div class="chat-toolbar">
+    <div class="toolbar-section">
+        <button class="btn btn-sm btn-outline" id="clear-chat-btn" title="Clear chat history">
+            🗑️ Clear Chat
+        </button>
+        <button class="btn btn-sm btn-outline" id="export-chat-btn" title="Export chat">
+            📥 Export
+        </button>
+    </div>
+    <div class="toolbar-section">
+        <button class="btn btn-sm btn-outline" id="system-prompt-btn" title="Set system prompt">
+            ⚙️ System Prompt
+        </button>
+        <button class="btn btn-sm btn-outline" id="settings-btn" title="Chat settings">
+            🔧 Settings
+        </button>
+    </div>
+</div>
+
+<!-- Page-specific scripts -->
+<script>
+// Add page-specific scripts to the scripts array
+if (typeof scripts === 'undefined') {
+    var scripts = [];
+}
+scripts.push('/js/chat.js');
+scripts.push('/js/models.js');
+scripts.push('/js/streaming.js');
+</script>

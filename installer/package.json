@@ -10,18 +10,31 @@
     "build:win": "electron-builder --win",
     "build:mac": "electron-builder --mac",
     "build:linux": "electron-builder --linux",
-    "test": "node test/test-installer.js",
+    "test": "jest",
+    "test:unit": "jest tests/unit",
+    "test:integration": "jest tests/integration",
+    "test:e2e": "jest tests/e2e",
+    "test:watch": "jest --watch",
+    "test:coverage": "jest --coverage",
+    "test:legacy": "node test/test-installer.js",
     "generate-icons": "node scripts/generate-icons.js"
   },
   "author": "DinoAir Team",
   "license": "MIT",
   "devDependencies": {
+    "@types/jest": "^30.0.0",
     "electron": "^28.0.0",
     "electron-builder": "^24.9.1",
+    "jest": "^30.0.5",
+    "jest-environment-node": "^30.0.5",
     "sharp": "^0.33.0"
   },
   "dependencies": {
-    "node-machine-id": "^1.1.12"
+    "chalk": "^4.1.2",
+    "cli-progress": "^3.12.0",
+    "inquirer": "^8.2.6",
+    "node-machine-id": "^1.1.12",
+    "ora": "^5.4.1"
   },
   "build": {
     "appId": "com.dinoair.installer",
@@ -38,17 +51,23 @@
       {
         "from": "../lib/hardware_detection",
         "to": "lib/hardware_detection",
-        "filter": ["**/*.py"]
+        "filter": [
+          "**/*.py"
+        ]
       },
       {
         "from": "../lib/model_recommendation",
         "to": "lib/model_recommendation",
-        "filter": ["**/*.py"]
+        "filter": [
+          "**/*.py"
+        ]
       },
       {
         "from": "scripts",
         "to": "scripts",
-        "filter": ["*.py"]
+        "filter": [
+          "*.py"
+        ]
       }
     ],
     "win": {
@@ -58,7 +77,9 @@
       "certificatePassword": "${env.WINDOWS_CERTIFICATE_PASSWORD}",
       "verifyUpdateCodeSignature": true,
       "publisherName": "DinoAir Team",
-      "signingHashAlgorithms": ["sha256"],
+      "signingHashAlgorithms": [
+        "sha256"
+      ],
       "rfc3161TimeStampServer": "http://timestamp.digicert.com"
     },
     "nsis": {
@@ -96,7 +117,11 @@
       ]
     },
     "linux": {
-      "target": ["AppImage", "deb", "rpm"],
+      "target": [
+        "AppImage",
+        "deb",
+        "rpm"
+      ],
       "icon": "assets/icon.png",
       "category": "Development",
       "maintainer": "DinoAir Team <support@dinoair.com>",
@@ -105,7 +130,9 @@
     },
     "protocols": {
       "name": "dinoair-protocol",
-      "schemes": ["dinoair"]
+      "schemes": [
+        "dinoair"
+      ]
     }
   }
 }
