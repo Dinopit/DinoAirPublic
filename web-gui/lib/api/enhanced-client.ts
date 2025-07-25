@@ -2,6 +2,7 @@ import { DinoAirError, ErrorType, ErrorContext, errorHandler } from '../services
 import { retry, RetryConfig, RetryStrategy, RetryWithCircuitBreaker, CircuitBreakerConfig } from '../utils/retry-strategies';
 import { requestDeduplication } from './request-deduplication';
 import { useCacheStore, cacheKeys, cacheTTL } from '../stores/cache-store';
+import { getCurrentCorrelationId, createCorrelationHeaders } from '../correlation/correlation-id';
 
 // Request interceptor type
 export type RequestInterceptor = (config: RequestConfig) => RequestConfig | Promise<RequestConfig>;
@@ -326,6 +327,12 @@ export class EnhancedApiClient {
 
   private mergeHeaders(headers?: HeadersInit): Headers {
     const merged = new Headers(this.config.defaultHeaders);
+    
+    // Add correlation ID headers
+    const correlationHeaders = createCorrelationHeaders(getCurrentCorrelationId());
+    Object.entries(correlationHeaders).forEach(([key, value]) => {
+      merged.set(key, value);
+    });
     
     if (headers) {
       const headersObj = headers instanceof Headers

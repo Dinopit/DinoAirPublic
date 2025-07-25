@@ -1,4 +1,8 @@
 import { NextRequest, NextResponse } from 'next/server';
+import { getCurrentCorrelationId } from '@/lib/correlation/correlation-id';
+import { getLogger } from '@/lib/logging/logger';
+
+const logger = getLogger('health-api');
 
 interface ServiceHealthCheck {
   status: 'healthy' | 'unhealthy' | 'degraded';
@@ -10,11 +14,14 @@ interface ServiceHealthCheck {
 
 async function checkOllama(): Promise<ServiceHealthCheck> {
   const startTime = Date.now();
+  const correlationId = getCurrentCorrelationId();
   try {
     // Check if Ollama is responsive
     const ollamaUrl = process.env.NEXT_PUBLIC_OLLAMA_URL || 'http://localhost:11434';
     const controller = new AbortController();
     const timeoutId = setTimeout(() => controller.abort(), 10000); // 10 second timeout
+    
+    logger.debug('Checking Ollama health', { ollamaUrl, correlationId });
     
     // Check multiple endpoints for deep health verification
     const [tagsResponse, versionResponse] = await Promise.allSettled([
@@ -40,6 +47,14 @@ async function checkOllama(): Promise<ServiceHealthCheck> {
         version = versionData.version;
       }
       
+      logger.info('Ollama health check completed', { 
+        ollamaUrl, 
+        isHealthy: true, 
+        status: tagsResponse.value?.status,
+        correlationId,
+        responseTime
+      });
+      
       return {
         status: 'healthy',
         responseTime,
@@ -55,6 +70,15 @@ async function checkOllama(): Promise<ServiceHealthCheck> {
         tagsResponse.reason?.message : 
         `HTTP ${tagsResponse.value?.status}`;
       
+      logger.info('Ollama health check completed', { 
+        ollamaUrl, 
+        isHealthy: false, 
+        status: tagsResponse.value?.status,
+        correlationId,
+        responseTime,
+        error
+      });
+      
       return {
         status: 'unhealthy',
         responseTime,
@@ -63,6 +87,7 @@ async function checkOllama(): Promise<ServiceHealthCheck> {
       };
     }
   } catch (error: any) {
+    logger.error('Ollama health check failed', error, { correlationId });
     return {
       status: 'unhealthy',
       responseTime: Date.now() - startTime,
@@ -74,11 +99,14 @@ async function checkOllama(): Promise<ServiceHealthCheck> {
 
 async function checkComfyUI(): Promise<ServiceHealthCheck> {
   const startTime = Date.now();
+  const correlationId = getCurrentCorrelationId();
   try {
     // Check if ComfyUI backend is responsive
     const comfyUrl = process.env.COMFYUI_API_URL || 'http://localhost:8188';
     const controller = new AbortController();
     const timeoutId = setTimeout(() => controller.abort(), 10000); // 10 second timeout
+    
+    logger.debug('Checking ComfyUI health', { comfyUrl, correlationId });
     
     // Check multiple endpoints for deep health verification
     const [healthResponse, systemStatsResponse] = await Promise.allSettled([
@@ -102,6 +130,14 @@ async function checkComfyUI(): Promise<ServiceHealthCheck> {
         systemStats = await systemStatsResponse.value.json().catch(() => ({}));
       }
       
+      logger.info('ComfyUI health check completed', { 
+        comfyUrl, 
+        isHealthy: true, 
+        status: healthResponse.value?.status,
+        correlationId,
+        responseTime
+      });
+      
       return {
         status: 'healthy',
         responseTime,
@@ -116,6 +152,15 @@ async function checkComfyUI(): Promise<ServiceHealthCheck> {
         healthResponse.reason?.message : 
         `HTTP ${healthResponse.value?.status}`;
       
+      logger.info('ComfyUI health check completed', { 
+        comfyUrl, 
+        isHealthy: false, 
+        status: healthResponse.value?.status,
+        correlationId,
+        responseTime,
+        error
+      });
+      
       return {
         status: 'unhealthy',
         responseTime,
@@ -124,6 +169,7 @@ async function checkComfyUI(): Promise<ServiceHealthCheck> {
       };
     }
   } catch (error: any) {
+    logger.error('ComfyUI health check failed', error, { correlationId });
     return {
       status: 'unhealthy',
       responseTime: Date.now() - startTime,
@@ -135,6 +181,9 @@ async function checkComfyUI(): Promise<ServiceHealthCheck> {
 
 export async function GET(request: NextRequest) {
   const startTime = Date.now();
+  const correlationId = getCurrentCorrelationId();
+  
+  logger.info('Health check started', { correlationId });
   
   // Perform comprehensive health checks
   const [ollamaHealth, comfyUIHealth] = await Promise.all([
@@ -175,6 +224,7 @@ export async function GET(request: NextRequest) {
     ready: isReady,
     timestamp: new Date().toISOString(),
     responseTime: `${totalResponseTime}ms`,
+    correlationId,
     version: process.env.NEXT_PUBLIC_VERSION || '1.0.0',
     environment: process.env.NODE_ENV || 'development',
     deployment: {
@@ -240,6 +290,14 @@ export async function GET(request: NextRequest) {
       }
     }
   };
+  
+  logger.info('Health check completed', { 
+    correlationId,
+    allHealthy,
+    responseTime: totalResponseTime,
+    ollamaHealthy: ollamaHealth.status === 'healthy',
+    comfyUIHealthy: comfyUIHealth.status === 'healthy'
+  });
   
   // Return appropriate status code based on health
   const statusCode = overallStatus === 'healthy' ? 200 : 503;
