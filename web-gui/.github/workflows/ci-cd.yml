@@ -72,6 +72,71 @@ jobs:
           flags: unittests
           name: codecov-umbrella
 
+  # Contract Tests (Consumer)
+  contract-tests-consumer:
+    name: Contract Tests (Consumer)
+    runs-on: ubuntu-latest
+    steps:
+      - name: Checkout code
+        uses: actions/checkout@v4
+
+      - name: Setup Node.js
+        uses: actions/setup-node@v4
+        with:
+          node-version: ${{ env.NODE_VERSION }}
+          cache: 'npm'
+          cache-dependency-path: web-gui/package-lock.json
+
+      - name: Install frontend dependencies
+        working-directory: ./web-gui
+        run: npm ci
+
+      - name: Run consumer contract tests
+        working-directory: ./web-gui
+        run: npm run test:contracts:consumer
+        env:
+          NODE_ENV: test
+
+      - name: Upload pact files
+        uses: actions/upload-artifact@v3
+        with:
+          name: pact-files
+          path: contracts/pacts/
+          retention-days: 7
+
+  # Contract Tests (Provider)
+  contract-tests-provider:
+    name: Contract Tests (Provider)
+    runs-on: ubuntu-latest
+    needs: [contract-tests-consumer]
+    steps:
+      - name: Checkout code
+        uses: actions/checkout@v4
+
+      - name: Setup Node.js
+        uses: actions/setup-node@v4
+        with:
+          node-version: ${{ env.NODE_VERSION }}
+          cache: 'npm'
+          cache-dependency-path: web-gui-node/package-lock.json
+
+      - name: Install backend dependencies
+        working-directory: ./web-gui-node
+        run: npm ci
+
+      - name: Download pact files
+        uses: actions/download-artifact@v3
+        with:
+          name: pact-files
+          path: contracts/pacts/
+
+      - name: Run provider contract verification
+        working-directory: ./web-gui-node
+        run: npm run test:contracts:provider
+        env:
+          NODE_ENV: test
+          CI: true
+
   # E2E Tests
   e2e-tests:
     name: E2E Tests
@@ -119,7 +184,7 @@ jobs:
   build:
     name: Build Application
     runs-on: ubuntu-latest
-    needs: [lint-and-type-check, unit-tests]
+    needs: [lint-and-type-check, unit-tests, contract-tests-provider]
     steps:
       - name: Checkout code
         uses: actions/checkout@v4
