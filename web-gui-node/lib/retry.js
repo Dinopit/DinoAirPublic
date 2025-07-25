@@ -38,12 +38,21 @@ function isRetryableError(error) {
   if (error.code === 'ECONNREFUSED' || 
       error.code === 'ENOTFOUND' || 
       error.code === 'ETIMEDOUT' ||
+      error.code === 'ECONNRESET' ||
       error.name === 'TimeoutError') {
     return true;
   }
   
   if (error.response && error.response.status >= 500) {
     return true;
+  }
+  
+  if (error.message && (error.message.includes('timeout') || error.message.includes('Timeout'))) {
+    return true;
+  }
+  
+  if (error.message && error.message.includes('Circuit') && error.message.includes('is open')) {
+    return false;
   }
   
   return false;
