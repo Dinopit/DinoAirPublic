@@ -7,14 +7,21 @@ const fs = require('fs');
 const path = require('path');
 const https = require('https');
 const { promisify } = require('util');
-const { spawn } = require('child_process');
+const { spawn, exec } = require('child_process');
 const crypto = require('crypto');
+const semver = require('semver');
+const chalk = require('chalk');
+const ora = require('ora');
+
+const execAsync = promisify(exec);
 
 class UpdateManager {
   constructor(options = {}) {
     this.logger = options.logger;
     this.fileUtils = options.fileUtils;
     this.verbose = options.verbose || false;
+    this.updateChannel = options.updateChannel || 'stable';
+    this.telemetryEnabled = options.telemetryEnabled !== false;
     
     // Update configuration
     this.config = {
@@ -690,6 +697,138 @@ class UpdateManager {
       this.logger.debug(`Automatic update checks enabled (interval: ${interval}ms)`);
     }
   }
+
+  /**
+   * Get the latest release for the specified channel
+   * @param {Array} releases Array of release objects
+   * @returns {Object|null} Latest release or null
+   */
+  getLatestReleaseForChannel(releases) {
+    if (!Array.isArray(releases) || releases.length === 0) return null;
+    
+    const channelReleases = releases.filter(release => {
+      if (this.updateChannel === 'stable') {
+        return !release.prerelease;
+      } else if (this.updateChannel === 'beta') {
+        return release.prerelease && release.tag_name.includes('beta');
+      } else if (this.updateChannel === 'alpha') {
+        return release.prerelease && (release.tag_name.includes('alpha') || release.tag_name.includes('beta'));
+      }
+      return false;
+    });
+
+    return channelReleases.length > 0 ? channelReleases[0] : null;
+  }
+
+  /**
+   * Get download URL for the current platform
+   * @param {Object} release Release object
+   * @returns {string} Download URL
+   */
+  getDownloadUrlForPlatform(release) {
+    const platform = process.platform;
+    const assets = release.assets || [];
+
+    let assetName;
+    if (platform === 'win32') {
+      assetName = assets.find(asset => asset.name.endsWith('.exe'));
+    } else if (platform === 'darwin') {
+      assetName = assets.find(asset => asset.name.endsWith('.dmg'));
+    } else if (platform === 'linux') {
+      assetName = assets.find(asset => asset.name.endsWith('.AppImage')) ||
+                  assets.find(asset => asset.name.endsWith('.deb')) ||
+                  assets.find(asset => asset.name.endsWith('.rpm'));
+    }
+
+    if (!assetName) {
+      throw new Error(`No installer found for platform: ${platform}`);
+    }
+
+    return assetName.browser_download_url;
+  }
+
+  /**
+   * Configure update settings
+   * @param {Object} settings Update configuration
+   * @returns {Promise<void>}
+   */
+  async configureUpdates(settings) {
+    const configPath = path.join(process.cwd(), 'update-config.json');
+    const config = {
+      channel: settings.channel || this.updateChannel || 'stable',
+      autoUpdate: settings.autoUpdate !== undefined ? settings.autoUpdate : false,
+      telemetryEnabled: settings.telemetryEnabled !== undefined ? settings.telemetryEnabled : true,
+      checkInterval: settings.checkInterval || 24 * 60 * 60 * 1000, // 24 hours
+      ...settings
+    };
+
+    try {
+      await fs.promises.writeFile(configPath, JSON.stringify(config, null, 2));
+      
+      // Update instance properties
+      Object.assign(this, config);
+    } catch (error) {
+      if (this.logger) {
+        this.logger.error(`Failed to save update config: ${error.message}`);
+      }
+      throw error;
+    }
+  }
+
+  /**
+   * Get current update configuration
+   * @returns {Promise<Object>} Current configuration
+   */
+  async getUpdateConfig() {
+    const configPath = path.join(process.cwd(), 'update-config.json');
+    
+    try {
+      const configData = await fs.promises.readFile(configPath, 'utf8');
+      return JSON.parse(configData);
+    } catch (error) {
+      // Return default config if file doesn't exist
+      return {
+        channel: this.updateChannel || 'stable',
+        autoUpdate: false,
+        telemetryEnabled: true,
+        checkInterval: 24 * 60 * 60 * 1000
+      };
+    }
+  }
+
+  /**
+   * Send telemetry data (if enabled)
+   * @param {string} event Event name
+   * @param {Object} data Event data
+   * @returns {Promise<void>}
+   */
+  async sendTelemetry(event, data = {}) {
+    if (!this.telemetryEnabled) return;
+
+    try {
+      const telemetryData = {
+        event,
+        timestamp: new Date().toISOString(),
+        version: this.config.currentVersion,
+        platform: process.platform,
+        arch: process.arch,
+        ...data
+      };
+
+      // For now, just log telemetry. In production, this would send to an analytics service
+      if (this.verbose && this.logger) {
+        this.logger.debug('Telemetry:', JSON.stringify(telemetryData));
+      }
+      
+      // TODO: Implement actual telemetry sending to analytics service
+    } catch (error) {
+      // Silently fail telemetry - don't interrupt user experience
+      if (this.verbose && this.logger) {
+        this.logger.debug('Telemetry failed:', error.message);
+      }
+    }
+  }
+}
 }
 
 module.exports = UpdateManager;
