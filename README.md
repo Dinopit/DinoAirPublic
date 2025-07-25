@@ -93,6 +93,11 @@ While DinoAir has received significant stability improvements, users should stil
   - Circuit breakers for external services
   - Health checks with auto-restart
   - Error boundaries and recovery mechanisms
+- 🧪 **Testing & Quality Assurance**
+  - Contract testing with Pact for API compatibility
+  - Consumer-driven contract tests for frontend-backend integration
+  - Automated contract verification in CI/CD pipeline
+  - Comprehensive API contract documentation
 - 📈 **Operational Excellence**
   - Comprehensive logging with rotation
   - Resource usage monitoring
@@ -389,7 +394,7 @@ curl -H "X-API-Key: your-api-key" http://localhost:3000/api/health
 
 ## 🧪 Testing
 
-### Run All Tests
+### Unit and Integration Tests
 
 ```bash
 cd web-gui
@@ -397,6 +402,34 @@ npm test                  # Unit tests
 npm run test:e2e         # E2E tests
 npm run test:coverage    # Coverage report
 ```
+
+### Contract Testing
+
+DinoAir implements comprehensive contract testing to ensure API compatibility between frontend and backend:
+
+```bash
+# Quick setup (installs dependencies and starts Pact Broker)
+cd contracts
+./setup-contracts.sh setup
+
+# Run consumer tests (frontend expectations)
+./setup-contracts.sh consumer
+
+# Run provider verification (backend compliance)
+./setup-contracts.sh provider
+
+# Run full contract testing workflow
+./setup-contracts.sh full
+```
+
+**Contract Testing Features:**
+- Consumer-driven contract tests for all API endpoints
+- Automated provider verification
+- Pact Broker for contract management
+- CI/CD integration with automated verification
+- Comprehensive documentation and examples
+
+For detailed contract testing information, see: [`contracts/CONTRACT_TESTING_GUIDE.md`](contracts/CONTRACT_TESTING_GUIDE.md)
 
 ### Stability Testing
 
