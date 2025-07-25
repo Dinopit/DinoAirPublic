@@ -1,0 +1,91 @@
+# Trivy Security Scanner Configuration
+# This file defines security policies and scanning configurations for DinoAir
+
+# Cache configuration
+cache:
+  dir: ~/.cache/trivy
+
+# Database configuration
+db:
+  skip-update: false
+  
+# Vulnerability scanning settings
+vulnerability:
+  type:
+    - os
+    - library
+  
+# Security checks to enable
+security-checks:
+  - vuln
+  - config
+  - secret
+
+# Severity levels to report
+severity:
+  - CRITICAL
+  - HIGH
+  - MEDIUM
+  - LOW
+  - UNKNOWN
+
+# Ignore specific vulnerabilities (with justification)
+ignore:
+  # Example: temporary ignores with expiration dates
+  # - cve: CVE-2021-12345
+  #   reason: "False positive - not applicable to our use case"
+  #   expires: "2024-12-31"
+
+# Exit code configuration
+exit-code: 1  # Fail on vulnerabilities
+
+# Output configuration
+format: table
+output: ""
+
+# Timeout settings
+timeout: 5m0s
+
+# Skip specific files/directories
+skip-files:
+  - "**/*.md"
+  - "**/test/**"
+  - "**/tests/**"
+  - "**/__tests__/**"
+  - "**/coverage/**"
+  - "**/node_modules/**"
+
+# Skip specific directories
+skip-dirs:
+  - node_modules
+  - .git
+  - .next
+  - coverage
+  - dist
+  - build
+
+# License scanning
+license:
+  # Forbidden licenses that should fail the build
+  forbidden:
+    - GPL-2.0
+    - GPL-3.0
+    - AGPL-1.0
+    - AGPL-3.0
+  
+  # Restricted licenses that should generate warnings
+  restricted:
+    - LGPL-2.1
+    - LGPL-3.0
+    - MPL-2.0
+
+# Secret scanning configuration
+secret:
+  config: .trivy/secret.yaml
+
+# Misconfiguration scanning
+misconfig:
+  include-non-failures: false
+  
+# Custom policies directory
+policy: .trivy/policies
