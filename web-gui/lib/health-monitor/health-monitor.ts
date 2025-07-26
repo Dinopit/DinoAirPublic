@@ -1,7 +1,20 @@
 /**
  * DinoAir Health Monitoring System for Web GUI
- * Client-side health monitoring and service status tracking
+ * Client-side health monitoring and service status tracking with APM integration
  */
+
+import { getAPMInstance, PerformanceMetrics } from '@/lib/monitoring/apm';
+
+export interface EnhancedPerformanceMetrics extends PerformanceMetrics {
+  healthMetrics?: {
+    servicesCount: number;
+    healthyServices: number;
+    unhealthyServices: number;
+    averageResponseTime: number;
+    totalConsecutiveFailures: number;
+    recentEventsCount: number;
+  };
+}
 
 export enum ServiceStatus {
   HEALTHY = 'healthy',
@@ -297,6 +310,61 @@ export class HealthMonitor {
     );
     
     await Promise.all(promises);
+  }
+
+  /**
+   * Collect comprehensive performance metrics for APM integration
+   */
+  collectPerformanceMetrics(): EnhancedPerformanceMetrics {
+    const startTime = performance.now();
+    
+    const apm = getAPMInstance();
+    const apmMetrics = apm.collectPerformanceMetrics();
+    
+    const healthMetrics = {
+      servicesCount: this.services.size,
+      healthyServices: Array.from(this.services.values()).filter(s => s.status === ServiceStatus.HEALTHY).length,
+      unhealthyServices: Array.from(this.services.values()).filter(s => s.status === ServiceStatus.UNHEALTHY).length,
+      averageResponseTime: this.calculateAverageResponseTime(),
+      totalConsecutiveFailures: Array.from(this.services.values()).reduce((sum, s) => sum + s.consecutiveFailures, 0),
+      recentEventsCount: this.eventHistory.length,
+    };
+    
+    return {
+      responseTime: performance.now() - startTime,
+      memoryUsage: apmMetrics.memoryUsage,
+      cpuUsage: apmMetrics.cpuUsage,
+      uptime: apmMetrics.uptime,
+      timestamp: new Date().toISOString(),
+      healthMetrics,
+    };
+  }
+
+  /**
+   * Calculate average response time across all services
+   */
+  private calculateAverageResponseTime(): number {
+    const services = Array.from(this.services.values());
+    const responseTimes = services
+      .map(s => s.responseTime)
+      .filter((time): time is number => time !== undefined);
+    
+    if (responseTimes.length === 0) return 0;
+    
+    return responseTimes.reduce((sum, time) => sum + time, 0) / responseTimes.length;
+  }
+
+  /**
+   * Get enhanced health report with APM metrics
+   */
+  getEnhancedHealthReport(): HealthReport & { performanceMetrics: EnhancedPerformanceMetrics } {
+    const baseReport = this.getHealthReport();
+    const performanceMetrics = this.collectPerformanceMetrics();
+    
+    return {
+      ...baseReport,
+      performanceMetrics,
+    };
   }
 }
 
