@@ -31,6 +31,11 @@ class ChatStreamer extends EventEmitter {
     try {
       this.emit('streamStart');
       
+      // Show loading state for the streaming operation
+      if (window.loadingManager) {
+        window.loadingManager.showApiLoading('chat-messages', 'Connecting to AI');
+      }
+      
       const response = await fetch('/api/chat', {
         method: 'POST',
         headers: {
@@ -85,6 +90,10 @@ class ChatStreamer extends EventEmitter {
       this.isStreaming = false;
       this.currentStream = null;
       this.abortController = null;
+      
+      if (window.loadingManager) {
+        window.loadingManager.hide('chat-messages');
+      }
     }
   }
 
@@ -95,6 +104,10 @@ class ChatStreamer extends EventEmitter {
     if (this.isStreaming && this.abortController) {
       this.abortController.abort();
       this.isStreaming = false;
+      
+      if (window.loadingManager) {
+        window.loadingManager.hide('chat-messages');
+      }
     }
   }
 

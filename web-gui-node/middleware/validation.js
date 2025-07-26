@@ -12,16 +12,38 @@ const { rateLimiters, addRateLimitInfo } = require('./enhanced-rate-limiting');
 const handleValidationErrors = (req, res, next) => {
   const errors = validationResult(req);
   if (!errors.isEmpty()) {
+    const fieldErrors = errors.array().map(error => ({
+      field: error.path,
+      message: getFieldErrorMessage(error.path, error.msg),
+      value: error.value
+    }));
+    
     return res.status(400).json({
-      error: 'Validation failed',
-      details: errors.array().map(error => ({
-        field: error.path,
-        message: error.msg,
-        value: error.value
-      }))
+      error: 'Please check the information you entered and try again.',
+      details: fieldErrors,
+      category: 'validation_error'
     });
   }
   next();
+};
+
+/**
+ * Get user-friendly field error messages
+ */
+const getFieldErrorMessage = (field, technicalMessage) => {
+  const fieldMessages = {
+    email: 'Please enter a valid email address.',
+    password: 'Password must be at least 8 characters with uppercase, lowercase, numbers, and special characters.',
+    name: 'Name should only contain letters, spaces, and common punctuation.',
+    messages: 'Please provide valid chat messages.',
+    'messages.*.content': 'Message cannot be empty and must be under 10,000 characters.',
+    model: 'Please select a valid AI model.',
+    content: 'Content cannot be empty.',
+    sessionId: 'Please provide a valid session ID.',
+    userId: 'Please provide a valid user ID.'
+  };
+  
+  return fieldMessages[field] || technicalMessage || 'Please enter a valid value for this field.';
 };
 
 /**
@@ -312,5 +334,6 @@ module.exports = {
   fileValidation,
   securityMiddleware,
   sanitizeInput,
-  handleValidationErrors
+  handleValidationErrors,
+  getFieldErrorMessage
 };

@@ -95,17 +95,47 @@ io.on('connection', (socket) => {
 app.use((err, req, res, next) => {
   console.error('Server error:', err);
   
+  let userMessage = 'We encountered an unexpected issue. Please try again.';
+  let category = 'server_error';
+  let statusCode = 500;
+  
+  // Handle specific error types
+  if (err.name === 'ValidationError') {
+    userMessage = 'Please check the information you entered and try again.';
+    category = 'validation_error';
+    statusCode = 400;
+  } else if (err.status === 401 || err.message?.includes('auth')) {
+    userMessage = 'You need to be signed in to access this feature.';
+    category = 'authentication_error';
+    statusCode = 401;
+  } else if (err.status === 403) {
+    userMessage = 'You don\'t have permission to access this feature.';
+    category = 'authorization_error';
+    statusCode = 403;
+  } else if (err.status === 429 || err.message?.includes('rate limit')) {
+    userMessage = 'You\'re making requests too quickly. Please wait a moment and try again.';
+    category = 'rate_limit_error';
+    statusCode = 429;
+  } else if (err.code === 'ECONNREFUSED' || err.code === 'ENOTFOUND') {
+    userMessage = 'We\'re having trouble connecting to our services. Please try again in a few moments.';
+    category = 'service_unavailable';
+    statusCode = 503;
+  }
+  
+  const errorResponse = {
+    error: userMessage,
+    category,
+    timestamp: new Date().toISOString()
+  };
+  
   if (NODE_ENV === 'development') {
-    res.status(500).json({
-      error: 'Internal server error',
+    errorResponse.technical = {
       message: err.message,
       stack: err.stack
-    });
-  } else {
-    res.status(500).json({
-      error: 'Internal server error'
-    });
+    };
   }
+  
+  res.status(statusCode).json(errorResponse);
 });
 
 // 404 handler
