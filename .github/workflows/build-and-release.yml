@@ -65,6 +65,11 @@ jobs:
           cd installer
           npm test
 
+      - name: Run security scan
+        run: |
+          cd installer
+          npm audit --audit-level moderate
+
       - name: Build Windows installer
         env:
           WINDOWS_CERTIFICATE_FILE: ${{ secrets.WINDOWS_CERTIFICATE_FILE }}
@@ -112,6 +117,11 @@ jobs:
         run: |
           cd installer
           npm test
+
+      - name: Run security scan
+        run: |
+          cd installer
+          npm audit --audit-level moderate
 
       - name: Import signing certificate
         if: env.APPLE_CERTIFICATE_P12 != ''
@@ -179,6 +189,11 @@ jobs:
         run: |
           cd installer
           npm test
+
+      - name: Run security scan
+        run: |
+          cd installer
+          npm audit --audit-level moderate
 
       - name: Build Linux installers
         run: |
