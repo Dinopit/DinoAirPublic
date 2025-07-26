@@ -7,7 +7,7 @@
  * Chat Streaming Manager
  * Handles streaming chat responses from the API
  */
-class ChatStreamer extends EventEmitter {
+class ChatStreamer extends window.EventEmitter {
   constructor() {
     super();
     this.isStreaming = false;
@@ -27,19 +27,19 @@ class ChatStreamer extends EventEmitter {
 
     this.isStreaming = true;
     this.abortController = new AbortController();
-    
+
     try {
       this.emit('streamStart');
-      
+
       // Show loading state for the streaming operation
       if (window.loadingManager) {
         window.loadingManager.showApiLoading('chat-messages', 'Connecting to AI');
       }
-      
+
       const response = await fetch('/api/chat', {
         method: 'POST',
         headers: {
-          'Content-Type': 'application/json',
+          'Content-Type': 'application/json'
         },
         body: JSON.stringify(messageData),
         signal: this.abortController.signal
@@ -55,7 +55,7 @@ class ChatStreamer extends EventEmitter {
 
       while (this.isStreaming) {
         const { done, value } = await reader.read();
-        
+
         if (done) {
           this.emit('streamEnd');
           break;
@@ -79,7 +79,6 @@ class ChatStreamer extends EventEmitter {
       if (buffer.trim()) {
         this.emit('streamChunk', buffer);
       }
-
     } catch (error) {
       if (error.name === 'AbortError') {
         this.emit('streamAborted');
@@ -90,7 +89,7 @@ class ChatStreamer extends EventEmitter {
       this.isStreaming = false;
       this.currentStream = null;
       this.abortController = null;
-      
+
       if (window.loadingManager) {
         window.loadingManager.hide('chat-messages');
       }
@@ -104,7 +103,7 @@ class ChatStreamer extends EventEmitter {
     if (this.isStreaming && this.abortController) {
       this.abortController.abort();
       this.isStreaming = false;
-      
+
       if (window.loadingManager) {
         window.loadingManager.hide('chat-messages');
       }
@@ -124,7 +123,7 @@ class ChatStreamer extends EventEmitter {
  * WebSocket Manager
  * Handles WebSocket connections for real-time updates
  */
-class WebSocketManager extends EventEmitter {
+class WebSocketManager extends window.EventEmitter {
   constructor() {
     super();
     this.socket = null;
@@ -142,9 +141,9 @@ class WebSocketManager extends EventEmitter {
    */
   connect(url = null) {
     const wsUrl = url || `ws://${window.location.host}`;
-    
+
     try {
-      this.socket = io(wsUrl, {
+      this.socket = window.io(wsUrl, {
         transports: ['websocket', 'polling'],
         timeout: 5000,
         reconnection: true,
@@ -162,7 +161,7 @@ class WebSocketManager extends EventEmitter {
    * Set up WebSocket event handlers
    */
   setupEventHandlers() {
-    if (!this.socket) return;
+    if (!this.socket) { return; }
 
     this.socket.on('connect', () => {
       this.isConnected = true;
@@ -171,27 +170,27 @@ class WebSocketManager extends EventEmitter {
       this.startHeartbeat();
     });
 
-    this.socket.on('disconnect', (reason) => {
+    this.socket.on('disconnect', reason => {
       this.isConnected = false;
       this.emit('disconnected', reason);
       this.stopHeartbeat();
-      
+
       if (reason === 'io server disconnect') {
         // Server initiated disconnect, try to reconnect
         this.reconnect();
       }
     });
 
-    this.socket.on('connect_error', (error) => {
+    this.socket.on('connect_error', error => {
       this.emit('connectionError', error);
       this.reconnect();
     });
 
-    this.socket.on('reconnect', (attemptNumber) => {
+    this.socket.on('reconnect', attemptNumber => {
       this.emit('reconnected', attemptNumber);
     });
 
-    this.socket.on('reconnect_error', (error) => {
+    this.socket.on('reconnect_error', error => {
       this.emit('reconnectError', error);
     });
 
@@ -200,15 +199,15 @@ class WebSocketManager extends EventEmitter {
     });
 
     // Custom event handlers
-    this.socket.on('message', (data) => {
+    this.socket.on('message', data => {
       this.emit('message', data);
     });
 
-    this.socket.on('notification', (data) => {
+    this.socket.on('notification', data => {
       this.emit('notification', data);
     });
 
-    this.socket.on('status_update', (data) => {
+    this.socket.on('status_update', data => {
       this.emit('statusUpdate', data);
     });
 
@@ -293,7 +292,7 @@ class WebSocketManager extends EventEmitter {
 
     this.reconnectAttempts++;
     const delay = this.reconnectDelay * Math.pow(2, this.reconnectAttempts - 1);
-    
+
     setTimeout(() => {
       if (!this.isConnected) {
         this.emit('reconnectAttempt', this.reconnectAttempts);
@@ -327,7 +326,7 @@ class WebSocketManager extends EventEmitter {
  * Server-Sent Events Manager
  * Alternative to WebSocket for server-sent events
  */
-class SSEManager extends EventEmitter {
+class SSEManager extends window.EventEmitter {
   constructor() {
     super();
     this.eventSource = null;
@@ -354,7 +353,7 @@ class SSEManager extends EventEmitter {
    * Set up SSE event handlers
    */
   setupEventHandlers() {
-    if (!this.eventSource) return;
+    if (!this.eventSource) { return; }
 
     this.eventSource.onopen = () => {
       this.isConnected = true;
@@ -362,7 +361,7 @@ class SSEManager extends EventEmitter {
       this.emit('connected');
     };
 
-    this.eventSource.onmessage = (event) => {
+    this.eventSource.onmessage = event => {
       try {
         const data = JSON.parse(event.data);
         this.emit('message', data);
@@ -371,17 +370,17 @@ class SSEManager extends EventEmitter {
       }
     };
 
-    this.eventSource.onerror = (error) => {
+    this.eventSource.onerror = error => {
       this.isConnected = false;
       this.emit('connectionError', error);
-      
+
       if (this.eventSource.readyState === EventSource.CLOSED) {
         this.reconnect();
       }
     };
 
     // Custom event listeners
-    this.eventSource.addEventListener('notification', (event) => {
+    this.eventSource.addEventListener('notification', event => {
       try {
         const data = JSON.parse(event.data);
         this.emit('notification', data);
@@ -390,7 +389,7 @@ class SSEManager extends EventEmitter {
       }
     });
 
-    this.eventSource.addEventListener('status', (event) => {
+    this.eventSource.addEventListener('status', event => {
       try {
         const data = JSON.parse(event.data);
         this.emit('statusUpdate', data);
@@ -411,7 +410,7 @@ class SSEManager extends EventEmitter {
 
     this.reconnectAttempts++;
     const delay = this.reconnectDelay * Math.pow(2, this.reconnectAttempts - 1);
-    
+
     setTimeout(() => {
       if (!this.isConnected) {
         this.emit('reconnectAttempt', this.reconnectAttempts);
@@ -444,7 +443,7 @@ class SSEManager extends EventEmitter {
  * Real-time Notifications Manager
  * Handles real-time notifications and updates
  */
-class NotificationManager extends EventEmitter {
+class NotificationManager extends window.EventEmitter {
   constructor() {
     super();
     this.notifications = [];
@@ -458,14 +457,14 @@ class NotificationManager extends EventEmitter {
    */
   show(notification) {
     const notif = {
-      id: StringUtils.generateId(),
+      id: window.StringUtils.generateId(),
       timestamp: new Date(),
       timeout: notification.timeout || this.defaultTimeout,
       ...notification
     };
 
     this.notifications.unshift(notif);
-    
+
     // Limit notifications array size
     if (this.notifications.length > this.maxNotifications) {
       this.notifications = this.notifications.slice(0, this.maxNotifications);
@@ -490,7 +489,7 @@ class NotificationManager extends EventEmitter {
   remove(id) {
     const index = this.notifications.findIndex(n => n.id === id);
     if (index !== -1) {
-      const notification = this.notifications.splice(index, 1)[0];
+      const [notification] = this.notifications.splice(index, 1);
       this.emit('notificationRemoved', notification);
     }
   }
@@ -525,7 +524,7 @@ class NotificationManager extends EventEmitter {
  * Progress Tracker
  * Tracks and manages progress for long-running operations
  */
-class ProgressTracker extends EventEmitter {
+class ProgressTracker extends window.EventEmitter {
   constructor() {
     super();
     this.operations = new Map();
@@ -559,7 +558,7 @@ class ProgressTracker extends EventEmitter {
    */
   update(id, update) {
     const operation = this.operations.get(id);
-    if (!operation) return;
+    if (!operation) { return; }
 
     Object.assign(operation, update);
     operation.lastUpdate = Date.now();
@@ -575,7 +574,7 @@ class ProgressTracker extends EventEmitter {
    */
   complete(id, result = {}) {
     const operation = this.operations.get(id);
-    if (!operation) return;
+    if (!operation) { return; }
 
     operation.status = 'completed';
     operation.progress = operation.total;
@@ -584,7 +583,7 @@ class ProgressTracker extends EventEmitter {
     Object.assign(operation, result);
 
     this.emit('progressComplete', operation);
-    
+
     // Remove completed operation after delay
     setTimeout(() => {
       this.operations.delete(id);
@@ -600,10 +599,10 @@ class ProgressTracker extends EventEmitter {
    */
   fail(id, error) {
     const operation = this.operations.get(id);
-    if (!operation) return;
+    if (!operation) { return; }
 
     operation.status = 'failed';
-    operation.error = formatError(error);
+    operation.error = window.formatError(error);
     operation.endTime = Date.now();
     operation.duration = operation.endTime - operation.startTime;
 
