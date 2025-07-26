@@ -5,7 +5,7 @@
 
 const express = require('express');
 const fetch = require('node-fetch');
-const { resourceManager } = require('../../lib/resource-manager');
+// const { resourceManager } = require('../../lib/resource-manager');
 const { rateLimits } = require('../../middleware/validation');
 const { ollamaBreaker, comfyuiBreaker } = require('../../lib/circuit-breaker');
 const { withRetry, isRetryableError } = require('../../lib/retry');
@@ -14,10 +14,10 @@ const router = express.Router();
 
 // Configuration
 const CONFIG = {
-  healthCheckTimeout: parseInt(process.env.HEALTH_CHECK_TIMEOUT) || 10000,
+  healthCheckTimeout: parseInt(process.env.HEALTH_CHECK_TIMEOUT, 10) || 10000,
   ollamaUrl: process.env.OLLAMA_URL || 'http://localhost:11434',
   comfyuiUrl: process.env.COMFYUI_URL || 'http://localhost:8188',
-  healthCheckInterval: parseInt(process.env.HEALTH_CHECK_INTERVAL) || 30000,
+  healthCheckInterval: parseInt(process.env.HEALTH_CHECK_INTERVAL, 10) || 30000,
   version: '2.0.0'
 };
 
@@ -28,18 +28,18 @@ const CACHE_TTL = 5000; // 5 seconds
 async function performDeepServiceCheck(serviceName, baseUrl, timeout = CONFIG.healthCheckTimeout) {
   const startTime = Date.now();
   const cacheKey = `${serviceName}-${Date.now() % CACHE_TTL}`;
-  
+
   // Check cache first
   if (healthCache.has(cacheKey)) {
     return healthCache.get(cacheKey);
   }
-  
+
   try {
-    let endpoints = [];
-    let version = undefined;
-    let metrics = {};
-    let error = null;
-    
+    const endpoints = [];
+    const version = undefined;
+    const metrics = {};
+    const error = null;
+
     if (serviceName === 'ollama') {
       // Deep Ollama health check
       const [tagsRes, versionRes, embedRes] = await Promise.allSettled([
@@ -52,27 +52,26 @@ async function performDeepServiceCheck(serviceName, baseUrl, timeout = CONFIG.he
           timeout: timeout / 2 // Shorter timeout for functionality test
         })
       ]);
-      
+
       if (tagsRes.status === 'fulfilled' && tagsRes.value.ok) {
         const models = await tagsRes.value.json().catch(() => ({}));
         metrics.modelCount = models.models?.length || 0;
         metrics.availableModels = models.models?.map(m => m.name) || [];
         endpoints.push(`${baseUrl}/api/tags`);
       }
-      
+
       if (versionRes.status === 'fulfilled' && versionRes.value.ok) {
         const versionData = await versionRes.value.json().catch(() => ({}));
-        version = versionData.version;
+        const { version: _version } = versionData;
         endpoints.push(`${baseUrl}/api/version`);
       }
-      
+
       if (embedRes.status === 'fulfilled') {
         metrics.embedEndpointAvailable = embedRes.value.status !== 404;
         if (embedRes.value.ok || embedRes.value.status === 400) {
           endpoints.push(`${baseUrl}/api/embed`);
         }
       }
-      
     } else if (serviceName === 'comfyui') {
       // Deep ComfyUI health check
       const [rootRes, systemStatsRes, historyRes, queueRes] = await Promise.allSettled([
@@ -81,32 +80,32 @@ async function performDeepServiceCheck(serviceName, baseUrl, timeout = CONFIG.he
         fetch(`${baseUrl}/history`, { timeout }),
         fetch(`${baseUrl}/queue`, { timeout })
       ]);
-      
+
       if (rootRes.status === 'fulfilled' && rootRes.value.ok) {
         endpoints.push(`${baseUrl}/`);
       }
-      
+
       if (systemStatsRes.status === 'fulfilled' && systemStatsRes.value.ok) {
         const stats = await systemStatsRes.value.json().catch(() => ({}));
         metrics.systemStats = stats;
         endpoints.push(`${baseUrl}/system_stats`);
       }
-      
+
       if (historyRes.status === 'fulfilled' && historyRes.value.ok) {
         endpoints.push(`${baseUrl}/history`);
         metrics.historyAvailable = true;
       }
-      
+
       if (queueRes.status === 'fulfilled' && queueRes.value.ok) {
         const queueData = await queueRes.value.json().catch(() => ({}));
         metrics.queueInfo = queueData;
         endpoints.push(`${baseUrl}/queue`);
       }
     }
-    
+
     const responseTime = Date.now() - startTime;
     const isHealthy = endpoints.length > 0;
-    
+
     const result = {
       name: serviceName,
       status: isHealthy ? 'healthy' : 'unhealthy',
@@ -116,16 +115,15 @@ async function performDeepServiceCheck(serviceName, baseUrl, timeout = CONFIG.he
       endpoints,
       metrics,
       error,
-      dependencies: serviceName === 'comfyui' ? ['python', 'torch', 'cuda'] :
-                   serviceName === 'ollama' ? ['go', 'cpu/gpu'] : []
+      dependencies:
+        serviceName === 'comfyui' ? ['python', 'torch', 'cuda'] : serviceName === 'ollama' ? ['go', 'cpu/gpu'] : []
     };
-    
+
     // Cache the result
     healthCache.set(cacheKey, result);
     setTimeout(() => healthCache.delete(cacheKey), CACHE_TTL);
-    
+
     return result;
-    
   } catch (error) {
     const result = {
       name: serviceName,
@@ -136,11 +134,11 @@ async function performDeepServiceCheck(serviceName, baseUrl, timeout = CONFIG.he
       endpoints: [],
       metrics: {}
     };
-    
+
     // Cache error result too (shorter TTL)
     healthCache.set(cacheKey, result);
     setTimeout(() => healthCache.delete(cacheKey), CACHE_TTL / 2);
-    
+
     return result;
   }
 }
@@ -155,14 +153,14 @@ router.get('/', rateLimits.api, async (req, res) => {
       'health.check.type': 'main'
     }
   });
-  
+
   try {
     // Perform deep health checks
     const [ollamaHealth, comfyuiHealth] = await Promise.all([
       performDeepServiceCheck('ollama', CONFIG.ollamaUrl),
       performDeepServiceCheck('comfyui', CONFIG.comfyuiUrl)
     ]);
-    
+
     // Web GUI health (current service)
     const webGuiHealth = {
       name: 'web-gui-node',
@@ -179,13 +177,13 @@ router.get('/', rateLimits.api, async (req, res) => {
       },
       dependencies: ['express', 'node.js']
     };
-    
+
     const services = [webGuiHealth, ollamaHealth, comfyuiHealth];
-    
+
     // Calculate overall status
     const healthyCount = services.filter(s => s.status === 'healthy').length;
     const unhealthyCount = services.filter(s => s.status === 'unhealthy').length;
-    
+
     let overallStatus;
     if (unhealthyCount === 0) {
       overallStatus = 'healthy';
@@ -194,10 +192,10 @@ router.get('/', rateLimits.api, async (req, res) => {
     } else {
       overallStatus = 'unhealthy';
     }
-    
+
     const totalResponseTime = Date.now() - startTime;
     const performanceMetrics = getPerformanceMetrics();
-    
+
     const health = {
       status: overallStatus,
       timestamp: new Date().toISOString(),
@@ -247,7 +245,7 @@ router.get('/', rateLimits.api, async (req, res) => {
       },
       performance: performanceMetrics
     };
-    
+
     // Check for Socket.io (if available)
     if (req.io) {
       const socketCount = req.io.engine.clientsCount || 0;
@@ -259,7 +257,7 @@ router.get('/', rateLimits.api, async (req, res) => {
         lastCheck: new Date().toISOString()
       };
     }
-    
+
     if (span) {
       span.setAttributes({
         'health.check.status': overallStatus,
@@ -269,13 +267,11 @@ router.get('/', rateLimits.api, async (req, res) => {
       });
       span.end();
     }
-    
+
     // Set response status based on overall health
-    const statusCode = overallStatus === 'healthy' ? 200 : 
-                      overallStatus === 'degraded' ? 200 : 503;
-    
+    const statusCode = overallStatus === 'healthy' ? 200 : overallStatus === 'degraded' ? 200 : 503;
+
     res.status(statusCode).json(health);
-    
   } catch (error) {
     if (span) {
       span.recordException(error);
@@ -295,14 +291,14 @@ router.get('/', rateLimits.api, async (req, res) => {
 // GET /api/health/detailed - Comprehensive health information with deep diagnostics
 router.get('/detailed', rateLimits.api, async (req, res) => {
   const startTime = Date.now();
-  
+
   try {
     // Perform comprehensive health checks
     const [ollamaHealth, comfyuiHealth] = await Promise.all([
       performDeepServiceCheck('ollama', CONFIG.ollamaUrl),
       performDeepServiceCheck('comfyui', CONFIG.comfyuiUrl)
     ]);
-    
+
     // Enhanced system information
     const systemInfo = {
       nodeVersion: process.version,
@@ -334,7 +330,7 @@ router.get('/detailed', rateLimits.api, async (req, res) => {
         networkInterfaces: Object.keys(require('os').networkInterfaces())
       }
     };
-    
+
     // Performance metrics
     const performanceMetrics = {
       eventLoopDelay: process.env.NODE_ENV === 'production' ? 'Available in production' : 'N/A',
@@ -346,7 +342,7 @@ router.get('/detailed', rateLimits.api, async (req, res) => {
       errorCount: global.errorCount || 0,
       averageResponseTime: global.averageResponseTime || 0
     };
-    
+
     // Service dependency analysis
     const dependencyStatus = {
       critical: {
@@ -369,7 +365,7 @@ router.get('/detailed', rateLimits.api, async (req, res) => {
         }
       }
     };
-    
+
     const services = [
       {
         name: 'web-gui-node',
@@ -389,12 +385,12 @@ router.get('/detailed', rateLimits.api, async (req, res) => {
       ollamaHealth,
       comfyuiHealth
     ];
-    
+
     // Calculate comprehensive status
     const healthyCount = services.filter(s => s.status === 'healthy').length;
     const unhealthyCount = services.filter(s => s.status === 'unhealthy').length;
     const degradedCount = services.filter(s => s.status === 'degraded').length;
-    
+
     let overallStatus;
     if (unhealthyCount === 0 && degradedCount === 0) {
       overallStatus = 'healthy';
@@ -403,9 +399,9 @@ router.get('/detailed', rateLimits.api, async (req, res) => {
     } else {
       overallStatus = 'degraded';
     }
-    
+
     const totalResponseTime = Date.now() - startTime;
-    
+
     const detailedHealth = {
       status: overallStatus,
       timestamp: new Date().toISOString(),
@@ -428,8 +424,9 @@ router.get('/detailed', rateLimits.api, async (req, res) => {
         healthy: healthyCount,
         unhealthy: unhealthyCount,
         degraded: degradedCount,
-        criticalServicesHealthy: dependencyStatus.critical.ollama.status === 'healthy' && 
-                                dependencyStatus.critical.comfyui.status === 'healthy',
+        criticalServicesHealthy:
+          dependencyStatus.critical.ollama.status === 'healthy' &&
+          dependencyStatus.critical.comfyui.status === 'healthy',
         lastUpdate: new Date().toISOString()
       },
       system: systemInfo,
@@ -449,7 +446,7 @@ router.get('/detailed', rateLimits.api, async (req, res) => {
           performanceMonitoring: true,
           dependencyTracking: true,
           caching: true,
-          realTimeMetrics: !!req.io
+          realTimeMetrics: Boolean(req.io)
         }
       },
       diagnostics: {
@@ -459,9 +456,8 @@ router.get('/detailed', rateLimits.api, async (req, res) => {
         criticalPathsOperational: services.every(s => s.name === 'web-gui-node' || s.endpoints.length > 0)
       }
     };
-    
+
     res.json(detailedHealth);
-    
   } catch (error) {
     console.error('Detailed health check error:', error);
     res.status(500).json({
@@ -479,7 +475,7 @@ router.get('/ping', rateLimits.api, (req, res) => {
   const timestamp = new Date().toISOString();
   const uptime = process.uptime();
   const correlationId = getCorrelationId(req);
-  
+
   res.json({
     status: 'ok',
     timestamp,
@@ -497,20 +493,24 @@ router.get('/status', rateLimits.api, async (req, res) => {
   try {
     // Quick check of critical services with circuit breaker
     const [ollamaOk, comfyOk] = await Promise.allSettled([
-      ollamaBreaker.call(() => withRetry(() => 
-        fetch(`${CONFIG.ollamaUrl}/api/tags`, { timeout: 3000 }).then(r => r.ok), 
-        { maxRetries: 1, retryCondition: isRetryableError }
-      )),
-      comfyuiBreaker.call(() => withRetry(() => 
-        fetch(`${CONFIG.comfyuiUrl}/`, { timeout: 3000, method: 'HEAD' }).then(r => r.ok), 
-        { maxRetries: 1, retryCondition: isRetryableError }
-      ))
+      ollamaBreaker.call(() =>
+        withRetry(() => fetch(`${CONFIG.ollamaUrl}/api/tags`, { timeout: 3000 }).then(r => r.ok), {
+          maxRetries: 1,
+          retryCondition: isRetryableError
+        })
+      ),
+      comfyuiBreaker.call(() =>
+        withRetry(() => fetch(`${CONFIG.comfyuiUrl}/`, { timeout: 3000, method: 'HEAD' }).then(r => r.ok), {
+          maxRetries: 1,
+          retryCondition: isRetryableError
+        })
+      )
     ]);
-    
+
     const ollamaHealthy = ollamaOk.status === 'fulfilled' && ollamaOk.value;
     const comfyHealthy = comfyOk.status === 'fulfilled' && comfyOk.value;
     const overallHealthy = ollamaHealthy && comfyHealthy;
-    
+
     const status = {
       status: overallHealthy ? 'healthy' : 'degraded',
       timestamp: new Date().toISOString(),
@@ -521,9 +521,8 @@ router.get('/status', rateLimits.api, async (req, res) => {
       },
       summary: overallHealthy ? 'All systems operational' : 'Some services may be experiencing issues'
     };
-    
+
     res.status(overallHealthy ? 200 : 503).json(status);
-    
   } catch (error) {
     res.status(500).json({
       status: 'error',
@@ -538,7 +537,7 @@ router.get('/status', rateLimits.api, async (req, res) => {
 router.get('/metrics', rateLimits.api, (req, res) => {
   const memoryUsage = process.memoryUsage();
   const cpuUsage = process.cpuUsage();
-  
+
   const metrics = {
     timestamp: new Date().toISOString(),
     system: {
@@ -571,7 +570,7 @@ router.get('/metrics', rateLimits.api, (req, res) => {
       cacheTTL: CACHE_TTL
     }
   };
-  
+
   res.json(metrics);
 });
 
