@@ -1,8 +1,8 @@
-# Super-Linter and ESLint workflow for comprehensive code quality
-# Integrates Super-Linter v8.0.0 with existing ESLint scanning
-# More details at https://github.com/super-linter/super-linter
+# ESLint Security Analysis workflow for SARIF reporting
+# Provides security-focused ESLint scanning with SARIF output
+# More details at https://github.com/eslint/eslint
 
-name: Super-Linter and Code Quality
+name: ESLint Security Analysis
 
 on:
   push:
@@ -13,40 +13,6 @@ on:
     - cron: '42 16 * * 1'
 
 jobs:
-  super-linter:
-    name: Super-Linter
-    runs-on: ubuntu-latest
-    permissions:
-      contents: read
-      packages: read
-      statuses: write
-    steps:
-      - name: Checkout code
-        uses: actions/checkout@v4
-        with:
-          fetch-depth: 0
-
-      - name: Super-Linter
-        uses: super-linter/super-linter@v8.0.0
-        env:
-          DEFAULT_BRANCH: master
-          GITHUB_TOKEN: ${{ secrets.GITHUB_TOKEN }}
-          VALIDATE_ALL_CODEBASE: false
-          VALIDATE_TYPESCRIPT_ES: true
-          VALIDATE_JAVASCRIPT_ES: true
-          VALIDATE_PYTHON_BLACK: true
-          VALIDATE_PYTHON_PYLINT: true
-          VALIDATE_YAML: true
-          VALIDATE_JSON: true
-          VALIDATE_MARKDOWN: true
-          VALIDATE_DOCKERFILE: true
-          VALIDATE_BASH: true
-          VALIDATE_CSS: true
-          VALIDATE_HTML: true
-          FILTER_REGEX_EXCLUDE: '.*/(node_modules|\.git|\.github|build|dist|coverage)/.*'
-          TYPESCRIPT_ES_CONFIG_FILE: web-gui/.eslintrc.js
-          JAVASCRIPT_ES_CONFIG_FILE: web-gui/.eslintrc.js
-
   eslint-sarif:
     name: ESLint SARIF Analysis
     runs-on: ubuntu-latest

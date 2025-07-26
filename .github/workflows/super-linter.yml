@@ -50,8 +50,8 @@ jobs:
           VALIDATE_XML: true
           
           # Configuration files
-          TYPESCRIPT_ES_CONFIG_FILE: web-gui/.eslintrc.js
-          JAVASCRIPT_ES_CONFIG_FILE: web-gui/.eslintrc.js
+          TYPESCRIPT_ES_CONFIG_FILE: web-gui/.eslintrc.json
+          JAVASCRIPT_ES_CONFIG_FILE: web-gui/.eslintrc.json
           PYTHON_BLACK_CONFIG_FILE: .python-black
           PYTHON_PYLINT_CONFIG_FILE: .pylintrc
           YAML_CONFIG_FILE: .yamllint.yml

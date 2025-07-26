@@ -24,8 +24,8 @@ describe('useChat', () => {
     const { result } = renderHook(() => useChat());
 
     expect(result.current.messages).toHaveLength(1);
-    expect(result.current.messages[0].role).toBe('assistant');
-    expect(result.current.messages[0].content).toContain('Welcome to DinoAir');
+    expect(result.current.messages[0]!.role).toBe('assistant');
+    expect(result.current.messages[0]!.content).toContain('Welcome to DinoAir');
     expect(result.current.isLoading).toBe(false);
     expect(result.current.isStreaming).toBe(false);
   });
@@ -49,7 +49,7 @@ describe('useChat', () => {
     });
 
     expect(result.current.messages).toHaveLength(1);
-    expect(result.current.messages[0].content).toContain('Welcome to DinoAir');
+    expect(result.current.messages[0]!.content).toContain('Welcome to DinoAir');
   });
 
   it('should send a message successfully with streaming', async () => {
@@ -78,10 +78,10 @@ describe('useChat', () => {
 
     await waitFor(() => {
       expect(result.current.messages).toHaveLength(3); // Welcome + user + assistant
-      expect(result.current.messages[1].role).toBe('user');
-      expect(result.current.messages[1].content).toBe('Test message');
-      expect(result.current.messages[2].role).toBe('assistant');
-      expect(result.current.messages[2].content).toBe('Hello from AI');
+      expect(result.current.messages[1]!.role).toBe('user');
+      expect(result.current.messages[1]!.content).toBe('Test message');
+      expect(result.current.messages[2]!.role).toBe('assistant');
+      expect(result.current.messages[2]!.content).toBe('Hello from AI');
     });
 
     expect(response).toEqual({
@@ -106,7 +106,7 @@ describe('useChat', () => {
       })
     ).rejects.toThrow('Server error occurred');
 
-    expect(result.current.messages[result.current.messages.length - 1].content).toContain('Error: Server error occurred');
+    expect(result.current.messages[result.current.messages.length - 1]!.content).toContain('Error: Server error occurred');
   });
 
   it('should handle network errors', async () => {
@@ -120,7 +120,7 @@ describe('useChat', () => {
       })
     ).rejects.toThrow('Network error');
 
-    expect(result.current.messages[result.current.messages.length - 1].content).toContain('Error: Network error');
+    expect(result.current.messages[result.current.messages.length - 1]!.content).toContain('Error: Network error');
   });
 
   it('should not send empty messages', async () => {
