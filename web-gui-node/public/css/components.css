@@ -631,6 +631,7 @@
   .modal-content {
     width: 95%;
     margin: var(--space-4);
+    max-height: 90vh;
   }
   
   .modal-header,
@@ -639,25 +640,125 @@
     padding: var(--space-4);
   }
   
+  .modal-close {
+    min-width: 44px;
+    min-height: 44px;
+    font-size: var(--text-xl);
+  }
+  
   .toast-container {
     left: var(--space-2);
     right: var(--space-2);
     max-width: none;
+    top: var(--space-2);
+  }
+  
+  .toast {
+    padding: var(--space-3);
   }
   
   .dropdown-menu {
     left: auto;
     right: 0;
     min-width: 180px;
+    max-width: calc(100vw - var(--space-4));
+  }
+  
+  .dropdown-item {
+    padding: var(--space-3) var(--space-4);
+    min-height: 44px;
+    display: flex;
+    align-items: center;
   }
   
   .tab-list {
     overflow-x: auto;
     -webkit-overflow-scrolling: touch;
+    scrollbar-width: none;
+    -ms-overflow-style: none;
+  }
+  
+  .tab-list::-webkit-scrollbar {
+    display: none;
   }
   
   .tab-link {
     white-space: nowrap;
+    padding: var(--space-3) var(--space-4);
+    min-height: 44px;
+    display: flex;
+    align-items: center;
+  }
+  
+  .card {
+    margin: var(--space-2) 0;
+  }
+  
+  .card-header,
+  .card-body,
+  .card-footer {
+    padding: var(--space-4);
+  }
+  
+  .accordion-header {
+    padding: var(--space-4);
+    min-height: 56px;
+  }
+  
+  .accordion-body {
+    padding: 0 var(--space-4) var(--space-4);
+  }
+}
+
+@media (max-width: 480px) {
+  .modal-content {
+    width: 98%;
+    margin: var(--space-2);
+    max-height: 95vh;
+  }
+  
+  .modal-header,
+  .modal-body,
+  .modal-footer {
+    padding: var(--space-3);
+  }
+  
+  .modal-footer {
+    flex-direction: column;
+    gap: var(--space-2);
+  }
+  
+  .modal-footer .btn {
+    width: 100%;
+  }
+  
+  .toast {
+    padding: var(--space-2);
+    font-size: var(--text-sm);
+  }
+  
+  .dropdown-menu {
+    min-width: 160px;
+  }
+  
+  .tab-link {
     padding: var(--space-2) var(--space-3);
+    font-size: var(--text-sm);
+  }
+  
+  .card-header,
+  .card-body,
+  .card-footer {
+    padding: var(--space-3);
+  }
+  
+  .accordion-header {
+    padding: var(--space-3);
+    font-size: var(--text-sm);
+  }
+  
+  .badge {
+    font-size: 0.625rem;
+    padding: var(--space-1) var(--space-2);
   }
 }
