@@ -150,8 +150,8 @@ While DinoAir has received significant stability improvements, users should stil
 
 ```bash
 # Clone the repository
-git clone https://github.com/yourusername/DinoAir.git
-cd DinoAir
+git clone https://github.com/Dinopit/DinoAirPublic.git
+cd DinoAirPublic
 
 # Use the new safe installer (recommended)
 python install_safe.py
@@ -190,19 +190,19 @@ DinoAir now features automatic hardware detection and adaptive configuration! Th
 
 ### Recommended Requirements (Standard Mode)
 - **OS**: Windows 10/11, Ubuntu 20.04+, macOS 11+
-- **CPU**: 6-core processor
-- **RAM**: 8-16GB
-- **Storage**: 25GB free space
-- **GPU**: Integrated graphics or better
-- **Models**: Qwen 3B, most features
+- **CPU**: 8-core processor
+- **RAM**: 16GB
+- **Storage**: 30GB free space
+- **GPU**: Dedicated GPU (4GB+ VRAM)
+- **Models**: Qwen 7B, most features
 
-### Optimal Requirements (Pro Mode)
+### Optimal Requirements (Pro Mode - For Developers)
 - **OS**: Windows 10/11, Ubuntu 20.04+, macOS 11+
-- **CPU**: 8+ core processor
-- **RAM**: 16GB+
-- **Storage**: 50GB free space
-- **GPU**: NVIDIA GPU with 8GB+ VRAM
-- **Models**: Qwen 7B+, all features including image generation
+- **CPU**: 12+ core processor
+- **RAM**: 32GB+
+- **Storage**: 100GB free space
+- **GPU**: High-end GPU (24GB+ VRAM)
+- **Models**: Qwen 14B+, all features including image generation
 
 **Note**: The hardware detection system will automatically configure DinoAir to run optimally on your system, selecting appropriate models and features based on available resources.
 
