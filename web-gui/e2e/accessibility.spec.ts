@@ -131,7 +131,6 @@ test.describe('Accessibility Tests', () => {
       await expect(modal).toBeVisible();
       
       await page.keyboard.press('Tab');
-      const focusedElement = await page.locator(':focus').first();
       const isWithinModal = await modal.locator(':focus').count() > 0;
       expect(isWithinModal).toBe(true);
       
