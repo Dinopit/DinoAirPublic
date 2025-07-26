@@ -10,13 +10,6 @@ const ThrowError = ({ shouldThrow }: { shouldThrow: boolean }) => {
   return <div>No error</div>;
 };
 
-// Component that throws error in useEffect
-const ThrowErrorInEffect = () => {
-  React.useEffect(() => {
-    throw new Error('Effect error');
-  }, []);
-  return <div>Component</div>;
-};
 
 describe('ErrorBoundary', () => {
   let consoleErrorSpy: jest.SpyInstance;

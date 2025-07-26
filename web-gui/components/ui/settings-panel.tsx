@@ -40,6 +40,7 @@ export const SettingsPanel = React.memo<SettingsPanelProps>(({ isOpen, onClose }
       document.addEventListener('keydown', handleKeyDown);
       return () => document.removeEventListener('keydown', handleKeyDown);
     }
+    return undefined;
   }, [isOpen, onClose]);
   const [autoSaveConversations, setAutoSaveConversations] = useState(true);
   const [showTutorialOnStartup, setShowTutorialOnStartup] = useState(true);
@@ -226,7 +227,7 @@ export const SettingsPanel = React.memo<SettingsPanelProps>(({ isOpen, onClose }
 
       {/* Panel */}
       <div 
-        ref={containerRef}
+        ref={containerRef as React.RefObject<HTMLDivElement>}
         className="fixed right-0 top-0 h-full w-full max-w-2xl bg-card shadow-xl z-50 flex flex-col"
         role="dialog"
         aria-modal="true"

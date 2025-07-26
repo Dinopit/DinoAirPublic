@@ -8,7 +8,7 @@ interface DebugLog {
   type: 'api' | 'websocket' | 'performance' | 'error' | 'info';
   message: string;
   data?: any;
-  stack?: string;
+  stack?: string | undefined;
 }
 
 interface PerformanceMetric {

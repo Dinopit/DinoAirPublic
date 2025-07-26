@@ -1,6 +1,6 @@
 import { NextRequest } from 'next/server';
 import { withApiAuth } from '@/lib/middleware/api-auth';
-import { withErrorHandler } from '@/lib/middleware/error-handler';
+import { withErrorHandler } from '@/lib/services/error-handler';
 import { ModelsController } from '@/lib/controllers/models.controller';
 
 /**

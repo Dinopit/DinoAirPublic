@@ -1,6 +1,6 @@
 import { renderHook, act, waitFor } from '@testing-library/react';
 import { useChat } from '../useChat';
-import { mockStreamResponse, waitForAsync } from '../../tests/utils/mock-utils';
+import { mockStreamResponse } from '../../tests/utils/mock-utils';
 
 // Mock the CodeBlockDetector
 jest.mock('@/lib/utils/code-block-detector', () => ({

@@ -7,34 +7,34 @@ import { LogLevel, LoggerConfig } from './logger';
 
 export interface DinoAirLoggingConfig extends LoggerConfig {
   // Application-specific settings
-  applicationName?: string;
-  environment?: string;
+  applicationName?: string | undefined;
+  environment?: string | undefined;
   
   // Correlation ID settings
-  enableCorrelationIds?: boolean;
-  correlationIdHeader?: string;
+  enableCorrelationIds?: boolean | undefined;
+  correlationIdHeader?: string | undefined;
   
   // Remote logging settings
-  remoteLogLevel?: LogLevel;
-  retryFailedLogs?: boolean;
-  maxRetries?: number;
+  remoteLogLevel?: LogLevel | undefined;
+  retryFailedLogs?: boolean | undefined;
+  maxRetries?: number | undefined;
   
   // Performance settings
-  enablePerformanceLogging?: boolean;
+  enablePerformanceLogging?: boolean | undefined;
   performanceThresholds?: {
     slow: number;    // ms
     warning: number; // ms
     error: number;   // ms
-  };
+  } | undefined;
   
   // Security settings
-  sanitizePasswords?: boolean;
-  sanitizeTokens?: boolean;
-  redactFields?: string[];
+  sanitizePasswords?: boolean | undefined;
+  sanitizeTokens?: boolean | undefined;
+  redactFields?: string[] | undefined;
   
   // Development settings
-  prettyPrint?: boolean;
-  logStackTraces?: boolean;
+  prettyPrint?: boolean | undefined;
+  logStackTraces?: boolean | undefined;
 }
 
 /**
@@ -204,7 +204,7 @@ export const LOG_LEVEL_COLORS: Record<LogLevel, string> = {
  */
 export function sanitizeLogData(
   data: any,
-  redactFields: string[] = DEFAULT_LOGGING_CONFIG.redactFields
+  redactFields: string[] | undefined = DEFAULT_LOGGING_CONFIG.redactFields
 ): any {
   if (!data || typeof data !== 'object') {
     return data;
@@ -220,9 +220,9 @@ export function sanitizeLogData(
     const lowerKey = key.toLowerCase();
     
     // Check if field should be redacted
-    const shouldRedact = redactFields.some(field => 
+    const shouldRedact = redactFields?.some(field => 
       lowerKey.includes(field.toLowerCase())
-    );
+    ) || false;
     
     if (shouldRedact) {
       sanitized[key] = '[REDACTED]';
@@ -243,6 +243,10 @@ export function getPerformanceLevel(
   duration: number,
   thresholds = DEFAULT_LOGGING_CONFIG.performanceThresholds
 ): LogLevel {
+  if (!thresholds) {
+    return LogLevel.DEBUG;
+  }
+  
   if (duration >= thresholds.error) {
     return LogLevel.ERROR;
   } else if (duration >= thresholds.warning) {

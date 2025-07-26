@@ -1,7 +1,7 @@
 import { NextResponse } from 'next/server';
 import type { NextRequest } from 'next/server';
 
-export function applySecurityHeaders(request: NextRequest, response: NextResponse) {
+export function applySecurityHeaders(_request: NextRequest, response: NextResponse) {
   const nonce = Buffer.from(crypto.randomUUID()).toString('base64');
   
   // Content Security Policy

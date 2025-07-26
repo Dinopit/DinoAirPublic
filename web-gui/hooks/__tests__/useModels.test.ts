@@ -1,6 +1,6 @@
 import { renderHook, act, waitFor } from '@testing-library/react';
 import { useModels } from '../useModels';
-import { mockFetch, createMockModel } from '../../tests/utils/mock-utils';
+import { createMockModel } from '../../tests/utils/mock-utils';
 
 describe('useModels', () => {
   beforeEach(() => {

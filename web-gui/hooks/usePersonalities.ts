@@ -38,8 +38,8 @@ const DEFAULT_PERSONALITIES: Personality[] = [
 export const usePersonalities = () => {
   const [personalities] = useState<Personality[]>(DEFAULT_PERSONALITIES);
   const [selectedPersonality, setSelectedPersonality] = useState('default');
-  const [systemPrompt, setSystemPrompt] = useState(DEFAULT_PERSONALITIES[0].system_prompt);
-  const [customSystemPrompt, setCustomSystemPrompt] = useState(DEFAULT_PERSONALITIES[0].system_prompt);
+  const [systemPrompt, setSystemPrompt] = useState(DEFAULT_PERSONALITIES[0]?.system_prompt || 'You are a helpful AI assistant.');
+  const [customSystemPrompt, setCustomSystemPrompt] = useState(DEFAULT_PERSONALITIES[0]?.system_prompt || 'You are a helpful AI assistant.');
 
   const handlePersonalityChange = useCallback((personalityName: string) => {
     setSelectedPersonality(personalityName);

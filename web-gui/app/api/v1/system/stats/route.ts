@@ -82,7 +82,7 @@ function calculateStats(numbers: number[]) {
   return { avg, min, max, p50, p95 };
 }
 
-async function getSystemStats(request: NextRequest) {
+async function getSystemStats(_request: NextRequest) {
   try {
     // Update memory usage
     const memUsage = process.memoryUsage();

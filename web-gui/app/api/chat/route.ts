@@ -38,8 +38,8 @@ export async function POST(request: NextRequest) {
     const stream = new ReadableStream({
       async start(controller) {
         try {
-          // Track API response time
-          const apiStartTime = Date.now();
+          // Track API response time (for future metrics)
+          // const apiStartTime = Date.now();
           
           // Call Ollama API
           const response = await fetch('http://localhost:11434/api/generate', {

@@ -24,13 +24,13 @@ export interface Toast {
   id: string;
   type: ToastType;
   title: string;
-  message?: string;
+  message?: string | undefined;
   priority: ToastPriority;
-  duration?: number | null; // milliseconds, null for persistent
-  actions?: ToastAction[];
-  closable?: boolean;
+  duration?: number | null | undefined; // milliseconds, null for persistent
+  actions?: ToastAction[] | undefined;
+  closable?: boolean | undefined;
   timestamp: number;
-  onClose?: () => void;
+  onClose?: (() => void) | undefined;
 }
 
 // Toast store configuration

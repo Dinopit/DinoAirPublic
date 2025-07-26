@@ -1,5 +1,5 @@
 import { GET } from '../route';
-import { createMockRequest, parseApiResponse, createMockMiddlewareResult } from '@/tests/utils/api-test-utils';
+import { createMockRequest, parseApiResponse } from '@/tests/utils/api-test-utils';
 
 // Mock fetch
 global.fetch = jest.fn();

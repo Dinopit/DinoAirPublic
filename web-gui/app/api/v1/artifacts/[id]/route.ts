@@ -16,7 +16,7 @@ interface Artifact {
 
 // GET: Get a specific artifact
 async function getArtifact(
-  request: NextRequest,
+  _request: NextRequest,
   { params }: { params: { id: string } }
 ) {
   try {
@@ -87,7 +87,7 @@ async function updateArtifact(
 
 // DELETE: Delete an artifact
 async function deleteArtifact(
-  request: NextRequest,
+  _request: NextRequest,
   { params }: { params: { id: string } }
 ) {
   try {

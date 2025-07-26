@@ -53,7 +53,6 @@ export const usePersonalityStore = create<PersonalityState>()(
 
       // Fetch personalities with caching
       fetchPersonalities: async (force = false) => {
-        const state = get();
         const cache = useCacheStore.getState();
         const cacheKey = cacheKeys.personalities();
 

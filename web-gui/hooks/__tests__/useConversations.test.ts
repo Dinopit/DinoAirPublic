@@ -71,7 +71,6 @@ describe('useConversations', () => {
       result.current.saveCurrentConversation(initialMessages, 'model1', 'prompt1', 'Conv 1');
     });
 
-    const conversationId = result.current.activeConversationId;
     const newMessages = [
       ...initialMessages,
       createMockMessage({ content: 'New message' }),

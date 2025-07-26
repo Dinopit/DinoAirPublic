@@ -340,7 +340,6 @@ export default function ApiDocsV1Page() {
               persistAuthorization={true}
               tryItOutEnabled={true}
               supportedSubmitMethods={['get', 'post', 'put', 'delete', 'patch']}
-              validatorUrl={null}
             />
           </div>
         )}

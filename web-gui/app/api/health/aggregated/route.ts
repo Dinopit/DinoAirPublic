@@ -4,7 +4,7 @@ interface ServiceHealth {
   name: string;
   status: 'healthy' | 'unhealthy' | 'degraded' | 'starting';
   responseTime: number;
-  version?: string;
+  version?: string | undefined;
   uptime?: number;
   lastCheck: string;
   error?: string;
@@ -159,7 +159,7 @@ function getSystemMetrics(): SystemMetrics {
   };
 }
 
-export async function GET(request: NextRequest) {
+export async function GET(_request: NextRequest) {
   const startTime = Date.now();
   
   // Configuration from environment or defaults
@@ -281,7 +281,7 @@ export async function GET(request: NextRequest) {
   });
 }
 
-export async function HEAD(request: NextRequest) {
+export async function HEAD(_request: NextRequest) {
   // Lightweight health check for monitoring systems
   const ollamaUrl = process.env.NEXT_PUBLIC_OLLAMA_URL || 'http://localhost:11434';
   const comfyUrl = process.env.COMFYUI_API_URL || 'http://localhost:8188';

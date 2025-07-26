@@ -16,7 +16,6 @@ export function middleware(request: NextRequest) {
   // Get request details
   const timestamp = new Date().toISOString()
   const method = request.method
-  const url = request.url
   const pathname = request.nextUrl.pathname
   
   // Get client IP (works in production, fallback for development)
@@ -88,7 +87,7 @@ export function middleware(request: NextRequest) {
     correlationId,
     pathname,
     status: response.status,
-    duration: endTime - parseInt(logData.requestId.split('_')[1])
+    duration: endTime - parseInt(logData.requestId.split('_')[1] || '0', 10)
   }))
   
   // Continue with the request in correlation context

@@ -93,7 +93,7 @@ async function checkDependencies(): Promise<{ ready: boolean; details: any }> {
   };
 }
 
-export async function GET(request: NextRequest) {
+export async function GET(_request: NextRequest) {
   const startTime = Date.now();
   
   try {
@@ -143,7 +143,7 @@ export async function GET(request: NextRequest) {
 }
 
 // Support HEAD requests for lighter readiness checks
-export async function HEAD(request: NextRequest) {
+export async function HEAD(_request: NextRequest) {
   try {
     const { ready } = await checkDependencies();
     const statusCode = ready ? 200 : 503;

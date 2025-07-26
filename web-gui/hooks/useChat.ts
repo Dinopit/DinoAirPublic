@@ -8,7 +8,7 @@ interface ChatResponse {
     name: string;
     type: string;
     content: string;
-  }>;
+  }> | undefined;
 }
 
 export const useChat = () => {

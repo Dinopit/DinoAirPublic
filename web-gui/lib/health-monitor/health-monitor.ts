@@ -15,14 +15,14 @@ export enum ServiceStatus {
 export interface ServiceHealth {
   name: string;
   status: ServiceStatus;
-  uptime?: string;
+  uptime?: string | undefined;
   consecutiveFailures: number;
   restartAttempts: number;
   cpuUsage: number;
   memoryUsageMb: number;
-  lastCheck?: string;
-  lastMessage?: string;
-  responseTime?: number;
+  lastCheck?: string | undefined;
+  lastMessage?: string | undefined;
+  responseTime?: number | undefined;
 }
 
 export interface HealthReport {

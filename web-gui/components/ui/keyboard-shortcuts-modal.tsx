@@ -33,6 +33,7 @@ export const KeyboardShortcutsModal: React.FC<KeyboardShortcutsModalProps> = ({
       document.addEventListener('keydown', handleKeyDown);
       return () => document.removeEventListener('keydown', handleKeyDown);
     }
+    return undefined;
   }, [isOpen, onClose]);
 
   if (!isOpen) return null;
@@ -64,7 +65,7 @@ export const KeyboardShortcutsModal: React.FC<KeyboardShortcutsModalProps> = ({
         aria-describedby="shortcuts-modal-description"
       >
         <div 
-          ref={containerRef}
+          ref={containerRef as React.RefObject<HTMLDivElement>}
           className="bg-card rounded-lg shadow-xl max-w-2xl w-full max-h-[80vh] overflow-hidden"
           tabIndex={-1}
         >
