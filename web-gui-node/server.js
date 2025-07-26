@@ -25,6 +25,7 @@ const { middleware: apmMiddleware, shutdown: apmShutdown } = require('./lib/apm'
 // Import route modules
 const apiRoutes = require('./routes/api');
 const pageRoutes = require('./routes/pages');
+const { smartRateLimit } = require('./middleware/auth-middleware');
 
 // Create Express app
 const app = express();
@@ -74,6 +75,8 @@ app.use((req, res, next) => {
   req.io = io;
   next();
 });
+
+app.use('/api', smartRateLimit);
 
 // Routes
 app.use('/api', apiRoutes);

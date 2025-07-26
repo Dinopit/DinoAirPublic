@@ -1,6 +1,7 @@
 // Authentication middleware for Supabase with database-backed session storage
 const auth = require('../lib/auth');
 const db = require('../lib/db');
+const { rateLimiters, addRateLimitInfo, getUserTier } = require('./enhanced-rate-limiting');
 
 let sessionStore;
 let sessionStoreAvailable = false;
@@ -19,6 +20,25 @@ try {
     clear: () => Promise.resolve()
   };
 }
+
+// In-memory cache for auth results to prevent race conditions
+const authCache = new Map();
+const CACHE_TTL = 30000; // 30 seconds
+
+setInterval(() => {
+  const now = Date.now();
+  for (const [key, value] of authCache.entries()) {
+    if (now - value.timestamp > CACHE_TTL) {
+      authCache.delete(key);
+    }
+  }
+}, 60000); // Clean up every minute
+
+const getCacheKey = (req, type) => {
+  const authHeader = req.headers.authorization || '';
+  const ip = req.ip || req.connection.remoteAddress || req.socket.remoteAddress;
+  return `${type}:${authHeader.substring(0, 20)}:${ip}`;
+};
 
 let jwtManager;
 let jwtManagerAvailable = false;
@@ -45,10 +65,22 @@ try {
 }
 
 /**
- * Middleware to check if user is authenticated via JWT token
+ * Middleware to check if user is authenticated via JWT token with rate limiting
  */
 const requireAuth = async (req, res, next) => {
+  const apiRateLimit = rateLimiters.api;
+  const rateLimitInfo = addRateLimitInfo('api');
+  
   try {
+    await new Promise((resolve, reject) => {
+      apiRateLimit(req, res, (err) => {
+        if (err) reject(err);
+        else resolve();
+      });
+    });
+    
+    rateLimitInfo(req, res, () => {});
+    
     // Check for JWT token in Authorization header
     const authHeader = req.headers.authorization;
     if (!authHeader || !authHeader.startsWith('Bearer ')) {
@@ -76,18 +108,47 @@ const requireAuth = async (req, res, next) => {
       profile: userData
     };
     
+    console.log('✅ User authenticated:', {
+      userId: req.user.id,
+      tier: getUserTier(req.user),
+      timestamp: new Date().toISOString(),
+      ip: req.ip,
+      userAgent: req.get('User-Agent')?.substring(0, 100)
+    });
+    
     next();
   } catch (error) {
+    if (error.status === 429 || error.message?.includes('rate limit')) {
+      return res.status(429).json({
+        error: 'Rate limit exceeded',
+        message: 'Too many authentication requests. Please wait before trying again.',
+        category: 'rate_limit_error',
+        retryAfter: error.retryAfter || 60
+      });
+    }
+    
     console.error('Auth middleware error:', error);
     return res.status(500).json({ error: 'Internal server error' });
   }
 };
 
 /**
- * Middleware to check if request has valid API key
+ * Middleware to check if request has valid API key with enhanced rate limiting
  */
 const requireApiKey = async (req, res, next) => {
+  const apiRateLimit = rateLimiters.api;
+  const rateLimitInfo = addRateLimitInfo('api');
+  
   try {
+    await new Promise((resolve, reject) => {
+      apiRateLimit(req, res, (err) => {
+        if (err) reject(err);
+        else resolve();
+      });
+    });
+    
+    rateLimitInfo(req, res, () => {});
+    
     // Check for API key in Authorization header
     const authHeader = req.headers.authorization;
     if (!authHeader) {
@@ -123,17 +184,38 @@ const requireApiKey = async (req, res, next) => {
     req.user = userData;
     req.apiKey = apiKey;
 
-    // Log API request (async, don't wait)
+    // Log API request with rate limit info (async, don't wait)
     db.storeApiLog({
       user_id: userId,
       api_key: apiKey,
       endpoint: req.originalUrl,
       method: req.method,
-      timestamp: new Date().toISOString()
+      timestamp: new Date().toISOString(),
+      user_tier: getUserTier(userData),
+      ip: req.ip
     }).catch(err => console.error('Error logging API request:', err));
+
+    console.log('🔑 API key authenticated:', {
+      userId: userData.id,
+      tier: getUserTier(userData),
+      endpoint: req.originalUrl,
+      method: req.method,
+      timestamp: new Date().toISOString(),
+      ip: req.ip
+    });
 
     next();
   } catch (error) {
+    if (error.status === 429 || error.message?.includes('rate limit')) {
+      return res.status(429).json({
+        error: 'Rate limit exceeded',
+        message: 'Too many API requests. Please wait before trying again.',
+        category: 'rate_limit_error',
+        retryAfter: error.retryAfter || 60,
+        upgradeMessage: 'Consider upgrading your plan for higher rate limits'
+      });
+    }
+    
     console.error('API key middleware error:', error);
     return res.status(500).json({ error: 'Internal server error' });
   }
@@ -243,8 +325,70 @@ const anyAuth = async (req, res, next) => {
   }
 };
 
+/**
+ * Enhanced rate limiting middleware that can be applied to any endpoint
+ * Automatically detects the appropriate rate limit category based on the endpoint
+ */
+const withRateLimit = (category = 'api') => {
+  return async (req, res, next) => {
+    const rateLimit = rateLimiters[category] || rateLimiters.api;
+    const rateLimitInfo = addRateLimitInfo(category);
+    
+    try {
+      await new Promise((resolve, reject) => {
+        rateLimit(req, res, (err) => {
+          if (err) reject(err);
+          else resolve();
+        });
+      });
+      
+      rateLimitInfo(req, res, () => {});
+      
+      next();
+    } catch (error) {
+      if (error.status === 429 || error.message?.includes('rate limit')) {
+        const tier = getUserTier(req.user);
+        return res.status(429).json({
+          error: 'Rate limit exceeded',
+          message: `Too many ${category} requests. Please wait before trying again.`,
+          category: 'rate_limit_error',
+          tier,
+          retryAfter: error.retryAfter || 60,
+          upgradeMessage: tier === 'free' ? 'Upgrade to premium for higher limits' : null
+        });
+      }
+      
+      console.error('Rate limit middleware error:', error);
+      return res.status(500).json({ error: 'Internal server error' });
+    }
+  };
+};
+
+/**
+ * Smart rate limiting middleware that automatically selects the appropriate category
+ * based on the request path and method
+ */
+const smartRateLimit = (req, res, next) => {
+  let category = 'api'; // default
+  
+  if (req.path.includes('/auth/') || req.path.includes('/signin') || req.path.includes('/signup')) {
+    category = 'auth';
+  } else if (req.path.includes('/chat')) {
+    category = 'chat';
+  } else if (req.path.includes('/upload') || req.method === 'POST' && req.path.includes('/artifacts')) {
+    category = 'upload';
+  } else if (req.path.includes('/export') || req.path.includes('/download')) {
+    category = 'export';
+  }
+  
+  const middleware = withRateLimit(category);
+  middleware(req, res, next);
+};
+
 module.exports = {
   requireAuth,
   requireApiKey,
-  anyAuth
+  anyAuth,
+  withRateLimit,
+  smartRateLimit
 };
