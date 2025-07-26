@@ -23,6 +23,12 @@ on:
         default: '5'
         type: string
 
+permissions:
+  contents: read
+  actions: write
+  pull-requests: write
+  issues: write
+
 env:
   NODE_VERSION: '20'
 
