@@ -1,0 +1,82 @@
+config:
+  target: 'http://localhost:3000'
+  phases:
+    - duration: 60
+      arrivalRate: 5
+      name: "Chat API Load Test"
+  defaults:
+    headers:
+      'Content-Type': 'application/json'
+  processor: "../processors/chat-processor.js"
+
+scenarios:
+  - name: "Chat Conversation Flow"
+    weight: 70
+    flow:
+      - post:
+          url: "/api/chat"
+          name: "Send Chat Message"
+          json:
+            messages:
+              - role: "user"
+                content: "{{ generateRandomQuestion() }}"
+            model: "qwen:7b-chat-v1.5-q4_K_M"
+            systemPrompt: "You are a helpful AI assistant."
+            sessionId: "{{ $randomUUID() }}"
+            userId: "load-test-user"
+          capture:
+            - json: "$.sessionId"
+              as: "sessionId"
+          expect:
+            - statusCode: 200
+            - hasHeader: "content-type"
+
+  - name: "Chat Models Check"
+    weight: 15
+    flow:
+      - get:
+          url: "/api/chat/models"
+          name: "Get Available Models"
+          expect:
+            - statusCode: [200, 503]
+
+  - name: "Chat Metrics Check"
+    weight: 10
+    flow:
+      - get:
+          url: "/api/chat/metrics"
+          name: "Get Chat Metrics"
+          qs:
+            timeframe: "hour"
+          expect:
+            - statusCode: 200
+            - contentType: json
+
+  - name: "Session Management"
+    weight: 5
+    flow:
+      - post:
+          url: "/api/chat/sessions"
+          name: "Create Chat Session"
+          json:
+            userId: "load-test-user"
+            metadata:
+              source: "load-test"
+          capture:
+            - json: "$.id"
+              as: "newSessionId"
+          expect:
+            - statusCode: 201
+      - get:
+          url: "/api/chat/sessions/{{ newSessionId }}"
+          name: "Get Session Details"
+          expect:
+            - statusCode: 200
+      - get:
+          url: "/api/chat/sessions"
+          name: "List User Sessions"
+          qs:
+            userId: "load-test-user"
+            limit: 10
+          expect:
+            - statusCode: 200

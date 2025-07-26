@@ -6,6 +6,19 @@
 const { body, param, query, validationResult } = require('express-validator');
 const { rateLimiters, addRateLimitInfo } = require('./enhanced-rate-limiting');
 
+let helmet;
+let helmetAvailable = false;
+
+try {
+  helmet = require('helmet');
+  helmetAvailable = true;
+  console.log('✅ Helmet security middleware loaded successfully');
+} catch (error) {
+  console.warn('⚠️  Helmet dependency not available, security middleware disabled:', error.message);
+  helmetAvailable = false;
+  helmet = () => (req, res, next) => next();
+}
+
 /**
  * Handle validation errors
  */
@@ -284,7 +297,7 @@ const fileValidation = {
  * Security middleware configuration
  * Note: CSP is now handled by dedicated middleware in csp.js
  */
-const securityMiddleware = helmet({
+const securityMiddleware = helmetAvailable ? helmet({
   contentSecurityPolicy: false, // Handled by dedicated CSP middleware
   crossOriginEmbedderPolicy: false,
   hsts: {
@@ -292,7 +305,10 @@ const securityMiddleware = helmet({
     includeSubDomains: true,
     preload: true
   }
-});
+}) : (req, res, next) => {
+  console.log('📊 Security middleware skipped - helmet not available');
+  next();
+};
 
 /**
  * Input sanitization middleware

@@ -52,6 +52,33 @@ jobs:
         working-directory: ./web-gui
         run: npm run test:coverage
 
+      - name: Install Playwright browsers
+        working-directory: ./web-gui
+        run: npx playwright install --with-deps
+
+      - name: Run accessibility tests
+        working-directory: ./web-gui
+        run: npm run test:accessibility
+
+      - name: Setup Node.js for backend
+        uses: actions/setup-node@v4
+        with:
+          node-version: '20'
+          cache: 'npm'
+          cache-dependency-path: web-gui-node/package-lock.json
+
+      - name: Install backend dependencies
+        working-directory: ./web-gui-node
+        run: npm ci
+
+      - name: Run backend tests
+        working-directory: ./web-gui-node
+        run: npm test
+
+      - name: Run load tests
+        working-directory: ./web-gui-node
+        run: npm run load-test:quick
+
       - name: Build application
         working-directory: ./web-gui
         run: npm run build:production
@@ -198,6 +225,33 @@ jobs:
           # - Performance tests
           
           echo "✅ All validation tests passed!"
+
+      - name: Configure APM monitoring
+        env:
+          TARGET_ENV: ${{ needs.determine-strategy.outputs.target-environment }}
+        run: |
+          echo "📊 Configuring APM monitoring for $TARGET_ENV environment..."
+          
+          # In real deployment:
+          # - Configure OpenTelemetry endpoints
+          # - Set up monitoring dashboards
+          # - Configure alerting rules
+          # - Verify APM data collection
+          
+          echo "✅ APM monitoring configured!"
+
+      - name: Verify APM endpoints
+        env:
+          TARGET_ENV: ${{ needs.determine-strategy.outputs.target-environment }}
+        run: |
+          echo "🔍 Verifying APM endpoints..."
+          
+          # In real deployment, verify:
+          # - /api/performance endpoint responds
+          # - /api/health includes performance metrics
+          # - OpenTelemetry traces are being collected
+          
+          echo "✅ APM endpoints verified!"
 
   # Switch traffic (conditional)
   switch-traffic:

@@ -4,8 +4,19 @@
  */
 
 const rateLimit = require('express-rate-limit');
-const RedisStore = require('rate-limit-redis');
-const Redis = require('redis');
+
+let RedisStore, Redis;
+let redisAvailable = false;
+
+try {
+  RedisStore = require('rate-limit-redis');
+  Redis = require('redis');
+  redisAvailable = true;
+  console.log('✅ Redis rate limiting dependencies loaded successfully');
+} catch (error) {
+  console.warn('⚠️  Redis dependencies not available, using memory-based rate limiting:', error.message);
+  redisAvailable = false;
+}
 
 // In-memory store for development (replace with Redis in production)
 class MemoryStore {
@@ -50,8 +61,8 @@ class MemoryStore {
   }
 }
 
-// Create store instance (use Redis in production)
-const store = process.env.REDIS_URL ? 
+// Create store instance (use Redis if available, otherwise memory store)
+const store = (redisAvailable && process.env.REDIS_URL) ? 
   new RedisStore({
     sendCommand: (...args) => Redis.createClient({ url: process.env.REDIS_URL }).sendCommand(args),
   }) : 
@@ -161,15 +172,7 @@ function createEnhancedRateLimit(category, options = {}) {
     standardHeaders: true,
     legacyHeaders: false,
     
-    // Custom headers with additional information
-    onLimitReached: (req, res) => {
-      const tier = getUserTier(req.user);
-      const config = RATE_LIMITS[category]?.[tier] || RATE_LIMITS.api.free;
-      
-      res.setHeader('X-RateLimit-Category', category);
-      res.setHeader('X-RateLimit-Tier', tier);
-      res.setHeader('X-RateLimit-User', req.user ? req.user.id : 'anonymous');
-    },
+    // Custom headers with additional information (onLimitReached is deprecated in v7)
     
     // Skip rate limiting for certain conditions
     skip: (req) => {

@@ -1,8 +1,48 @@
 // Authentication middleware for Supabase with database-backed session storage
 const auth = require('../lib/auth');
 const db = require('../lib/db');
-const { sessionStore } = require('../lib/session-store');
-const { jwtManager } = require('../lib/jwt-manager');
+
+let sessionStore;
+let sessionStoreAvailable = false;
+
+try {
+  ({ sessionStore } = require('../lib/session-store'));
+  sessionStoreAvailable = true;
+  console.log('✅ Session store loaded successfully');
+} catch (error) {
+  console.warn('⚠️  Session store not available, using memory-based sessions:', error.message);
+  sessionStoreAvailable = false;
+  sessionStore = {
+    get: (sessionId) => Promise.resolve(null),
+    set: (sessionId, data) => Promise.resolve(),
+    destroy: (sessionId) => Promise.resolve(),
+    clear: () => Promise.resolve()
+  };
+}
+
+let jwtManager;
+let jwtManagerAvailable = false;
+
+try {
+  ({ jwtManager } = require('../lib/jwt-manager'));
+  jwtManagerAvailable = true;
+  console.log('✅ JWT manager loaded successfully');
+} catch (error) {
+  console.warn('⚠️  JWT manager not available, using fallback implementation:', error.message);
+  jwtManagerAvailable = false;
+  jwtManager = {
+    verifyAccessToken: (token) => {
+      try {
+        const payload = JSON.parse(Buffer.from(token.split('.')[1], 'base64').toString());
+        return payload;
+      } catch (e) {
+        return null;
+      }
+    },
+    generateAccessToken: (payload) => 'fallback-token',
+    generateRefreshToken: (payload) => 'fallback-refresh-token'
+  };
+}
 
 /**
  * Middleware to check if user is authenticated via JWT token

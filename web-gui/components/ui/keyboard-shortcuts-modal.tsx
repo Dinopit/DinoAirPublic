@@ -3,6 +3,7 @@
 import React from 'react';
 import { X } from 'lucide-react';
 import { formatShortcut, KeyboardShortcut } from '../../hooks/useKeyboardShortcuts';
+import { useFocusManagement } from '../../hooks/useFocusManagement';
 
 interface KeyboardShortcutsModalProps {
   isOpen: boolean;
@@ -15,6 +16,25 @@ export const KeyboardShortcutsModal: React.FC<KeyboardShortcutsModalProps> = ({
   onClose,
   shortcuts,
 }) => {
+  const { containerRef } = useFocusManagement(isOpen, {
+    restoreFocus: true,
+    trapFocus: true,
+    autoFocus: true
+  });
+
+  React.useEffect(() => {
+    const handleKeyDown = (event: KeyboardEvent) => {
+      if (event.key === 'Escape') {
+        onClose();
+      }
+    };
+
+    if (isOpen) {
+      document.addEventListener('keydown', handleKeyDown);
+      return () => document.removeEventListener('keydown', handleKeyDown);
+    }
+  }, [isOpen, onClose]);
+
   if (!isOpen) return null;
 
   const groupedShortcuts = shortcuts.reduce((acc, shortcut) => {
@@ -32,45 +52,68 @@ export const KeyboardShortcutsModal: React.FC<KeyboardShortcutsModalProps> = ({
       <div 
         className="fixed inset-0 bg-black/50 z-40 transition-opacity"
         onClick={onClose}
+        aria-hidden="true"
       />
       
       {/* Modal */}
-      <div className="fixed inset-0 z-50 flex items-center justify-center p-4">
-        <div className="bg-card rounded-lg shadow-xl max-w-2xl w-full max-h-[80vh] overflow-hidden">
+      <div 
+        className="fixed inset-0 z-50 flex items-center justify-center p-4"
+        role="dialog"
+        aria-modal="true"
+        aria-labelledby="shortcuts-modal-title"
+        aria-describedby="shortcuts-modal-description"
+      >
+        <div 
+          ref={containerRef}
+          className="bg-card rounded-lg shadow-xl max-w-2xl w-full max-h-[80vh] overflow-hidden"
+          tabIndex={-1}
+        >
           {/* Header */}
           <div className="flex items-center justify-between p-6 border-b border-border">
-            <h2 className="text-2xl font-semibold">Keyboard Shortcuts</h2>
+            <h2 id="shortcuts-modal-title" className="text-2xl font-semibold">
+              Keyboard Shortcuts
+            </h2>
             <button
               onClick={onClose}
               className="p-2 hover:bg-muted rounded-lg transition-colors"
-              aria-label="Close modal"
+              aria-label="Close keyboard shortcuts dialog"
             >
-              <X className="w-5 h-5" />
+              <X className="w-5 h-5" aria-hidden="true" />
             </button>
           </div>
           
           {/* Content */}
-          <div className="p-6 overflow-y-auto max-h-[60vh]">
+          <div 
+            className="p-6 overflow-y-auto max-h-[60vh]"
+            id="shortcuts-modal-description"
+          >
             <div className="space-y-6">
               {Object.entries(groupedShortcuts).map(([category, categoryShortcuts]) => (
-                <div key={category}>
-                  <h3 className="text-lg font-medium mb-3 text-muted-foreground">
+                <section key={category} aria-labelledby={`category-${category.toLowerCase()}`}>
+                  <h3 
+                    id={`category-${category.toLowerCase()}`}
+                    className="text-lg font-medium mb-3 text-muted-foreground"
+                  >
                     {category}
                   </h3>
-                  <div className="space-y-2">
+                  <div className="space-y-2" role="list">
                     {categoryShortcuts.map((shortcut, index) => (
                       <div
                         key={`${shortcut.key}-${index}`}
                         className="flex items-center justify-between p-3 rounded-lg hover:bg-muted/50 transition-colors"
+                        role="listitem"
                       >
                         <span className="text-sm">{shortcut.description}</span>
-                        <kbd className="px-3 py-1 text-sm font-mono bg-muted rounded border border-border">
+                        <kbd 
+                          className="px-3 py-1 text-sm font-mono bg-muted rounded border border-border"
+                          aria-label={`Keyboard shortcut: ${formatShortcut(shortcut)}`}
+                        >
                           {formatShortcut(shortcut)}
                         </kbd>
                       </div>
                     ))}
                   </div>
-                </div>
+                </section>
               ))}
             </div>
           </div>
@@ -78,7 +121,12 @@ export const KeyboardShortcutsModal: React.FC<KeyboardShortcutsModalProps> = ({
           {/* Footer */}
           <div className="p-6 border-t border-border bg-muted/30">
             <p className="text-sm text-muted-foreground text-center">
-              Press <kbd className="px-2 py-0.5 text-xs font-mono bg-muted rounded border border-border">Esc</kbd> to close
+              Press <kbd 
+                className="px-2 py-0.5 text-xs font-mono bg-muted rounded border border-border"
+                aria-label="Escape key"
+              >
+                Esc
+              </kbd> to close this dialog
             </p>
           </div>
         </div>

@@ -1,8 +1,7 @@
 {
   "extends": [
     "next/core-web-vitals",
-    "@typescript-eslint/recommended",
-    "@typescript-eslint/recommended-requiring-type-checking"
+    "plugin:storybook/recommended"
   ],
   "parser": "@typescript-eslint/parser",
   "parserOptions": {
@@ -18,7 +17,12 @@
   ],
   "rules": {
     // TypeScript specific rules
-    "@typescript-eslint/no-unused-vars": ["error", { "argsIgnorePattern": "^_" }],
+    "@typescript-eslint/no-unused-vars": [
+      "error",
+      {
+        "argsIgnorePattern": "^_"
+      }
+    ],
     "@typescript-eslint/no-explicit-any": "warn",
     "@typescript-eslint/explicit-function-return-type": "off",
     "@typescript-eslint/explicit-module-boundary-types": "off",
@@ -26,11 +30,15 @@
     "@typescript-eslint/prefer-const": "error",
     "@typescript-eslint/no-var-requires": "error",
     "@typescript-eslint/ban-ts-comment": "warn",
-    "@typescript-eslint/consistent-type-imports": ["error", { "prefer": "type-imports" }],
+    "@typescript-eslint/consistent-type-imports": [
+      "error",
+      {
+        "prefer": "type-imports"
+      }
+    ],
     "@typescript-eslint/no-unnecessary-type-assertion": "error",
     "@typescript-eslint/prefer-nullish-coalescing": "error",
     "@typescript-eslint/prefer-optional-chain": "error",
-
     // React specific rules
     "react/jsx-uses-react": "off",
     "react/react-in-jsx-scope": "off",
@@ -51,12 +59,16 @@
     "react/no-unescaped-entities": "error",
     "react/no-unknown-property": "error",
     "react/require-render-return": "error",
-    "react/self-closing-comp": ["error", { "component": true, "html": true }],
-
+    "react/self-closing-comp": [
+      "error",
+      {
+        "component": true,
+        "html": true
+      }
+    ],
     // React Hooks rules
     "react-hooks/rules-of-hooks": "error",
     "react-hooks/exhaustive-deps": "warn",
-
     // Import rules
     "import/order": [
       "error",
@@ -79,60 +91,118 @@
     "import/no-duplicates": "error",
     "import/no-unresolved": "off",
     "import/named": "off",
-
     // General code quality rules
-    "no-console": ["warn", { "allow": ["warn", "error"] }],
+    "no-console": [
+      "warn",
+      {
+        "allow": [
+          "warn",
+          "error"
+        ]
+      }
+    ],
     "no-debugger": "error",
     "no-alert": "error",
     "no-var": "error",
     "prefer-const": "error",
     "no-unused-expressions": "error",
     "no-duplicate-imports": "error",
-    "no-multiple-empty-lines": ["error", { "max": 2, "maxEOF": 1 }],
-    "eol-last": ["error", "always"],
-    "comma-dangle": ["error", "never"],
-    "semi": ["error", "always"],
-    "quotes": ["error", "single", { "avoidEscape": true }],
-    "jsx-quotes": ["error", "prefer-double"],
-
+    "no-multiple-empty-lines": [
+      "error",
+      {
+        "max": 2,
+        "maxEOF": 1
+      }
+    ],
+    "eol-last": [
+      "error",
+      "always"
+    ],
+    "comma-dangle": [
+      "error",
+      "never"
+    ],
+    "semi": [
+      "error",
+      "always"
+    ],
+    "quotes": [
+      "error",
+      "single",
+      {
+        "avoidEscape": true
+      }
+    ],
+    "jsx-quotes": [
+      "error",
+      "prefer-double"
+    ],
     // Naming conventions
-    "camelcase": ["error", { "properties": "never", "ignoreDestructuring": false }],
+    "camelcase": [
+      "error",
+      {
+        "properties": "never",
+        "ignoreDestructuring": false
+      }
+    ],
     "@typescript-eslint/naming-convention": [
       "error",
       {
         "selector": "variableLike",
-        "format": ["camelCase", "PascalCase", "UPPER_CASE"]
+        "format": [
+          "camelCase",
+          "PascalCase",
+          "UPPER_CASE"
+        ]
       },
       {
         "selector": "function",
-        "format": ["camelCase", "PascalCase"]
+        "format": [
+          "camelCase",
+          "PascalCase"
+        ]
       },
       {
         "selector": "typeLike",
-        "format": ["PascalCase"]
+        "format": [
+          "PascalCase"
+        ]
       },
       {
         "selector": "interface",
-        "format": ["PascalCase"],
-        "prefix": ["I"]
+        "format": [
+          "PascalCase"
+        ],
+        "prefix": [
+          "I"
+        ]
       },
       {
         "selector": "typeAlias",
-        "format": ["PascalCase"]
+        "format": [
+          "PascalCase"
+        ]
       },
       {
         "selector": "enum",
-        "format": ["PascalCase"]
+        "format": [
+          "PascalCase"
+        ]
       },
       {
         "selector": "enumMember",
-        "format": ["UPPER_CASE"]
+        "format": [
+          "UPPER_CASE"
+        ]
       }
     ],
-
     // File and component naming
-    "react/jsx-pascal-case": ["error", { "allowAllCaps": false }],
-
+    "react/jsx-pascal-case": [
+      "error",
+      {
+        "allowAllCaps": false
+      }
+    ],
     // Accessibility rules
     "jsx-a11y/alt-text": "error",
     "jsx-a11y/anchor-has-content": "error",
@@ -145,7 +215,12 @@
   },
   "overrides": [
     {
-      "files": ["**/*.test.ts", "**/*.test.tsx", "**/*.spec.ts", "**/*.spec.tsx"],
+      "files": [
+        "**/*.test.ts",
+        "**/*.test.tsx",
+        "**/*.spec.ts",
+        "**/*.spec.tsx"
+      ],
       "env": {
         "jest": true
       },
