@@ -32,7 +32,9 @@
     "security:scan:secrets": "./scripts/security-scan.sh --secrets",
     "security:audit": "npm audit && ./scripts/security-scan.sh --dependencies --secrets",
     "clean": "rm -rf .next out coverage security-reports",
-    "postinstall": "echo 'Skipping type-check for now'"
+    "postinstall": "echo 'Skipping type-check for now'",
+    "storybook": "storybook dev -p 6006",
+    "build-storybook": "storybook build"
   },
   "dependencies": {
     "@radix-ui/react-dialog": "^1.0.5",
@@ -67,6 +69,11 @@
     "@next/bundle-analyzer": "^15.4.2",
     "@pact-foundation/pact": "^13.1.0",
     "@playwright/test": "^1.54.1",
+    "@storybook/addon-actions": "^7.6.20",
+    "@storybook/addon-controls": "^7.6.20",
+    "@storybook/addon-docs": "^7.6.20",
+    "@storybook/addon-essentials": "^7.6.20",
+    "@storybook/react": "^7.6.20",
     "@tailwindcss/typography": "^0.5.10",
     "@testing-library/jest-dom": "^6.6.3",
     "@testing-library/react": "^16.3.0",

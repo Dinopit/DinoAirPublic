@@ -1,6 +1,6 @@
 'use client';
 
-import React, { createContext, useContext, useState, useCallback, useEffect } from 'react';
+import React, { createContext, useContext, useState, useCallback } from 'react';
 import { X, CheckCircle, AlertCircle, Info, AlertTriangle } from 'lucide-react';
 
 export type ToastType = 'success' | 'error' | 'info' | 'warning';
@@ -151,18 +151,38 @@ const ToastItem: React.FC<ToastItemProps> = ({ toast, onRemove }) => {
 export const toast = {
   success: (title: string, message?: string, duration?: number) => {
     const { addToast } = useToast();
-    addToast({ type: 'success', title, message, duration });
+    addToast({ 
+      type: 'success', 
+      title, 
+      ...(message !== undefined && { message }),
+      ...(duration !== undefined && { duration })
+    });
   },
   error: (title: string, message?: string, duration?: number) => {
     const { addToast } = useToast();
-    addToast({ type: 'error', title, message, duration });
+    addToast({ 
+      type: 'error', 
+      title, 
+      ...(message !== undefined && { message }),
+      ...(duration !== undefined && { duration })
+    });
   },
   info: (title: string, message?: string, duration?: number) => {
     const { addToast } = useToast();
-    addToast({ type: 'info', title, message, duration });
+    addToast({ 
+      type: 'info', 
+      title, 
+      ...(message !== undefined && { message }),
+      ...(duration !== undefined && { duration })
+    });
   },
   warning: (title: string, message?: string, duration?: number) => {
     const { addToast } = useToast();
-    addToast({ type: 'warning', title, message, duration });
+    addToast({ 
+      type: 'warning', 
+      title, 
+      ...(message !== undefined && { message }),
+      ...(duration !== undefined && { duration })
+    });
   },
 };
