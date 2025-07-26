@@ -28,6 +28,10 @@ const getApiSpec = () => createSwaggerSpec({
         name: 'Personalities',
         description: 'Operations related to AI personalities',
       },
+      {
+        name: 'Artifacts',
+        description: 'Operations related to code artifacts and file management',
+      },
     ],
     components: {
       securitySchemes: {
@@ -209,6 +213,322 @@ const getApiSpec = () => createSwaggerSpec({
               example: 'req_123456',
             },
           },
+        },
+        Artifact: {
+          type: 'object',
+          properties: {
+            id: {
+              type: 'string',
+              description: 'Unique identifier for the artifact',
+              example: 'artifact_1642234567890_abc123def',
+            },
+            name: {
+              type: 'string',
+              description: 'Name of the artifact',
+              example: 'my-component.tsx',
+            },
+            type: {
+              type: 'string',
+              enum: ['javascript', 'javascriptreact', 'typescript', 'typescriptreact', 'python', 'html', 'css', 'json', 'markdown', 'text'],
+              description: 'Type/language of the artifact',
+              example: 'typescriptreact',
+            },
+            content: {
+              type: 'string',
+              description: 'Content of the artifact',
+              example: 'import React from "react";\n\nconst MyComponent = () => {\n  return <div>Hello World</div>;\n};\n\nexport default MyComponent;',
+            },
+            size: {
+              type: 'integer',
+              description: 'Size of the artifact in bytes',
+              example: 1024,
+            },
+            tags: {
+              type: 'array',
+              items: {
+                type: 'string',
+              },
+              description: 'Tags associated with the artifact',
+              example: ['react', 'component', 'typescript'],
+            },
+            createdAt: {
+              type: 'string',
+              format: 'date-time',
+              description: 'Creation timestamp',
+              example: '2024-01-15T10:30:00Z',
+            },
+            updatedAt: {
+              type: 'string',
+              format: 'date-time',
+              description: 'Last update timestamp',
+              example: '2024-01-15T10:30:00Z',
+            },
+            userId: {
+              type: 'string',
+              description: 'ID of the user who owns the artifact',
+              example: 'user_123456',
+              nullable: true,
+            },
+          },
+          required: ['id', 'name', 'type', 'content', 'createdAt'],
+        },
+        ArtifactResponse: {
+          type: 'object',
+          properties: {
+            success: {
+              type: 'boolean',
+              example: true,
+            },
+            artifact: {
+              $ref: '#/components/schemas/Artifact',
+            },
+            timestamp: {
+              type: 'string',
+              format: 'date-time',
+              example: '2024-01-15T10:30:00Z',
+            },
+            requestId: {
+              type: 'string',
+              description: 'Unique request identifier',
+              example: 'req_123456',
+            },
+          },
+        },
+        ArtifactsResponse: {
+          type: 'object',
+          properties: {
+            success: {
+              type: 'boolean',
+              example: true,
+            },
+            artifacts: {
+              type: 'array',
+              items: {
+                $ref: '#/components/schemas/Artifact',
+              },
+            },
+            total: {
+              type: 'integer',
+              description: 'Total number of artifacts',
+              example: 25,
+            },
+            page: {
+              type: 'integer',
+              description: 'Current page number',
+              example: 1,
+            },
+            pageSize: {
+              type: 'integer',
+              description: 'Number of items per page',
+              example: 10,
+            },
+            timestamp: {
+              type: 'string',
+              format: 'date-time',
+              example: '2024-01-15T10:30:00Z',
+            },
+            requestId: {
+              type: 'string',
+              description: 'Unique request identifier',
+              example: 'req_123456',
+            },
+          },
+        },
+        ArtifactStatsResponse: {
+          type: 'object',
+          properties: {
+            success: {
+              type: 'boolean',
+              example: true,
+            },
+            stats: {
+              type: 'object',
+              properties: {
+                total: {
+                  type: 'integer',
+                  description: 'Total number of artifacts',
+                  example: 25,
+                },
+                byType: {
+                  type: 'object',
+                  additionalProperties: {
+                    type: 'integer',
+                  },
+                  description: 'Count of artifacts by type',
+                  example: {
+                    typescript: 10,
+                    javascript: 8,
+                    python: 5,
+                    markdown: 2,
+                  },
+                },
+                totalSize: {
+                  type: 'integer',
+                  description: 'Total size of all artifacts in bytes',
+                  example: 1048576,
+                },
+                averageSize: {
+                  type: 'integer',
+                  description: 'Average size of artifacts in bytes',
+                  example: 41943,
+                },
+                recentCount: {
+                  type: 'integer',
+                  description: 'Number of artifacts created in the last week',
+                  example: 5,
+                },
+                storage: {
+                  type: 'object',
+                  properties: {
+                    limits: {
+                      type: 'object',
+                      properties: {
+                        maxArtifacts: {
+                          type: 'integer',
+                          example: 1000,
+                        },
+                        maxTotalSize: {
+                          type: 'integer',
+                          example: 104857600,
+                        },
+                        maxTotalSizeMB: {
+                          type: 'integer',
+                          example: 100,
+                        },
+                      },
+                    },
+                    current: {
+                      type: 'object',
+                      properties: {
+                        artifacts: {
+                          type: 'integer',
+                          example: 25,
+                        },
+                        totalSize: {
+                          type: 'integer',
+                          example: 1048576,
+                        },
+                        totalSizeMB: {
+                          type: 'integer',
+                          example: 1,
+                        },
+                      },
+                    },
+                    utilization: {
+                      type: 'object',
+                      properties: {
+                        count: {
+                          type: 'integer',
+                          description: 'Percentage of artifact count limit used',
+                          example: 3,
+                        },
+                        size: {
+                          type: 'integer',
+                          description: 'Percentage of storage size limit used',
+                          example: 1,
+                        },
+                      },
+                    },
+                    status: {
+                      type: 'string',
+                      enum: ['healthy', 'warning', 'critical'],
+                      description: 'Storage status based on utilization',
+                      example: 'healthy',
+                    },
+                  },
+                },
+              },
+            },
+            timestamp: {
+              type: 'string',
+              format: 'date-time',
+              example: '2024-01-15T10:30:00Z',
+            },
+            requestId: {
+              type: 'string',
+              description: 'Unique request identifier',
+              example: 'req_123456',
+            },
+          },
+        },
+        CreateArtifactRequest: {
+          type: 'object',
+          properties: {
+            name: {
+              type: 'string',
+              description: 'Name of the artifact',
+              example: 'my-component.tsx',
+            },
+            type: {
+              type: 'string',
+              enum: ['javascript', 'javascriptreact', 'typescript', 'typescriptreact', 'python', 'html', 'css', 'json', 'markdown', 'text'],
+              description: 'Type/language of the artifact',
+              example: 'typescriptreact',
+            },
+            content: {
+              type: 'string',
+              description: 'Content of the artifact',
+              example: 'import React from "react";\n\nconst MyComponent = () => {\n  return <div>Hello World</div>;\n};\n\nexport default MyComponent;',
+            },
+            tags: {
+              type: 'array',
+              items: {
+                type: 'string',
+              },
+              description: 'Tags to associate with the artifact',
+              example: ['react', 'component', 'typescript'],
+            },
+          },
+          required: ['name', 'type', 'content'],
+        },
+        UpdateArtifactRequest: {
+          type: 'object',
+          properties: {
+            name: {
+              type: 'string',
+              description: 'Name of the artifact',
+              example: 'my-updated-component.tsx',
+            },
+            type: {
+              type: 'string',
+              enum: ['javascript', 'javascriptreact', 'typescript', 'typescriptreact', 'python', 'html', 'css', 'json', 'markdown', 'text'],
+              description: 'Type/language of the artifact',
+              example: 'typescriptreact',
+            },
+            content: {
+              type: 'string',
+              description: 'Updated content of the artifact',
+              example: 'import React from "react";\n\nconst MyUpdatedComponent = () => {\n  return <div>Hello Updated World</div>;\n};\n\nexport default MyUpdatedComponent;',
+            },
+            tags: {
+              type: 'array',
+              items: {
+                type: 'string',
+              },
+              description: 'Updated tags for the artifact',
+              example: ['react', 'component', 'typescript', 'updated'],
+            },
+          },
+        },
+        BulkExportRequest: {
+          type: 'object',
+          properties: {
+            artifactIds: {
+              type: 'array',
+              items: {
+                type: 'string',
+              },
+              description: 'Array of artifact IDs to export',
+              example: ['artifact_1642234567890_abc123def', 'artifact_1642234567891_def456ghi'],
+            },
+            includeManifest: {
+              type: 'boolean',
+              description: 'Whether to include a manifest.json file in the export',
+              example: true,
+              default: true,
+            },
+          },
+          required: ['artifactIds'],
         },
         ErrorResponse: {
           type: 'object',

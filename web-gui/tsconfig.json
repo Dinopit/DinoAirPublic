@@ -18,6 +18,16 @@
     "isolatedModules": true,
     "jsx": "preserve",
     "incremental": true,
+    
+    // Additional strict type checking options
+    "noImplicitAny": true,
+    "noImplicitReturns": true,
+    "noImplicitThis": true,
+    "noUnusedLocals": true,
+    "noUnusedParameters": true,
+    "exactOptionalPropertyTypes": true,
+    "noUncheckedIndexedAccess": true,
+    "noImplicitOverride": true,
     "plugins": [
       {
         "name": "next"

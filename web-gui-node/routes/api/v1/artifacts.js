@@ -4,35 +4,25 @@
  */
 
 const express = require('express');
-const multer = require('multer');
 const JSZip = require('jszip');
 const { artifacts } = require('../../../lib/supabase');
 const { resourceManager } = require('../../../lib/resource-manager');
+const { requireAuth } = require('../../../middleware/auth-middleware');
+const { rateLimits } = require('../../../middleware/validation');
+const { 
+  createSecureUpload, 
+  postUploadValidation, 
+  secureDownloadHeaders,
+  getUserQuota,
+  getUserStorageUsage 
+} = require('../../../middleware/file-security');
 const router = express.Router();
 
-// Configure multer for file uploads
-const upload = multer({
-  limits: {
-    fileSize: 10 * 1024 * 1024, // 10MB limit
-    files: 10 // Max 10 files
-  },
-  fileFilter: (req, file, cb) => {
-    // Allow common text and code file types
-    const allowedTypes = [
-      'text/plain',
-      'application/json',
-      'text/javascript',
-      'text/html',
-      'text/css',
-      'application/javascript'
-    ];
-    
-    if (allowedTypes.includes(file.mimetype) || file.originalname.match(/\.(txt|js|ts|jsx|tsx|html|css|json|md|py|java|cpp|c|cs|php|rb|go|rs|swift|kt)$/i)) {
-      cb(null, true);
-    } else {
-      cb(new Error('Invalid file type. Only text and code files are allowed.'));
-    }
-  }
+// Configure secure file upload with enhanced security
+const upload = createSecureUpload({
+  uploadDir: 'uploads/artifacts',
+  maxFileSize: 50 * 1024 * 1024, // 50MB max per file
+  maxFiles: 20
 });
 
 // Configuration constants
@@ -40,29 +30,55 @@ const MAX_ARTIFACTS = 1000;
 const MAX_TOTAL_SIZE = 100 * 1024 * 1024; // 100MB
 
 /**
- * Get current storage statistics from database
+ * Get current storage statistics from database with user-specific quotas
  */
-async function getStorageStats(userId = null) {
+async function getStorageStats(userId = null, user = null) {
   try {
     const stats = await artifacts.getStats(userId);
+    
+    // Get user-specific quota limits
+    let quota;
+    if (user) {
+      quota = getUserQuota(user);
+    } else {
+      // Default to free tier limits if no user provided
+      quota = {
+        maxFiles: MAX_ARTIFACTS,
+        maxTotalSize: MAX_TOTAL_SIZE
+      };
+    }
+    
     return {
       count: stats.count,
-      maxCount: MAX_ARTIFACTS,
+      maxCount: quota.maxFiles,
       totalSize: stats.totalSize,
-      maxSize: MAX_TOTAL_SIZE,
+      maxSize: quota.maxTotalSize,
       utilizationPercent: {
-        count: Math.round((stats.count / MAX_ARTIFACTS) * 100),
-        size: Math.round((stats.totalSize / MAX_TOTAL_SIZE) * 100)
+        count: Math.round((stats.count / quota.maxFiles) * 100),
+        size: Math.round((stats.totalSize / quota.maxTotalSize) * 100)
+      },
+      quota: {
+        plan: user?.metadata?.plan || user?.plan || 'free',
+        maxFiles: quota.maxFiles,
+        maxTotalSize: quota.maxTotalSize,
+        maxFileSize: quota.maxFileSize
       }
     };
   } catch (error) {
     console.error('Error getting storage stats:', error);
+    const defaultQuota = getUserQuota(user);
     return {
       count: 0,
-      maxCount: MAX_ARTIFACTS,
+      maxCount: defaultQuota.maxFiles,
       totalSize: 0,
-      maxSize: MAX_TOTAL_SIZE,
-      utilizationPercent: { count: 0, size: 0 }
+      maxSize: defaultQuota.maxTotalSize,
+      utilizationPercent: { count: 0, size: 0 },
+      quota: {
+        plan: 'free',
+        maxFiles: defaultQuota.maxFiles,
+        maxTotalSize: defaultQuota.maxTotalSize,
+        maxFileSize: defaultQuota.maxFileSize
+      }
     };
   }
 }
@@ -372,8 +388,8 @@ router.get('/:id/versions', async (req, res) => {
   }
 });
 
-// POST /api/v1/artifacts/bulk-import - Import multiple artifacts
-router.post('/bulk-import', upload.array('files', 10), async (req, res) => {
+// POST /api/v1/artifacts/bulk-import - Import multiple artifacts with enhanced security
+router.post('/bulk-import', requireAuth, rateLimits.upload, rateLimits.addInfo.upload, upload.array('files', 20), postUploadValidation, async (req, res) => {
   try {
     if (!req.files || req.files.length === 0) {
       return res.status(400).json({
@@ -382,7 +398,7 @@ router.post('/bulk-import', upload.array('files', 10), async (req, res) => {
       });
     }
 
-    const { user_id } = req.body;
+    const userId = req.user.id;
     const importedArtifacts = [];
     const errors = [];
 
@@ -403,41 +419,71 @@ router.post('/bulk-import', upload.array('files', 10), async (req, res) => {
     // Process each file
     for (const file of req.files) {
       try {
-        const content = file.buffer.toString('utf8');
+        // Read file content from disk (secure upload uses disk storage)
+        const fs = require('fs').promises;
+        const content = await fs.readFile(file.path, 'utf8');
         const fileExtension = file.originalname.split('.').pop().toLowerCase();
 
         const artifactData = {
           name: file.originalname,
           type: typeMap[fileExtension] || 'text',
           content,
-          user_id: user_id || null,
+          user_id: userId,
           tags: ['imported'],
           metadata: {
-            author: 'Import',
+            author: req.user.email || 'Import',
             originalFilename: file.originalname,
-            importedAt: new Date().toISOString()
+            importedAt: new Date().toISOString(),
+            fileSize: file.size,
+            securityScan: file.securityScan
           }
         };
 
         // Create artifact in database
         const createdArtifact = await artifacts.create(artifactData);
         importedArtifacts.push(createdArtifact);
+
+        // Clean up temporary file
+        await fs.unlink(file.path);
       } catch (error) {
         errors.push({
           file: file.originalname,
           error: error.message
         });
+        
+        // Clean up temporary file on error
+        try {
+          await require('fs').promises.unlink(file.path);
+        } catch (unlinkError) {
+          console.error('Error cleaning up file:', unlinkError);
+        }
       }
     }
+
+    // Get updated storage stats
+    const storageStats = await getStorageStats(userId, req.user);
 
     res.json({
       success: true,
       imported: importedArtifacts.length,
       artifacts: importedArtifacts,
-      errors
+      errors,
+      storageStats
     });
   } catch (error) {
     console.error('Error importing artifacts:', error);
+    
+    // Clean up any remaining files on error
+    if (req.files) {
+      await Promise.all(req.files.map(async (file) => {
+        try {
+          await require('fs').promises.unlink(file.path);
+        } catch (unlinkError) {
+          console.error('Error cleaning up file:', unlinkError);
+        }
+      }));
+    }
+    
     res.status(500).json({
       success: false,
       error: 'Failed to import artifacts',
@@ -446,8 +492,8 @@ router.post('/bulk-import', upload.array('files', 10), async (req, res) => {
   }
 });
 
-// GET /api/v1/artifacts/export/single/:id - Export single artifact
-router.get('/export/single/:id', async (req, res) => {
+// GET /api/v1/artifacts/export/single/:id - Export single artifact with secure headers
+router.get('/export/single/:id', rateLimits.export, rateLimits.addInfo.export, secureDownloadHeaders, async (req, res) => {
   try {
     const { id } = req.params;
     const artifact = await artifacts.getById(id);
@@ -476,8 +522,12 @@ router.get('/export/single/:id', async (req, res) => {
     const extension = extensionMap[artifact.type] || '.txt';
     const filename = artifact.name.endsWith(extension) ? artifact.name : artifact.name + extension;
 
+    // Set secure headers for file download
     res.setHeader('Content-Type', 'application/octet-stream');
     res.setHeader('Content-Disposition', `attachment; filename="${filename}"`);
+    res.setHeader('X-Content-Type-Options', 'nosniff');
+    res.setHeader('Cache-Control', 'no-cache, no-store, must-revalidate');
+    
     res.send(artifact.content);
   } catch (error) {
     console.error('Error exporting artifact:', error);
@@ -489,10 +539,15 @@ router.get('/export/single/:id', async (req, res) => {
   }
 });
 
-// POST /api/v1/artifacts/export/bulk - Export multiple artifacts as ZIP
+// POST /api/v1/artifacts/export/bulk - Export multiple artifacts as ZIP with streaming support
 router.post('/export/bulk', async (req, res) => {
   try {
-    const { artifactIds, includeManifest = true } = req.body;
+    const { 
+      artifactIds, 
+      includeManifest = true, 
+      useStreaming = null, // null = auto-detect, true = force streaming, false = force sync
+      compressionLevel = 6 
+    } = req.body;
 
     if (!artifactIds || !Array.isArray(artifactIds) || artifactIds.length === 0) {
       return res.status(400).json({
@@ -503,11 +558,14 @@ router.post('/export/bulk', async (req, res) => {
 
     // Fetch artifacts from database
     const selectedArtifacts = [];
+    let totalSize = 0;
+    
     for (const id of artifactIds) {
       try {
         const artifact = await artifacts.getById(id);
         if (artifact) {
           selectedArtifacts.push(artifact);
+          totalSize += artifact.content ? Buffer.byteLength(artifact.content, 'utf8') : 0;
         }
       } catch (error) {
         console.error(`Error fetching artifact ${id}:`, error);
@@ -521,53 +579,98 @@ router.post('/export/bulk', async (req, res) => {
       });
     }
 
-    const zip = new JSZip();
+    // Determine if we should use streaming based on size and count
+    const STREAMING_THRESHOLD_SIZE = 10 * 1024 * 1024; // 10MB
+    const STREAMING_THRESHOLD_COUNT = 50; // 50 artifacts
+    
+    const shouldUseStreaming = useStreaming !== null 
+      ? useStreaming 
+      : (totalSize > STREAMING_THRESHOLD_SIZE || selectedArtifacts.length > STREAMING_THRESHOLD_COUNT);
 
-    // Add artifacts to ZIP
-    selectedArtifacts.forEach(artifact => {
-      const extensionMap = {
-        'javascript': '.js',
-        'javascriptreact': '.jsx',
-        'typescript': '.ts',
-        'typescriptreact': '.tsx',
-        'python': '.py',
-        'html': '.html',
-        'css': '.css',
-        'json': '.json',
-        'markdown': '.md',
-        'text': '.txt'
-      };
-
-      const extension = extensionMap[artifact.type] || '.txt';
-      const filename = artifact.name.endsWith(extension) ? artifact.name : artifact.name + extension;
+    if (shouldUseStreaming) {
+      // Use streaming export service for large exports
+      const { streamingExportService } = require('../../../lib/streaming-export');
       
-      zip.file(filename, artifact.content);
-    });
+      const exportJob = await streamingExportService.startExport(selectedArtifacts, {
+        includeManifest,
+        compressionLevel,
+        userId: req.user?.id
+      });
 
-    // Add manifest if requested
-    if (includeManifest) {
-      const manifest = {
-        exportDate: new Date().toISOString(),
-        totalArtifacts: selectedArtifacts.length,
-        artifacts: selectedArtifacts.map(artifact => ({
-          id: artifact.id,
-          name: artifact.name,
-          type: artifact.type,
-          createdAt: artifact.createdAt,
-          size: artifact.size,
-          tags: artifact.tags
-        }))
-      };
-      
-      zip.file('manifest.json', JSON.stringify(manifest, null, 2));
+      return res.json({
+        success: true,
+        streaming: true,
+        data: {
+          jobId: exportJob.jobId,
+          status: exportJob.status,
+          progress: exportJob.progress,
+          estimatedSize: exportJob.estimatedSize,
+          totalArtifacts: selectedArtifacts.length,
+          progressUrl: `/api/v1/export-progress/stream/${exportJob.jobId}`,
+          pollUrl: `/api/v1/export-progress/poll/${exportJob.jobId}`,
+          cancelUrl: `/api/v1/export-progress/cancel/${exportJob.jobId}`
+        },
+        message: 'Export job started. Use the progress URL to track completion.',
+        timestamp: new Date().toISOString()
+      });
+    } else {
+      // Use synchronous export for small exports (backwards compatibility)
+      const zip = new JSZip();
+
+      // Add artifacts to ZIP
+      selectedArtifacts.forEach(artifact => {
+        const extensionMap = {
+          'javascript': '.js',
+          'javascriptreact': '.jsx',
+          'typescript': '.ts',
+          'typescriptreact': '.tsx',
+          'python': '.py',
+          'html': '.html',
+          'css': '.css',
+          'json': '.json',
+          'markdown': '.md',
+          'text': '.txt'
+        };
+
+        const extension = extensionMap[artifact.type] || '.txt';
+        const filename = artifact.name.endsWith(extension) ? artifact.name : artifact.name + extension;
+        
+        zip.file(filename, artifact.content);
+      });
+
+      // Add manifest if requested
+      if (includeManifest) {
+        const manifest = {
+          exportDate: new Date().toISOString(),
+          totalArtifacts: selectedArtifacts.length,
+          exportType: 'synchronous',
+          artifacts: selectedArtifacts.map(artifact => ({
+            id: artifact.id,
+            name: artifact.name,
+            type: artifact.type,
+            createdAt: artifact.createdAt,
+            size: artifact.size,
+            tags: artifact.tags
+          }))
+        };
+        
+        zip.file('manifest.json', JSON.stringify(manifest, null, 2));
+      }
+
+      const zipBuffer = await zip.generateAsync({ 
+        type: 'nodebuffer',
+        compression: 'DEFLATE',
+        compressionOptions: { level: compressionLevel }
+      });
+
+      res.setHeader('Content-Type', 'application/zip');
+      res.setHeader('Content-Disposition', 'attachment; filename="dinoair-artifacts.zip"');
+      res.setHeader('Content-Length', zipBuffer.length);
+      res.setHeader('X-Export-Type', 'synchronous');
+      res.send(zipBuffer);
     }
-
-    const zipBuffer = await zip.generateAsync({ type: 'nodebuffer' });
-
-    res.setHeader('Content-Type', 'application/zip');
-    res.setHeader('Content-Disposition', 'attachment; filename="dinoair-artifacts.zip"');
-    res.send(zipBuffer);
   } catch (error) {
+    console.error('Bulk export error:', error);
     res.status(500).json({
       success: false,
       error: 'Failed to export artifacts',

@@ -11,12 +11,14 @@ const artifactsRoutes = require('./artifacts');
 const chatRoutes = require('./chat');
 const modelsRoutes = require('./models');
 const personalitiesRoutes = require('./personalities');
+const exportProgressRoutes = require('./export-progress');
 
 // Mount V1 routes
 router.use('/artifacts', artifactsRoutes);
 router.use('/chat', chatRoutes);
 router.use('/models', modelsRoutes);
 router.use('/personalities', personalitiesRoutes);
+router.use('/export-progress', exportProgressRoutes);
 
 // V1 API root endpoint
 router.get('/', (req, res) => {
@@ -28,7 +30,8 @@ router.get('/', (req, res) => {
       artifacts: '/api/v1/artifacts',
       chat: '/api/v1/chat',
       models: '/api/v1/models',
-      personalities: '/api/v1/personalities'
+      personalities: '/api/v1/personalities',
+      'export-progress': '/api/v1/export-progress'
     },
     documentation: '/api/docs'
   });

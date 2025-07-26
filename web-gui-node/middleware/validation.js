@@ -4,8 +4,7 @@
  */
 
 const { body, param, query, validationResult } = require('express-validator');
-const rateLimit = require('express-rate-limit');
-const helmet = require('helmet');
+const { rateLimiters, addRateLimitInfo } = require('./enhanced-rate-limiting');
 
 /**
  * Handle validation errors
@@ -26,41 +25,24 @@ const handleValidationErrors = (req, res, next) => {
 };
 
 /**
- * Rate limiting configurations
+ * Enhanced rate limiting configurations with user-specific quotas
  */
 const rateLimits = {
-  // Strict rate limiting for authentication endpoints
-  auth: rateLimit({
-    windowMs: 15 * 60 * 1000, // 15 minutes
-    max: 5, // 5 attempts per window
-    message: {
-      error: 'Too many authentication attempts, please try again later'
-    },
-    standardHeaders: true,
-    legacyHeaders: false
-  }),
-
-  // Moderate rate limiting for chat endpoints
-  chat: rateLimit({
-    windowMs: 1 * 60 * 1000, // 1 minute
-    max: 30, // 30 requests per minute
-    message: {
-      error: 'Too many chat requests, please slow down'
-    },
-    standardHeaders: true,
-    legacyHeaders: false
-  }),
-
-  // General API rate limiting
-  api: rateLimit({
-    windowMs: 15 * 60 * 1000, // 15 minutes
-    max: 100, // 100 requests per window
-    message: {
-      error: 'Too many API requests, please try again later'
-    },
-    standardHeaders: true,
-    legacyHeaders: false
-  })
+  // Enhanced rate limiters with user-specific quotas
+  auth: rateLimiters.auth,
+  chat: rateLimiters.chat,
+  api: rateLimiters.api,
+  upload: rateLimiters.upload,
+  export: rateLimiters.export,
+  
+  // Rate limit info middleware for adding headers
+  addInfo: {
+    auth: addRateLimitInfo('auth'),
+    chat: addRateLimitInfo('chat'),
+    api: addRateLimitInfo('api'),
+    upload: addRateLimitInfo('upload'),
+    export: addRateLimitInfo('export')
+  }
 };
 
 /**
