@@ -160,29 +160,28 @@ const requireApiKey = async (req, res, next) => {
       ? authHeader.substring(7) 
       : authHeader;
 
-    // Verify the API key
-    const { userId, error } = await auth.verifyApiKey(apiKey);
+    // Verify the API key with enhanced security
+    const ip = req.ip || req.connection.remoteAddress || req.socket.remoteAddress || 'unknown';
+    const { userId, userData, keyData, error } = await auth.verifyApiKey(apiKey, ip);
 
     if (error || !userId) {
-      return res.status(401).json({ error: 'Invalid API key' });
+      return res.status(401).json({ 
+        error: 'Invalid API key',
+        category: 'invalid_api_key'
+      });
     }
 
-    // Get user data with error handling
-    let userData;
-    try {
-      userData = await db.getUserById(userId);
-    } catch (dbError) {
-      console.error('Database error in API key auth:', dbError);
-      return res.status(500).json({ error: 'Database error' });
-    }
-    
     if (!userData) {
-      return res.status(401).json({ error: 'User not found' });
+      return res.status(401).json({ 
+        error: 'User not found',
+        category: 'user_not_found'
+      });
     }
 
     // Add user and API key info to request
     req.user = userData;
     req.apiKey = apiKey;
+    req.keyData = keyData;
 
     // Log API request with rate limit info (async, don't wait)
     db.storeApiLog({
@@ -261,17 +260,16 @@ const anyAuth = async (req, res, next) => {
           ? authHeader.substring(7) 
           : authHeader;
 
-        const { userId, error } = await auth.verifyApiKey(apiKey);
+        const ip = req.ip || req.connection.remoteAddress || req.socket.remoteAddress || 'unknown';
+        const { userId, userData, keyData, error } = await auth.verifyApiKey(apiKey, ip);
 
-        if (!error && userId) {
-          const userData = await db.getUserById(userId);
-          if (userData) {
-            authResult = {
-              user: userData,
-              apiKey,
-              method: 'apikey'
-            };
-          }
+        if (!error && userId && userData) {
+          authResult = {
+            user: userData,
+            apiKey,
+            keyData,
+            method: 'apikey'
+          };
         }
       } catch (apiError) {
         console.warn('API key auth failed in anyAuth:', apiError.message);
