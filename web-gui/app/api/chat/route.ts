@@ -1,5 +1,5 @@
 import { NextRequest, NextResponse } from 'next/server';
-import { recordChatResponseTime, recordTokenUsage } from '@/app/api/v1/system/stats/route';
+import { recordChatResponseTime, recordTokenUsage } from '@/lib/utils/performance-metrics';
 
 export async function POST(request: NextRequest) {
   const startTime = Date.now();

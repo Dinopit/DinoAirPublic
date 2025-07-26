@@ -14,6 +14,7 @@ import { DebugProvider, useDebug } from '../../contexts/debug-context';
 import DebugPanel from '../ui/debug-panel';
 import { PluginManager } from '../plugins';
 import { useScreenReader } from '../../hooks/useScreenReader';
+import { OfflineIndicator } from '../ui/offline-indicator';
 
 type Tab = 'chat' | 'artifacts' | 'plugins';
 
@@ -218,6 +219,9 @@ const LocalGuiContent = () => {
 
   return (
     <div className="flex flex-col h-screen bg-background">
+      {/* Offline indicator */}
+      <OfflineIndicator />
+      
       {/* Skip to main content link for screen readers */}
       <a
         href="#main-content"
