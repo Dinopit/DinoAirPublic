@@ -52,6 +52,14 @@ jobs:
         working-directory: ./web-gui
         run: npm run test:coverage
 
+      - name: Install Playwright browsers
+        working-directory: ./web-gui
+        run: npx playwright install --with-deps
+
+      - name: Run accessibility tests
+        working-directory: ./web-gui
+        run: npm run test:accessibility
+
       - name: Build application
         working-directory: ./web-gui
         run: npm run build:production

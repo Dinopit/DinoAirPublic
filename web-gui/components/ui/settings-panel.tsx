@@ -9,6 +9,7 @@ import { toast } from '@/lib/stores/toast-store';
 import { PersonalityCard } from './personality-card';
 import { PersonalityDetailsModal } from './personality-details-modal';
 import { PersonalityImportModal } from './personality-import-modal';
+import { useFocusManagement } from '../../hooks/useFocusManagement';
 
 interface SettingsPanelProps {
   isOpen: boolean;
@@ -20,7 +21,26 @@ interface SettingsPanelProps {
 export const SettingsPanel = React.memo<SettingsPanelProps>(({ isOpen, onClose }) => {
   const [activeTab, setActiveTab] = useState<'general' | 'ai' | 'data'>('general');
   const { currentTheme, setTheme } = useThemeStore();
+  
+  const { containerRef } = useFocusManagement(isOpen, {
+    restoreFocus: true,
+    trapFocus: true,
+    autoFocus: true
+  });
   const [defaultModel, setDefaultModel] = useState('qwen:7b-chat-v1.5-q4_K_M');
+
+  useEffect(() => {
+    const handleKeyDown = (event: KeyboardEvent) => {
+      if (event.key === 'Escape') {
+        onClose();
+      }
+    };
+
+    if (isOpen) {
+      document.addEventListener('keydown', handleKeyDown);
+      return () => document.removeEventListener('keydown', handleKeyDown);
+    }
+  }, [isOpen, onClose]);
   const [autoSaveConversations, setAutoSaveConversations] = useState(true);
   const [showTutorialOnStartup, setShowTutorialOnStartup] = useState(true);
   const [hasUnsavedChanges, setHasUnsavedChanges] = useState(false);
@@ -198,24 +218,35 @@ export const SettingsPanel = React.memo<SettingsPanelProps>(({ isOpen, onClose }
   return (
     <>
       {/* Backdrop */}
-      <div className="fixed inset-0 bg-black/50 z-40" onClick={onClose} />
+      <div 
+        className="fixed inset-0 bg-black/50 z-40" 
+        onClick={onClose}
+        aria-hidden="true"
+      />
 
       {/* Panel */}
-      <div className="fixed right-0 top-0 h-full w-full max-w-2xl bg-card shadow-xl z-50 flex flex-col">
+      <div 
+        ref={containerRef}
+        className="fixed right-0 top-0 h-full w-full max-w-2xl bg-card shadow-xl z-50 flex flex-col"
+        role="dialog"
+        aria-modal="true"
+        aria-labelledby="settings-title"
+        tabIndex={-1}
+      >
         {/* Header */}
         <div className="flex items-center justify-between p-6 border-b">
-          <h2 className="text-2xl font-semibold">Settings</h2>
+          <h2 id="settings-title" className="text-2xl font-semibold">Settings</h2>
           <button
             onClick={onClose}
             className="p-2 hover:bg-muted rounded-lg transition-colors"
-            aria-label="Close settings"
+            aria-label="Close settings panel"
           >
-            <X className="w-5 h-5" />
+            <X className="w-5 h-5" aria-hidden="true" />
           </button>
         </div>
 
         {/* Tabs */}
-        <div className="flex border-b">
+        <div className="flex border-b" role="tablist" aria-label="Settings categories">
           <button
             className={`px-6 py-3 font-medium transition-colors ${
               activeTab === 'general'
@@ -223,6 +254,10 @@ export const SettingsPanel = React.memo<SettingsPanelProps>(({ isOpen, onClose }
                 : 'text-muted-foreground hover:text-foreground'
             }`}
             onClick={() => setActiveTab('general')}
+            role="tab"
+            aria-selected={activeTab === 'general'}
+            aria-controls="general-panel"
+            id="general-tab"
           >
             General
           </button>
@@ -233,6 +268,10 @@ export const SettingsPanel = React.memo<SettingsPanelProps>(({ isOpen, onClose }
                 : 'text-muted-foreground hover:text-foreground'
             }`}
             onClick={() => setActiveTab('ai')}
+            role="tab"
+            aria-selected={activeTab === 'ai'}
+            aria-controls="ai-panel"
+            id="ai-tab"
           >
             AI Settings
           </button>
@@ -243,6 +282,10 @@ export const SettingsPanel = React.memo<SettingsPanelProps>(({ isOpen, onClose }
                 : 'text-muted-foreground hover:text-foreground'
             }`}
             onClick={() => setActiveTab('data')}
+            role="tab"
+            aria-selected={activeTab === 'data'}
+            aria-controls="data-panel"
+            id="data-tab"
           >
             Data & Privacy
           </button>
@@ -250,15 +293,36 @@ export const SettingsPanel = React.memo<SettingsPanelProps>(({ isOpen, onClose }
 
         {/* Content */}
         <div className="flex-1 overflow-y-auto p-6">
-          {activeTab === 'general' && (
-            <GeneralTabImplementation {...generalTabProps} />
-          )}
-          {activeTab === 'ai' && (
-            <AITabImplementation {...aiTabProps} />
-          )}
-          {activeTab === 'data' && (
-            <DataTabImplementation {...dataTabProps} />
-          )}
+          <div
+            role="tabpanel"
+            id="general-panel"
+            aria-labelledby="general-tab"
+            hidden={activeTab !== 'general'}
+          >
+            {activeTab === 'general' && (
+              <GeneralTabImplementation {...generalTabProps} />
+            )}
+          </div>
+          <div
+            role="tabpanel"
+            id="ai-panel"
+            aria-labelledby="ai-tab"
+            hidden={activeTab !== 'ai'}
+          >
+            {activeTab === 'ai' && (
+              <AITabImplementation {...aiTabProps} />
+            )}
+          </div>
+          <div
+            role="tabpanel"
+            id="data-panel"
+            aria-labelledby="data-tab"
+            hidden={activeTab !== 'data'}
+          >
+            {activeTab === 'data' && (
+              <DataTabImplementation {...dataTabProps} />
+            )}
+          </div>
         </div>
 
         {/* Footer */}
@@ -315,39 +379,48 @@ const GeneralTabImplementation: React.FC<any> = ({
     <div>
       <h3 className="text-lg font-medium mb-3">Appearance</h3>
       <div className="space-y-3">
-        <label className="flex items-center gap-3">
-          <input
-            type="radio"
-            name="theme"
-            value="light"
-            checked={currentTheme === 'light'}
-            onChange={(e) => setTheme(e.target.value as any)}
-            className="w-4 h-4"
-          />
-          <span>Light mode</span>
-        </label>
-        <label className="flex items-center gap-3">
-          <input
-            type="radio"
-            name="theme"
-            value="dark"
-            checked={currentTheme === 'dark'}
-            onChange={(e) => setTheme(e.target.value as any)}
-            className="w-4 h-4"
-          />
-          <span>Dark mode</span>
-        </label>
-        <label className="flex items-center gap-3">
-          <input
-            type="radio"
-            name="theme"
-            value="system"
-            checked={currentTheme === 'system'}
-            onChange={(e) => setTheme(e.target.value as any)}
-            className="w-4 h-4"
-          />
-          <span>System theme</span>
-        </label>
+        <fieldset>
+          <legend className="sr-only">Theme selection</legend>
+          <label className="flex items-center gap-3">
+            <input
+              type="radio"
+              name="theme"
+              value="light"
+              checked={currentTheme === 'light'}
+              onChange={(e) => setTheme(e.target.value as any)}
+              className="w-4 h-4"
+              aria-describedby="light-theme-desc"
+            />
+            <span>Light mode</span>
+            <span id="light-theme-desc" className="sr-only">Use light theme for the interface</span>
+          </label>
+          <label className="flex items-center gap-3">
+            <input
+              type="radio"
+              name="theme"
+              value="dark"
+              checked={currentTheme === 'dark'}
+              onChange={(e) => setTheme(e.target.value as any)}
+              className="w-4 h-4"
+              aria-describedby="dark-theme-desc"
+            />
+            <span>Dark mode</span>
+            <span id="dark-theme-desc" className="sr-only">Use dark theme for the interface</span>
+          </label>
+          <label className="flex items-center gap-3">
+            <input
+              type="radio"
+              name="theme"
+              value="system"
+              checked={currentTheme === 'system'}
+              onChange={(e) => setTheme(e.target.value as any)}
+              className="w-4 h-4"
+              aria-describedby="system-theme-desc"
+            />
+            <span>System theme</span>
+            <span id="system-theme-desc" className="sr-only">Use system theme preference</span>
+          </label>
+        </fieldset>
       </div>
     </div>
 
@@ -445,10 +518,15 @@ const AITabImplementation: React.FC<any> = ({
             value={defaultModel}
             onChange={(e) => setDefaultModel(e.target.value)}
             className="w-full px-3 py-2 border rounded-lg bg-background"
+            aria-label="Select default AI model"
+            aria-describedby="model-selection-desc"
           >
             <option value="qwen:7b-chat-v1.5-q4_K_M">Qwen 7B (Default)</option>
             {/* More models can be added here */}
           </select>
+          <span id="model-selection-desc" className="sr-only">
+            Choose the default AI model for conversations
+          </span>
         </div>
 
         {/* Personality Selection */}

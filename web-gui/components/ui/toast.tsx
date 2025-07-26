@@ -68,7 +68,12 @@ interface ToastContainerProps {
 
 const ToastContainer: React.FC<ToastContainerProps> = ({ toasts, removeToast }) => {
   return (
-    <div className="fixed bottom-4 right-4 z-50 space-y-2">
+    <div 
+      className="fixed bottom-4 right-4 z-50 space-y-2"
+      role="region"
+      aria-label="Notifications"
+      aria-live="polite"
+    >
       {toasts.map((toast) => (
         <ToastItem key={toast.id} toast={toast} onRemove={() => removeToast(toast.id)} />
       ))}
@@ -111,21 +116,31 @@ const ToastItem: React.FC<ToastItemProps> = ({ toast, onRemove }) => {
         ${isExiting ? 'animate-slide-out-right' : 'animate-slide-in-right'}
         transition-all duration-300 ease-in-out
       `}
+      role="alert"
+      aria-live="assertive"
+      aria-atomic="true"
     >
       <div className="flex items-start gap-3">
-        {icons[toast.type]}
+        <div aria-hidden="true">
+          {icons[toast.type]}
+        </div>
         <div className="flex-1">
-          <h4 className="font-medium text-foreground">{toast.title}</h4>
+          <h4 className="font-medium text-foreground" id={`toast-title-${toast.id}`}>
+            {toast.title}
+          </h4>
           {toast.message && (
-            <p className="mt-1 text-sm text-muted-foreground">{toast.message}</p>
+            <p className="mt-1 text-sm text-muted-foreground" id={`toast-message-${toast.id}`}>
+              {toast.message}
+            </p>
           )}
         </div>
         <button
           onClick={handleRemove}
           className="p-1 hover:bg-black/5 dark:hover:bg-white/5 rounded transition-colors"
-          aria-label="Close notification"
+          aria-label={`Close ${toast.type} notification: ${toast.title}`}
+          aria-describedby={`toast-title-${toast.id} ${toast.message ? `toast-message-${toast.id}` : ''}`}
         >
-          <X className="w-4 h-4" />
+          <X className="w-4 h-4" aria-hidden="true" />
         </button>
       </div>
     </div>
