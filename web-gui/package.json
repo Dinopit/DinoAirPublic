@@ -32,7 +32,7 @@
     "security:scan:secrets": "./scripts/security-scan.sh --secrets",
     "security:audit": "npm audit && ./scripts/security-scan.sh --dependencies --secrets",
     "clean": "rm -rf .next out coverage security-reports",
-    "postinstall": "echo 'Skipping type-check for now'",
+    "postinstall": "npm run type-check",
     "prepare": "cd .. && husky install",
     "storybook": "storybook dev -p 6006",
     "build-storybook": "storybook build",

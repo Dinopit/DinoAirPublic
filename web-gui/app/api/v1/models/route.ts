@@ -1,7 +1,8 @@
-import { NextRequest } from 'next/server';
+import type { NextRequest } from 'next/server';
+
+import { ModelsController } from '@/lib/controllers/models.controller';
 import { withApiAuth } from '@/lib/middleware/api-auth';
 import { withErrorHandler } from '@/lib/services/error-handler';
-import { ModelsController } from '@/lib/controllers/models.controller';
 
 /**
  * @swagger
@@ -34,10 +35,8 @@ import { ModelsController } from '@/lib/controllers/models.controller';
  *         description: CORS headers returned
  */
 
-const modelsController = new ModelsController();
-
 async function handleGetModels(request: NextRequest) {
-  return modelsController.handleGetModels(request);
+  return ModelsController.handleGetModels(request);
 }
 
 export const GET = withApiAuth(withErrorHandler(handleGetModels));
