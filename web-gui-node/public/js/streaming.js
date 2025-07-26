@@ -293,12 +293,24 @@ class WebSocketManager extends window.EventEmitter {
     this.reconnectAttempts++;
     const delay = this.reconnectDelay * Math.pow(2, this.reconnectAttempts - 1);
 
-    setTimeout(() => {
+    // Store timeout reference to prevent memory leak
+    const reconnectTimer = setTimeout(() => {
       if (!this.isConnected) {
         this.emit('reconnectAttempt', this.reconnectAttempts);
         this.connect();
       }
     }, delay);
+    
+    // Track timer for cleanup if needed
+    if (!this.reconnectTimers) {
+      this.reconnectTimers = new Set();
+    }
+    this.reconnectTimers.add(reconnectTimer);
+    
+    // Clean up timer reference after execution
+    setTimeout(() => {
+      this.reconnectTimers.delete(reconnectTimer);
+    }, delay + 1000);
   }
 
   /**
@@ -306,6 +318,13 @@ class WebSocketManager extends window.EventEmitter {
    */
   disconnect() {
     this.stopHeartbeat();
+    
+    // Clear any pending reconnect timers to prevent memory leaks
+    if (this.reconnectTimers) {
+      this.reconnectTimers.forEach(timer => clearTimeout(timer));
+      this.reconnectTimers.clear();
+    }
+    
     if (this.socket) {
       this.socket.disconnect();
       this.socket = null;
@@ -411,18 +430,36 @@ class SSEManager extends window.EventEmitter {
     this.reconnectAttempts++;
     const delay = this.reconnectDelay * Math.pow(2, this.reconnectAttempts - 1);
 
-    setTimeout(() => {
+    // Store timeout reference to prevent memory leak
+    const reconnectTimer = setTimeout(() => {
       if (!this.isConnected) {
         this.emit('reconnectAttempt', this.reconnectAttempts);
         this.connect(this.eventSource.url);
       }
     }, delay);
+    
+    // Track timer for cleanup if needed
+    if (!this.reconnectTimers) {
+      this.reconnectTimers = new Set();
+    }
+    this.reconnectTimers.add(reconnectTimer);
+    
+    // Clean up timer reference after execution
+    setTimeout(() => {
+      this.reconnectTimers.delete(reconnectTimer);
+    }, delay + 1000);
   }
 
   /**
    * Disconnect SSE
    */
   disconnect() {
+    // Clear any pending reconnect timers to prevent memory leaks
+    if (this.reconnectTimers) {
+      this.reconnectTimers.forEach(timer => clearTimeout(timer));
+      this.reconnectTimers.clear();
+    }
+    
     if (this.eventSource) {
       this.eventSource.close();
       this.eventSource = null;
@@ -474,9 +511,15 @@ class NotificationManager extends window.EventEmitter {
 
     // Auto-remove notification after timeout
     if (notif.timeout > 0) {
-      setTimeout(() => {
+      const timeoutId = setTimeout(() => {
         this.remove(notif.id);
       }, notif.timeout);
+      
+      // Track timeout for cleanup
+      if (!this.notificationTimeouts) {
+        this.notificationTimeouts = new Map();
+      }
+      this.notificationTimeouts.set(notif.id, timeoutId);
     }
 
     return notif.id;
@@ -491,6 +534,12 @@ class NotificationManager extends window.EventEmitter {
     if (index !== -1) {
       const [notification] = this.notifications.splice(index, 1);
       this.emit('notificationRemoved', notification);
+      
+      // Clear associated timeout to prevent memory leak
+      if (this.notificationTimeouts && this.notificationTimeouts.has(id)) {
+        clearTimeout(this.notificationTimeouts.get(id));
+        this.notificationTimeouts.delete(id);
+      }
     }
   }
 
@@ -498,6 +547,12 @@ class NotificationManager extends window.EventEmitter {
    * Clear all notifications
    */
   clear() {
+    // Clear all timeouts to prevent memory leaks
+    if (this.notificationTimeouts) {
+      this.notificationTimeouts.forEach(timeoutId => clearTimeout(timeoutId));
+      this.notificationTimeouts.clear();
+    }
+    
     this.notifications = [];
     this.emit('notificationsCleared');
   }
@@ -585,9 +640,15 @@ class ProgressTracker extends window.EventEmitter {
     this.emit('progressComplete', operation);
 
     // Remove completed operation after delay
-    setTimeout(() => {
+    const cleanupTimeout = setTimeout(() => {
       this.operations.delete(id);
     }, 5000);
+    
+    // Track cleanup timeout for manual cleanup if needed
+    if (!this.cleanupTimeouts) {
+      this.cleanupTimeouts = new Map();
+    }
+    this.cleanupTimeouts.set(id, cleanupTimeout);
 
     return operation;
   }
@@ -636,6 +697,12 @@ class ProgressTracker extends window.EventEmitter {
     if (operation) {
       this.operations.delete(id);
       this.emit('progressRemoved', operation);
+      
+      // Clear associated cleanup timeout to prevent memory leak
+      if (this.cleanupTimeouts && this.cleanupTimeouts.has(id)) {
+        clearTimeout(this.cleanupTimeouts.get(id));
+        this.cleanupTimeouts.delete(id);
+      }
     }
   }
 
@@ -643,6 +710,12 @@ class ProgressTracker extends window.EventEmitter {
    * Clear all operations
    */
   clear() {
+    // Clear all cleanup timeouts to prevent memory leaks
+    if (this.cleanupTimeouts) {
+      this.cleanupTimeouts.forEach(timeoutId => clearTimeout(timeoutId));
+      this.cleanupTimeouts.clear();
+    }
+    
     this.operations.clear();
     this.emit('progressCleared');
   }
