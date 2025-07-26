@@ -39,7 +39,7 @@ describe('useConversations', () => {
     const { result } = renderHook(() => useConversations());
 
     expect(result.current.conversations).toHaveLength(1);
-    expect(result.current.conversations[0].name).toBe('Conversation 1');
+    expect(result.current.conversations[0]!.name).toBe('Conversation 1');
   });
 
   it('should save a new conversation', () => {
@@ -55,11 +55,11 @@ describe('useConversations', () => {
     });
 
     expect(result.current.conversations).toHaveLength(1);
-    expect(result.current.activeConversationId).toBe(result.current.conversations[0].id);
-    expect(result.current.conversations[0].name).toBe('Test Conversation');
-    expect(result.current.conversations[0].messages).toEqual(messages);
-    expect(result.current.conversations[0].model).toBe('test-model');
-    expect(result.current.conversations[0].systemPrompt).toBe('You are helpful');
+    expect(result.current.activeConversationId).toBe(result.current.conversations[0]!.id);
+    expect(result.current.conversations[0]!.name).toBe('Test Conversation');
+    expect(result.current.conversations[0]!.messages).toEqual(messages);
+    expect(result.current.conversations[0]!.model).toBe('test-model');
+    expect(result.current.conversations[0]!.systemPrompt).toBe('You are helpful');
   });
 
   it('should update an existing conversation', () => {
@@ -81,9 +81,9 @@ describe('useConversations', () => {
     });
 
     expect(result.current.conversations).toHaveLength(1);
-    expect(result.current.conversations[0].messages).toEqual(newMessages);
-    expect(result.current.conversations[0].name).toBe('Conv 1 Updated');
-    expect(result.current.conversations[0].updatedAt).toBeInstanceOf(Date);
+    expect(result.current.conversations[0]!.messages).toEqual(newMessages);
+    expect(result.current.conversations[0]!.name).toBe('Conv 1 Updated');
+    expect(result.current.conversations[0]!.updatedAt).toBeInstanceOf(Date);
   });
 
   it('should delete a conversation', () => {
@@ -97,7 +97,7 @@ describe('useConversations', () => {
     });
 
     expect(result.current.conversations).toHaveLength(2);
-    const firstConvId = result.current.conversations[0].id;
+    const firstConvId = result.current.conversations[0]!.id;
 
     act(() => {
       result.current.deleteConversation(firstConvId);
@@ -154,7 +154,7 @@ describe('useConversations', () => {
       result.current.saveCurrentConversation([createMockMessage({ content: 'Conv 2' })], 'model2', 'prompt2', 'Conv 2');
     });
 
-    const firstConvId = result.current.conversations[0].id;
+    const firstConvId = result.current.conversations[0]!.id;
 
     let loadedConv;
     act(() => {
@@ -224,7 +224,7 @@ describe('useConversations', () => {
       result.current.saveCurrentConversation([createMockMessage()], 'model', 'prompt');
     });
 
-    expect(result.current.conversations[0].name).toContain('Conversation');
-    expect(result.current.conversations[0].name).toMatch(/\d/); // Should contain numbers from date
+    expect(result.current.conversations[0]!.name).toContain('Conversation');
+    expect(result.current.conversations[0]!.name).toMatch(/\d/); // Should contain numbers from date
   });
 });
