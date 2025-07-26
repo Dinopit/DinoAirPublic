@@ -1,73 +1,41 @@
-// Authentication middleware for Supabase
+// Authentication middleware for Supabase with database-backed session storage
 const auth = require('../lib/auth');
 const db = require('../lib/db');
-const { LRUCache } = require('lru-cache');
-
-const authCache = new LRUCache({
-  max: 1000,
-  ttl: 5000, // 5 seconds
-  updateAgeOnGet: true,
-  updateAgeOnHas: true,
-  dispose: (value, key) => {
-    console.log(`Auth cache entry ${key} disposed`);
-  }
-});
-
-const CACHE_TTL = 5000; // 5 seconds
+const { sessionStore } = require('../lib/session-store');
+const { jwtManager } = require('../lib/jwt-manager');
 
 /**
- * Clear expired cache entries
- */
-function clearExpiredCache() {
-  const initialSize = authCache.size;
-  authCache.purgeStale();
-  
-  const currentSize = authCache.size;
-  if (initialSize !== currentSize) {
-    console.log(`Auth cache cleanup: removed ${initialSize - currentSize} expired entries. Current size: ${currentSize}`);
-  }
-}
-
-setInterval(clearExpiredCache, 30000);
-
-/**
- * Generate cache key for request
- */
-function getCacheKey(req, type) {
-  const sessionId = req.sessionID || req.headers['x-session-id'] || 'anonymous';
-  const apiKey = req.headers.authorization;
-  return `${type}:${sessionId}:${apiKey || 'none'}`;
-}
-
-/**
- * Middleware to check if user is authenticated via session
+ * Middleware to check if user is authenticated via JWT token
  */
 const requireAuth = async (req, res, next) => {
   try {
-    const cacheKey = getCacheKey(req, 'session');
-    const cached = authCache.get(cacheKey);
-    
-    if (cached && (Date.now() - cached.timestamp) < CACHE_TTL) {
-      if (cached.error) {
-        return res.status(401).json({ error: 'Not authenticated' });
-      }
-      req.user = cached.user;
-      return next();
+    // Check for JWT token in Authorization header
+    const authHeader = req.headers.authorization;
+    if (!authHeader || !authHeader.startsWith('Bearer ')) {
+      return res.status(401).json({ error: 'Access token required' });
     }
 
-    const { user, error } = await auth.getCurrentUser();
+    const token = authHeader.substring(7);
+    const tokenPayload = jwtManager.verifyAccessToken(token);
     
-    authCache.set(cacheKey, {
-      user,
-      error,
-      timestamp: Date.now()
-    });
-
-    if (error || !user) {
-      return res.status(401).json({ error: 'Not authenticated' });
+    if (!tokenPayload) {
+      return res.status(401).json({ error: 'Invalid or expired access token' });
     }
 
-    req.user = user;
+    // Get user data from database
+    const userData = await db.getUserById(tokenPayload.userId);
+    if (!userData) {
+      return res.status(401).json({ error: 'User not found' });
+    }
+
+    req.user = {
+      id: tokenPayload.userId,
+      email: tokenPayload.email,
+      roles: tokenPayload.roles,
+      metadata: tokenPayload.metadata,
+      profile: userData
+    };
+    
     next();
   } catch (error) {
     console.error('Auth middleware error:', error);
@@ -91,26 +59,10 @@ const requireApiKey = async (req, res, next) => {
       ? authHeader.substring(7) 
       : authHeader;
 
-    const cacheKey = getCacheKey(req, 'apikey');
-    const cached = authCache.get(cacheKey);
-    
-    if (cached && (Date.now() - cached.timestamp) < CACHE_TTL) {
-      if (cached.error) {
-        return res.status(401).json({ error: cached.error });
-      }
-      req.user = cached.user;
-      req.apiKey = cached.apiKey;
-      return next();
-    }
-
     // Verify the API key
     const { userId, error } = await auth.verifyApiKey(apiKey);
 
     if (error || !userId) {
-      authCache.set(cacheKey, {
-        error: 'Invalid API key',
-        timestamp: Date.now()
-      });
       return res.status(401).json({ error: 'Invalid API key' });
     }
 
@@ -124,18 +76,8 @@ const requireApiKey = async (req, res, next) => {
     }
     
     if (!userData) {
-      authCache.set(cacheKey, {
-        error: 'User not found',
-        timestamp: Date.now()
-      });
       return res.status(401).json({ error: 'User not found' });
     }
-
-    authCache.set(cacheKey, {
-      user: userData,
-      apiKey,
-      timestamp: Date.now()
-    });
 
     // Add user and API key info to request
     req.user = userData;

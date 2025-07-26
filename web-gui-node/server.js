@@ -34,7 +34,9 @@ const PORT = process.env.PORT || 3000;
 const NODE_ENV = process.env.NODE_ENV || 'development';
 
 // Security middleware
-const cspMiddleware = require('./middleware/csp');
+const { cspMiddleware, cspViolationHandler, reportToMiddleware } = require('./middleware/csp');
+app.use(reportToMiddleware);
+app.use(cspViolationHandler);
 app.use(cspMiddleware);
 
 // CORS configuration
@@ -66,6 +68,7 @@ app.use((req, res, next) => {
 // Routes
 app.use('/api', apiRoutes);
 app.use('/api/system', require('./routes/api/system'));
+app.use('/api/health/database', require('./routes/api/health/database'));
 app.use('/', pageRoutes);
 
 // Socket.io connection handling

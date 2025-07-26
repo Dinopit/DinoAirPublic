@@ -76,6 +76,35 @@ const createTablesSQL = {
       CONSTRAINT artifacts_type_check CHECK (char_length(type) > 0),
       CONSTRAINT artifacts_content_check CHECK (char_length(content) > 0)
     );
+  `,
+
+  // User Sessions Table (for database-backed session storage)
+  user_sessions: `
+    CREATE TABLE IF NOT EXISTS user_sessions (
+      id TEXT PRIMARY KEY,
+      user_id TEXT NOT NULL,
+      data JSONB DEFAULT '{}'::jsonb,
+      expires_at TIMESTAMPTZ NOT NULL,
+      created_at TIMESTAMPTZ DEFAULT NOW(),
+      updated_at TIMESTAMPTZ DEFAULT NOW(),
+      CONSTRAINT user_sessions_user_id_check CHECK (char_length(user_id) > 0),
+      CONSTRAINT user_sessions_id_check CHECK (char_length(id) > 0)
+    );
+  `,
+
+  // JWT Refresh Tokens Table (for token management)
+  refresh_tokens: `
+    CREATE TABLE IF NOT EXISTS refresh_tokens (
+      id UUID PRIMARY KEY DEFAULT gen_random_uuid(),
+      user_id TEXT NOT NULL,
+      token_hash TEXT NOT NULL UNIQUE,
+      expires_at TIMESTAMPTZ NOT NULL,
+      created_at TIMESTAMPTZ DEFAULT NOW(),
+      revoked_at TIMESTAMPTZ,
+      device_info JSONB DEFAULT '{}'::jsonb,
+      CONSTRAINT refresh_tokens_user_id_check CHECK (char_length(user_id) > 0),
+      CONSTRAINT refresh_tokens_token_hash_check CHECK (char_length(token_hash) > 0)
+    );
   `
 };
 
@@ -112,6 +141,19 @@ const createIndexesSQL = {
     CREATE INDEX IF NOT EXISTS idx_artifacts_version ON artifacts(version);
     CREATE INDEX IF NOT EXISTS idx_artifacts_tags ON artifacts USING GIN(tags);
     CREATE INDEX IF NOT EXISTS idx_artifacts_metadata ON artifacts USING GIN(metadata);
+  `,
+  user_sessions: `
+    CREATE INDEX IF NOT EXISTS idx_user_sessions_user_id ON user_sessions(user_id);
+    CREATE INDEX IF NOT EXISTS idx_user_sessions_expires_at ON user_sessions(expires_at);
+    CREATE INDEX IF NOT EXISTS idx_user_sessions_created_at ON user_sessions(created_at);
+    CREATE INDEX IF NOT EXISTS idx_user_sessions_updated_at ON user_sessions(updated_at);
+  `,
+  refresh_tokens: `
+    CREATE INDEX IF NOT EXISTS idx_refresh_tokens_user_id ON refresh_tokens(user_id);
+    CREATE INDEX IF NOT EXISTS idx_refresh_tokens_token_hash ON refresh_tokens(token_hash);
+    CREATE INDEX IF NOT EXISTS idx_refresh_tokens_expires_at ON refresh_tokens(expires_at);
+    CREATE INDEX IF NOT EXISTS idx_refresh_tokens_created_at ON refresh_tokens(created_at);
+    CREATE INDEX IF NOT EXISTS idx_refresh_tokens_revoked_at ON refresh_tokens(revoked_at);
   `
 };
 
@@ -232,6 +274,32 @@ const createRLSPolicies = {
     -- Policy: Service role can access all artifacts
     CREATE POLICY IF NOT EXISTS "Service role can access all artifacts" ON artifacts
       FOR ALL USING (auth.role() = 'service_role');
+  `,
+
+  user_sessions: `
+    -- Enable RLS
+    ALTER TABLE user_sessions ENABLE ROW LEVEL SECURITY;
+    
+    -- Policy: Users can access their own sessions
+    CREATE POLICY IF NOT EXISTS "Users can access own sessions" ON user_sessions
+      FOR ALL USING (user_id = auth.uid()::text);
+    
+    -- Policy: Service role can access all sessions
+    CREATE POLICY IF NOT EXISTS "Service role can access all sessions" ON user_sessions
+      FOR ALL USING (auth.role() = 'service_role');
+  `,
+
+  refresh_tokens: `
+    -- Enable RLS
+    ALTER TABLE refresh_tokens ENABLE ROW LEVEL SECURITY;
+    
+    -- Policy: Users can access their own refresh tokens
+    CREATE POLICY IF NOT EXISTS "Users can access own refresh tokens" ON refresh_tokens
+      FOR ALL USING (user_id = auth.uid()::text);
+    
+    -- Policy: Service role can access all refresh tokens
+    CREATE POLICY IF NOT EXISTS "Service role can access all refresh tokens" ON refresh_tokens
+      FOR ALL USING (auth.role() = 'service_role');
   `
 };
 
@@ -295,6 +363,8 @@ async function createTables() {
     await executeSQLStatement(createTablesSQL.chat_messages, 'Create chat_messages table');
     await executeSQLStatement(createTablesSQL.chat_metrics, 'Create chat_metrics table');
     await executeSQLStatement(createTablesSQL.artifacts, 'Create artifacts table');
+    await executeSQLStatement(createTablesSQL.user_sessions, 'Create user_sessions table');
+    await executeSQLStatement(createTablesSQL.refresh_tokens, 'Create refresh_tokens table');
 
     // Step 2: Create indexes for better performance
     console.log('\n🔧 Creating indexes...\n');
@@ -303,6 +373,8 @@ async function createTables() {
     await executeSQLStatement(createIndexesSQL.chat_messages, 'Create indexes for chat_messages');
     await executeSQLStatement(createIndexesSQL.chat_metrics, 'Create indexes for chat_metrics');
     await executeSQLStatement(createIndexesSQL.artifacts, 'Create indexes for artifacts');
+    await executeSQLStatement(createIndexesSQL.user_sessions, 'Create indexes for user_sessions');
+    await executeSQLStatement(createIndexesSQL.refresh_tokens, 'Create indexes for refresh_tokens');
 
     // Step 3: Add foreign key constraints
     console.log('\n🔧 Adding foreign key constraints...\n');
@@ -329,6 +401,8 @@ async function setupRLS() {
     await executeSQLStatement(createRLSPolicies.chat_messages, 'Setup RLS for chat_messages');
     await executeSQLStatement(createRLSPolicies.chat_metrics, 'Setup RLS for chat_metrics');
     await executeSQLStatement(createRLSPolicies.artifacts, 'Setup RLS for artifacts');
+    await executeSQLStatement(createRLSPolicies.user_sessions, 'Setup RLS for user_sessions');
+    await executeSQLStatement(createRLSPolicies.refresh_tokens, 'Setup RLS for refresh_tokens');
 
     console.log('\n✅ Row Level Security policies configured successfully!');
   } catch (error) {
@@ -343,7 +417,7 @@ async function setupRLS() {
 async function verifyTables() {
   console.log('\n🔍 Verifying table creation...\n');
 
-  const tables = ['DinoAI', 'chat_sessions', 'chat_messages', 'chat_metrics', 'artifacts'];
+  const tables = ['DinoAI', 'chat_sessions', 'chat_messages', 'chat_metrics', 'artifacts', 'user_sessions', 'refresh_tokens'];
   
   for (const table of tables) {
     try {
