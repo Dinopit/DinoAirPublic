@@ -331,7 +331,7 @@ function generateSecureApiKey() {
  * @returns {Promise<string>} Hashed API key
  */
 async function hashApiKey(apiKey) {
-  const saltRounds = 12;
+  const saltRounds = 10;
   return await bcrypt.hash(apiKey, saltRounds);
 }
 

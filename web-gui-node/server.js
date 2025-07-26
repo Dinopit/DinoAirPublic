@@ -154,12 +154,20 @@ app.use((err, req, res, next) => {
 
 // 404 handler
 app.use((req, res) => {
-  res.status(404).render('error', {
-    title: 'Page Not Found',
-    error: {
-      status: 404,
-      message: 'The requested page could not be found.'
-    }
+  if (req.path.startsWith('/api/')) {
+    return res.status(404).json({
+      error: 'API endpoint not found',
+      category: 'not_found',
+      path: req.path,
+      timestamp: new Date().toISOString()
+    });
+  }
+  
+  res.status(404).json({
+    error: 'Page not found',
+    category: 'not_found',
+    path: req.path,
+    timestamp: new Date().toISOString()
   });
 });
 
