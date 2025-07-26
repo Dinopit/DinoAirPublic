@@ -4,7 +4,7 @@ import React, { useState, useEffect, useMemo } from 'react';
 import { versionControl } from '@/lib/utils/artifact-version-control';
 import { ArtifactExporter } from '@/lib/utils/artifact-export';
 import { SkeletonCard } from '../ui/skeleton';
-import { initializePrism, highlightCode, isPrismInitialized } from '@/lib/utils/prism-initializer';
+import { initializePrism } from '@/lib/utils/prism-initializer';
 import { getFileTypeIcon } from '@/lib/utils/file-type-utils';
 
 interface Artifact {
@@ -37,7 +37,6 @@ const LocalArtifactsView = () => {
   const [selectedArtifacts, setSelectedArtifacts] = useState<Set<string>>(new Set());
   const [viewingVersions, setViewingVersions] = useState<Artifact | null>(null);
   const [versionHistory, setVersionHistory] = useState<ArtifactVersion[]>([]);
-  const [comparingVersions, setComparingVersions] = useState<{artifact: Artifact, v1: number, v2: number} | null>(null);
   const [copiedArtifactId, setCopiedArtifactId] = useState<string | null>(null);
   const [isLoading, setIsLoading] = useState<boolean>(true);
 

@@ -4,7 +4,7 @@
  */
 
 import { NextRequest, NextResponse } from 'next/server';
-import { createHash, randomBytes } from 'crypto';
+import { createHash } from 'crypto';
 import { z } from 'zod';
 
 // Simple JWT implementation without external dependencies
@@ -22,6 +22,11 @@ class SimpleJWT {
   private static decode(token: string): any | null {
     try {
       const [encodedHeader, encodedPayload, signature] = token.split('.');
+      
+      if (!encodedHeader || !encodedPayload || !signature) {
+        return null;
+      }
+      
       const expectedSignature = createHash('sha256')
         .update(`${encodedHeader}.${encodedPayload}.${process.env.JWT_SECRET || 'secret'}`)
         .digest('base64url');
@@ -30,7 +35,7 @@ class SimpleJWT {
         return null;
       }
 
-      const payload = JSON.parse(Buffer.from(encodedPayload, 'base64url').toString());
+      const payload = JSON.parse(Buffer.from(encodedPayload.replace(/-/g, '+').replace(/_/g, '/'), 'base64').toString());
       
       // Check expiration
       if (payload.exp && payload.exp < Date.now() / 1000) {
@@ -302,7 +307,7 @@ export function hasPermission(
  */
 export function requirePermissions(permissions: string | string[]) {
   return async (
-    request: NextRequest,
+    _request: NextRequest,
     context: AuthContext,
     next: () => Promise<NextResponse>
   ): Promise<NextResponse> => {

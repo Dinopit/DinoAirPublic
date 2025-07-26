@@ -157,6 +157,7 @@ export class CircuitBreaker<T = any> {
     this.stats.totalCalls++;
     
     const bucket = this.windowBuckets[this.currentBucketIdx];
+    if (!bucket) return;
     bucket.calls++;
     
     if (success) {
@@ -169,12 +170,12 @@ export class CircuitBreaker<T = any> {
       this.stats.lastFailureTime = Date.now();
       this.stats.consecutiveFailures++;
       this.stats.consecutiveSuccesses = 0;
-      bucket.failures++;
+      if (bucket) bucket.failures++;
     }
     
     if (duration > this.config.slowCallDuration) {
       this.stats.slowCalls++;
-      bucket.slow++;
+      if (bucket) bucket.slow++;
     }
   }
   
@@ -352,8 +353,8 @@ export function circuitBreaker(config: CircuitBreakerConfig) {
   const breaker = new CircuitBreaker(config);
   
   return function (
-    target: any,
-    propertyKey: string,
+    _target: any,
+    _propertyKey: string,
     descriptor: PropertyDescriptor
   ) {
     const originalMethod = descriptor.value;

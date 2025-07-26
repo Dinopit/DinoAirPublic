@@ -1,5 +1,5 @@
 import React from 'react';
-import { render, screen, fireEvent } from '../../../../tests/utils/test-utils';
+import { render, screen } from '../../../../tests/utils/test-utils';
 import userEvent from '@testing-library/user-event';
 import ChatInput from '../ChatInput';
 

@@ -51,7 +51,9 @@ export default class ExamplePlugin implements PluginInstance {
         const prefix = this.getConfig('prefix', '!');
         if (message.content.startsWith(prefix)) {
           const command = message.content.slice(prefix.length).split(' ')[0];
-          await this.handleCommand(command, message);
+          if (command) {
+            await this.handleCommand(command, message);
+          }
         }
       }
     });
@@ -107,7 +109,7 @@ export default class ExamplePlugin implements PluginInstance {
     });
   }
 
-  private async handleCommand(command: string, message: any) {
+  private async handleCommand(command: string, _message: any) {
     const config = this.getConfig('commands', {});
     
     switch (command.toLowerCase()) {
@@ -138,7 +140,9 @@ export default class ExamplePlugin implements PluginInstance {
             'What\'s a programmer\'s favorite hangout place? The Foo Bar!'
           ];
           const randomJoke = jokes[Math.floor(Math.random() * jokes.length)];
-          await this.api?.sendChatMessage(randomJoke);
+          if (randomJoke) {
+            await this.api?.sendChatMessage(randomJoke);
+          }
         }
         break;
         

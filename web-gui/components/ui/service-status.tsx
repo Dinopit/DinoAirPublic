@@ -93,6 +93,7 @@ export default function ServiceStatus() {
       const interval = setInterval(fetchHealth, 10000); // Refresh every 10 seconds
       return () => clearInterval(interval);
     }
+    return undefined;
   }, [autoRefresh]);
 
   const getStatusIcon = (status: ServiceHealth['status']) => {
@@ -138,7 +139,7 @@ export default function ServiceStatus() {
     const command = serviceInfo[service]?.restartCommand;
     if (!command) return;
 
-    if (confirm(`Are you sure you want to restart ${serviceInfo[service].name}?`)) {
+    if (confirm(`Are you sure you want to restart ${serviceInfo[service]?.name}?`)) {
       // In a real implementation, this would call an API endpoint to restart the service
       alert(`Restart command: ${command}\n\nNote: Service restart is not implemented in the free tier. Please restart manually.`);
     }
@@ -149,7 +150,7 @@ export default function ServiceStatus() {
     const now = new Date();
     return [
       `[${now.toISOString()}] Service ${service} started`,
-      `[${now.toISOString()}] Listening on port ${serviceInfo[service].port}`,
+      `[${now.toISOString()}] Listening on port ${serviceInfo[service]?.port}`,
       `[${now.toISOString()}] Health check endpoint available`,
       `[${now.toISOString()}] Ready to accept connections`,
     ];

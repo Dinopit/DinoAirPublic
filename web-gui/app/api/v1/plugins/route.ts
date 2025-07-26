@@ -2,7 +2,7 @@ import { NextRequest, NextResponse } from 'next/server';
 import { withApiAuth } from '@/lib/middleware/api-auth';
 
 // GET: List all installed plugins
-async function listPlugins(request: NextRequest) {
+async function listPlugins(_request: NextRequest) {
   try {
     // Since plugins are stored client-side, we'll return instructions
     // for accessing them. In production, this could be from a database.

@@ -98,7 +98,7 @@ const LocalChatView = memo(() => {
   const messagesEndRef = useRef<HTMLDivElement>(null);
 
   // Use centralized personality store
-  const { personalities, loading: personalitiesLoading, fetchPersonalities } = usePersonalities();
+  const { personalities, loading: personalitiesLoading } = usePersonalities();
   const { currentPersonality, setCurrentPersonality } = useCurrentPersonality();
   
   // Initialize system prompt from current personality
@@ -123,6 +123,7 @@ const LocalChatView = memo(() => {
       }, 5000);
       return () => clearTimeout(timer);
     }
+    return undefined;
   }, [artifactNotifications]);
 
   // Load models and conversations on mount

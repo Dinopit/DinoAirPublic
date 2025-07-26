@@ -110,16 +110,9 @@ export default function MonitoringDashboard() {
       const interval = setInterval(refreshData, 30000); // Refresh every 30 seconds
       return () => clearInterval(interval);
     }
+    return undefined;
   }, [autoRefresh, timeframe]);
 
-  const getStatusColor = (status: string) => {
-    switch (status) {
-      case 'healthy': return 'text-green-600';
-      case 'warning': return 'text-yellow-600';
-      case 'critical': return 'text-red-600';
-      default: return 'text-gray-600';
-    }
-  };
 
   const getStatusIcon = (status: string) => {
     switch (status) {

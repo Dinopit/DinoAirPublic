@@ -1,7 +1,7 @@
 import { DinoAirError, ErrorType, ErrorContext, errorHandler } from '../services/error-handler';
 import { retry, RetryConfig, RetryStrategy, RetryWithCircuitBreaker, CircuitBreakerConfig } from '../utils/retry-strategies';
 import { requestDeduplication } from './request-deduplication';
-import { useCacheStore, cacheKeys, cacheTTL } from '../stores/cache-store';
+import { useCacheStore, cacheTTL } from '../stores/cache-store';
 import { getCurrentCorrelationId, createCorrelationHeaders } from '../correlation/correlation-id';
 
 // Request interceptor type
@@ -287,7 +287,7 @@ export class EnhancedApiClient {
       ...config,
       url,
       method: 'POST',
-      body: data ? JSON.stringify(data) : undefined,
+      body: data ? JSON.stringify(data) : null,
     });
   }
 
@@ -296,7 +296,7 @@ export class EnhancedApiClient {
       ...config,
       url,
       method: 'PUT',
-      body: data ? JSON.stringify(data) : undefined,
+      body: data ? JSON.stringify(data) : null,
     });
   }
 
@@ -305,7 +305,7 @@ export class EnhancedApiClient {
       ...config,
       url,
       method: 'PATCH',
-      body: data ? JSON.stringify(data) : undefined,
+      body: data ? JSON.stringify(data) : null,
     });
   }
 

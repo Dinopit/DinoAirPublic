@@ -3,7 +3,7 @@ import { withApiAuth } from '@/lib/middleware/api-auth';
 import { createExamplePluginManifest } from '@/lib/plugins/example-plugin';
 
 // GET: Download a specific plugin from registry
-async function downloadPlugin(request: NextRequest, { params }: { params: { id: string } }) {
+async function downloadPlugin(_request: NextRequest, { params }: { params: { id: string } }) {
   try {
     const pluginId = params.id;
 

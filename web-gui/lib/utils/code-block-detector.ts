@@ -26,7 +26,7 @@ export class CodeBlockDetector {
     while ((match = codeBlockRegex.exec(message)) !== null) {
       codeBlocks.push({
         language: match[1] || 'text',
-        code: match[2].trim(),
+        code: (match[2] || '').trim(),
         startIndex: match.index,
         endIndex: match.index + match[0].length
       });
@@ -93,18 +93,18 @@ export class CodeBlockDetector {
     const lines = codeBlock.code.split('\n');
     
     // Look for function/class/component names
-    const functionMatch = lines[0].match(/(?:function|const|let|var|def|class|interface|type|export\s+default\s+function)\s+(\w+)/);
-    if (functionMatch) {
+    const functionMatch = lines[0]?.match(/(?:function|const|let|var|def|class|interface|type|export\s+default\s+function)\s+(\w+)/);
+    if (functionMatch && functionMatch[1]) {
       baseName = functionMatch[1];
     } else {
       // Look for React component
       const componentMatch = codeBlock.code.match(/(?:const|function|class)\s+(\w+)\s*[:=]?\s*(?:\(|React\.FC|Component)/);
-      if (componentMatch) {
+      if (componentMatch && componentMatch[1]) {
         baseName = componentMatch[1];
       } else {
         // Look for Python class/function
         const pythonMatch = codeBlock.code.match(/(?:class|def)\s+(\w+)/);
-        if (pythonMatch) {
+        if (pythonMatch && pythonMatch[1]) {
           baseName = pythonMatch[1];
         }
       }
@@ -142,7 +142,7 @@ export class CodeBlockDetector {
     let match;
     while ((match = inlineCodeRegex.exec(message)) !== null) {
       // Only consider it if it's substantial (not just a single word)
-      if (match[1].length > 20 || match[1].includes('\n')) {
+      if (match[1] && (match[1].length > 20 || match[1].includes('\n'))) {
         snippets.push(match[1]);
       }
     }

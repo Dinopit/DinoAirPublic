@@ -50,7 +50,7 @@ async function checkOllama(): Promise<ServiceHealthCheck> {
       logger.info('Ollama health check completed', { 
         ollamaUrl, 
         isHealthy: true, 
-        status: tagsResponse.value?.status,
+        status: tagsResponse.status === 'fulfilled' ? tagsResponse.value?.status : undefined,
         correlationId,
         responseTime
       });
@@ -73,7 +73,7 @@ async function checkOllama(): Promise<ServiceHealthCheck> {
       logger.info('Ollama health check completed', { 
         ollamaUrl, 
         isHealthy: false, 
-        status: tagsResponse.value?.status,
+        status: tagsResponse.status === 'fulfilled' ? tagsResponse.value?.status : undefined,
         correlationId,
         responseTime,
         error
@@ -150,7 +150,7 @@ async function checkComfyUI(): Promise<ServiceHealthCheck> {
       logger.info('ComfyUI health check completed', { 
         comfyUrl, 
         isHealthy: true, 
-        status: healthResponse.value?.status,
+        status: healthResponse.status === 'fulfilled' ? healthResponse.value?.status : undefined,
         correlationId,
         responseTime
       });
@@ -172,7 +172,7 @@ async function checkComfyUI(): Promise<ServiceHealthCheck> {
       logger.info('ComfyUI health check completed', { 
         comfyUrl, 
         isHealthy: false, 
-        status: healthResponse.value?.status,
+        status: healthResponse.status === 'fulfilled' ? healthResponse.value?.status : undefined,
         correlationId,
         responseTime,
         error
@@ -196,7 +196,7 @@ async function checkComfyUI(): Promise<ServiceHealthCheck> {
   }
 }
 
-export async function GET(request: NextRequest) {
+export async function GET(_request: NextRequest) {
   const startTime = Date.now();
   const correlationId = getCurrentCorrelationId();
   
@@ -359,7 +359,7 @@ function formatUptime(seconds: number): string {
 }
 
 // Support HEAD requests for lighter health checks
-export async function HEAD(request: NextRequest) {
+export async function HEAD(_request: NextRequest) {
   const [ollamaHealth, comfyUIHealth] = await Promise.all([
     checkOllama(),
     checkComfyUI(),

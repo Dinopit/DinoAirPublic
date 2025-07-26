@@ -91,6 +91,10 @@ export const OnboardingTutorial: React.FC<OnboardingTutorialProps> = ({
   });
 
   const currentStepData = TUTORIAL_STEPS[currentStep];
+  
+  if (!currentStepData) {
+    return null;
+  }
 
   useEffect(() => {
     const handleKeyDown = (event: KeyboardEvent) => {
@@ -103,6 +107,7 @@ export const OnboardingTutorial: React.FC<OnboardingTutorialProps> = ({
       document.addEventListener('keydown', handleKeyDown);
       return () => document.removeEventListener('keydown', handleKeyDown);
     }
+    return undefined;
   }, [isOpen, onClose]);
 
   useEffect(() => {
@@ -222,7 +227,7 @@ export const OnboardingTutorial: React.FC<OnboardingTutorialProps> = ({
 
       {/* Tooltip */}
       <div
-        ref={containerRef}
+        ref={containerRef as React.RefObject<HTMLDivElement>}
         className="fixed z-[102] bg-card rounded-lg shadow-2xl p-6 max-w-sm transition-all duration-300"
         style={getTooltipPosition()}
         role="dialog"
