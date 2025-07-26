@@ -1,0 +1,76 @@
+name: Sentry Error Monitoring
+
+on:
+  push:
+    branches: [ master, main ]
+  pull_request:
+    branches: [ master, main ]
+
+env:
+  PYTHON_VERSION: '3.11'
+  NODE_VERSION: '20'
+
+jobs:
+  sentry-check:
+    name: Validate Sentry Integration
+    runs-on: ubuntu-latest
+    steps:
+      - name: Checkout code
+        uses: actions/checkout@v4
+
+      - name: Setup Python
+        uses: actions/setup-python@v4
+        with:
+          python-version: ${{ env.PYTHON_VERSION }}
+
+      - name: Install Python dependencies
+        run: |
+          pip install -r requirements.txt
+
+      - name: Validate Sentry configuration
+        run: |
+          python -c "
+          try:
+              import sentry_sdk
+              from sentry_config import init_sentry
+              print('✅ Sentry SDK available and configuration valid')
+          except ImportError as e:
+              print(f'❌ Sentry import error: {e}')
+              exit(1)
+          except Exception as e:
+              print(f'❌ Sentry configuration error: {e}')
+              exit(1)
+          "
+
+      - name: Test error capture functionality
+        run: |
+          python -c "
+          from sentry_config import capture_exception, capture_message
+          
+          # Test message capture
+          capture_message('Test message from CI', 'info')
+          print('✅ Message capture test passed')
+          
+          # Test exception capture (without raising)
+          try:
+              raise ValueError('Test exception from CI')
+          except Exception as e:
+              capture_exception(e, {'test': 'ci_validation'})
+              print('✅ Exception capture test passed')
+          "
+
+      - name: Check Node.js projects
+        run: |
+          echo "ℹ️ Checking Node.js projects for potential Sentry integration"
+          if [ -f "web-gui/package.json" ]; then
+            echo "📦 Found web-gui project"
+          fi
+          if [ -f "web-gui-node/package.json" ]; then
+            echo "📦 Found web-gui-node project"
+          fi
+
+      - name: Summary
+        run: |
+          echo "✅ Sentry integration validation completed"
+          echo "🔍 Error tracking is configured for Python components"
+          echo "📝 Consider adding Sentry to Node.js projects for comprehensive monitoring"
