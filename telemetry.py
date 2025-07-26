@@ -18,6 +18,16 @@ from pathlib import Path
 from datetime import datetime
 from typing import Dict, Any, Optional, List
 
+# Initialize Sentry error tracking
+try:
+    from sentry_config import init_sentry, capture_exception, capture_message
+    init_sentry()
+except ImportError:
+    def capture_exception(error, extra_data=None):
+        pass
+    def capture_message(message, level='info', extra_data=None):
+        pass
+
 
 class TelemetryConfig:
     """Configuration manager for telemetry settings"""

@@ -11,6 +11,15 @@ import socket
 import json
 from pathlib import Path
 
+# Initialize Sentry error tracking
+try:
+    from sentry_config import init_sentry, capture_exception
+    init_sentry()
+except ImportError:
+    print("INFO: Sentry not available, continuing without error tracking")
+    def capture_exception(error, extra_data=None):
+        pass
+
 # Track running processes
 running_processes = []
 
@@ -80,6 +89,7 @@ def check_port(port):
             return result != 0
     except Exception as e:
         print_warning(f"Could not check port {port}: {e}")
+        capture_exception(e, {"port": port, "function": "is_port_available"})
         return True  # Assume port is available if check fails
 
 def find_process_on_port(port):
@@ -181,9 +191,11 @@ def start_comfyui():
     except subprocess.SubprocessError as e:
         print_error(f"Failed to start ComfyUI: {e}")
         print_info("Please check if Python is properly installed and in PATH.")
+        capture_exception(e, {"function": "start_comfyui", "comfyui_path": comfyui_path})
         return None
     except Exception as e:
         print_error(f"Unexpected error starting ComfyUI: {e}")
+        capture_exception(e, {"function": "start_comfyui", "comfyui_path": comfyui_path})
         return None
 
 def check_ollama():

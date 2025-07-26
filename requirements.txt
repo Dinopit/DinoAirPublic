@@ -10,5 +10,8 @@ tqdm>=4.66.0
 # Metrics collection dependencies
 psutil>=5.9.0
 
+# Sentry for error tracking and monitoring
+sentry-sdk>=2.0.0
+
 # Note: ComfyUI has its own requirements.txt that will be installed separately
 # This file contains only the additional dependencies needed for model downloading
