@@ -158,6 +158,12 @@ class ManagedService:
         # Stop monitoring
         self._stop_event.set()
         
+        # Wait for monitor thread to stop before closing process
+        if self._monitor_thread and self._monitor_thread.is_alive():
+            self._monitor_thread.join(timeout=5)
+            if self._monitor_thread.is_alive():
+                self.logger.warning(f"Monitor thread for {self.config.name} did not stop gracefully")
+        
         if self.process:
             try:
                 # Send SIGTERM for graceful shutdown
@@ -175,6 +181,23 @@ class ManagedService:
                     self.logger.warning(f"{self.config.name} did not stop gracefully, forcing...")
                     self.process.kill()
                     self.process.wait()
+                
+                # Close subprocess streams to prevent resource leaks
+                if self.process.stdout:
+                    try:
+                        self.process.stdout.close()
+                    except (ValueError, OSError):
+                        pass
+                if self.process.stderr:
+                    try:
+                        self.process.stderr.close()
+                    except (ValueError, OSError):
+                        pass
+                if self.process.stdin:
+                    try:
+                        self.process.stdin.close()
+                    except (ValueError, OSError):
+                        pass
                 
                 self.process = None
                 
@@ -194,9 +217,20 @@ class ManagedService:
         self.logger.info(f"Restarting {self.config.name}...")
         self.status = ServiceStatus.RESTARTING
         
-        # Stop the service
+        # Stop the service and ensure complete cleanup
         if not self.stop():
             return False
+        
+        # Ensure monitor thread is fully stopped before restarting
+        if self._monitor_thread and self._monitor_thread.is_alive():
+            self.logger.warning(f"Waiting for monitor thread to finish for {self.config.name}")
+            self._monitor_thread.join(timeout=10)
+            if self._monitor_thread.is_alive():
+                self.logger.error(f"Monitor thread did not stop for {self.config.name}")
+                return False
+        
+        # Reset monitor thread reference to prevent reuse
+        self._monitor_thread = None
         
         # Wait before restarting
         time.sleep(self.config.restart_delay_seconds)
@@ -258,8 +292,11 @@ class ManagedService:
     def _update_metric_history(self, history_list, new_value):
         """Update a metric history list, keeping only the last 60 samples."""
         history_list.append(new_value)
-        if len(history_list) > 60:  # Keep last 60 samples
-            history_list.pop(0)
+        # Prevent unbounded growth - keep only last 60 samples  
+        max_samples = 60
+        if len(history_list) > max_samples:
+            # Remove oldest samples to prevent memory leak
+            del history_list[:-max_samples]
     
     def _check_resource_limits(self, cpu_percent, memory_mb):
         """Check if resource usage exceeds configured limits and log warnings."""
@@ -328,20 +365,22 @@ class ManagedService:
         
         # Non-blocking read from stdout
         try:
-            if self.process.stdout:
+            if self.process.stdout and not self.process.stdout.closed:
                 line = self.process.stdout.readline()
                 if line:
                     self.logger.info(f"[{self.config.name}] {line.strip()}")
-        except:
+        except (ValueError, OSError):
+            # Handle closed file descriptor gracefully
             pass
         
         # Non-blocking read from stderr
         try:
-            if self.process.stderr:
+            if self.process.stderr and not self.process.stderr.closed:
                 line = self.process.stderr.readline()
                 if line:
                     self.logger.warning(f"[{self.config.name}] {line.strip()}")
-        except:
+        except (ValueError, OSError):
+            # Handle closed file descriptor gracefully
             pass
     
     def _is_port_available(self, port: int) -> bool:
@@ -364,10 +403,15 @@ class ProcessManager:
         self.logger = self._setup_logging()
         self.running = False
         self._command_queue = queue.Queue()
+        self._shutdown_requested = False
         
         # Set up signal handlers
         signal.signal(signal.SIGINT, self._signal_handler)
         signal.signal(signal.SIGTERM, self._signal_handler)
+        
+        # Register cleanup for process exit
+        import atexit
+        atexit.register(self._cleanup_on_exit)
     
     def _setup_logging(self) -> logging.Logger:
         """Set up logging with rotation"""
@@ -532,8 +576,18 @@ class ProcessManager:
     def _process_command_queue(self):
         """Process any pending commands from the command queue."""
         try:
+            # Process commands with timeout to prevent blocking
             cmd = self._command_queue.get(timeout=1)
             self._handle_command(cmd)
+            
+            # Prevent queue from growing unbounded - limit to 100 pending commands
+            while self._command_queue.qsize() > 100:
+                try:
+                    # Discard oldest commands if queue is too large
+                    self._command_queue.get_nowait()
+                    self.logger.warning("Command queue full, discarding old commands")
+                except queue.Empty:
+                    break
         except queue.Empty:
             pass
     
@@ -602,8 +656,17 @@ class ProcessManager:
     
     def _signal_handler(self, signum, frame):
         """Handle shutdown signals"""
+        if self._shutdown_requested:
+            return  # Already shutting down
+        self._shutdown_requested = True
         self.logger.info(f"Received signal {signum}, shutting down...")
         self.running = False
+        
+    def _cleanup_on_exit(self):
+        """Cleanup resources on process exit"""
+        if not self._shutdown_requested:
+            self.logger.info("Process exiting, cleaning up resources...")
+            self.stop_all()
 
 
 def create_default_config() -> Dict[str, Any]:

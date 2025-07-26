@@ -22,11 +22,8 @@ from .config_validator import (
     CONFIG_TEMPLATE
 )
 
-
-)
 __all__ = [
     # Core config classes
-r
     'ConfigError',
     'ConfigValueType',
     'ConfigField',

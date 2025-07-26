@@ -1,4 +1,5 @@
 const EventEmitter = require('events');
+const { EventListenerManager } = require('./event-listener-manager');
 
 class ResourceManager extends EventEmitter {
   constructor() {
@@ -7,6 +8,7 @@ class ResourceManager extends EventEmitter {
     this.timers = new Set();
     this.intervals = new Set();
     this.streams = new Set();
+    this.eventListenerManager = new EventListenerManager();
     this.isShuttingDown = false;
     
     this.setupGracefulShutdown();
@@ -49,6 +51,15 @@ class ResourceManager extends EventEmitter {
   registerInterval(intervalId) {
     this.intervals.add(intervalId);
     return intervalId;
+  }
+  
+  registerEventListener(target, event, listener, options) {
+    this.eventListenerManager.addEventListener(target, event, listener, options);
+    return { target, event, listener, options };
+  }
+  
+  removeEventListener(target, event, listener, options) {
+    this.eventListenerManager.removeEventListener(target, event, listener, options);
   }
   
   registerStream(stream) {
@@ -119,6 +130,10 @@ class ResourceManager extends EventEmitter {
     this.streams.clear();
     console.log('Closed all streams');
     
+    // Clean up all event listeners
+    this.eventListenerManager.cleanup();
+    console.log('Cleaned up all event listeners');
+    
     for (const [key, { resource, cleanupFn }] of this.resources.entries()) {
       try {
         if (cleanupFn) {
@@ -135,11 +150,14 @@ class ResourceManager extends EventEmitter {
   }
   
   getStats() {
+    const eventListenerStats = this.eventListenerManager.getStats();
     return {
       timers: this.timers.size,
       intervals: this.intervals.size,
       streams: this.streams.size,
       resources: this.resources.size,
+      eventListeners: eventListenerStats.totalListeners,
+      eventListenersByType: eventListenerStats.byType,
       isShuttingDown: this.isShuttingDown
     };
   }
