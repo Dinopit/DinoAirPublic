@@ -2,3 +2,4 @@
 . "$(dirname -- "$0")/_/husky.sh"
 
 cd web-gui-node && npx lint-staged
+cd ../web-gui && npx lint-staged

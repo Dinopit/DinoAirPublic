@@ -1,19 +1,6 @@
 {
-  "*.{js,jsx,ts,tsx}": [
-    "eslint --fix",
-    "prettier --write",
-    "git add"
-  ],
-  "*.{json,md,yml,yaml}": [
-    "prettier --write",
-    "git add"
-  ],
-  "*.{css,scss,less}": [
-    "prettier --write",
-    "git add"
-  ],
-  "package.json": [
-    "prettier --write",
-    "git add"
-  ]
+  "*.{js,jsx,ts,tsx}": ["eslint --fix", "npx prettier --write"],
+  "*.{json,md,yml,yaml}": ["npx prettier --write"],
+  "*.{css,scss,less}": ["npx prettier --write"],
+  "package.json": ["npx prettier --write"]
 }
