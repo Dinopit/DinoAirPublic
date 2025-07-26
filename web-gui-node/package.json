@@ -14,7 +14,12 @@
     "db:setup": "node scripts/setup-database.js",
     "db:test": "node scripts/test-supabase.js",
     "test:crud": "node scripts/test-crud-operations.js",
-    "test:supabase": "npm run db:test && npm run test:crud"
+    "test:supabase": "npm run db:test && npm run test:crud",
+    "load-test": "./load-tests/run-all-tests.sh",
+    "load-test:quick": "./load-tests/quick-test.sh",
+    "load-test:chat": "npx artillery run load-tests/scenarios/chat-api.yml",
+    "load-test:health": "npx artillery run load-tests/scenarios/health-api.yml",
+    "load-test:artifacts": "npx artillery run load-tests/scenarios/artifacts-api.yml"
   },
   "dependencies": {
     "@supabase/supabase-js": "^2.52.1",
