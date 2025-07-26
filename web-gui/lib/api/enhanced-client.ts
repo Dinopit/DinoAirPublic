@@ -261,8 +261,8 @@ export class EnhancedApiClient {
         
         // Create error response
         const errorResponse: EnhancedResponse<T> = new Response(null, {
-          status: 0,
-          statusText: 'Error',
+          status: 500,
+          statusText: 'Internal Server Error',
         }) as EnhancedResponse<T>;
         
         errorResponse.error = handledError;
