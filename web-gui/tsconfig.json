@@ -6,7 +6,7 @@
       "dom.iterable",
       "es6"
     ],
-    "types": ["jest", "@testing-library/jest-dom"],
+    "types": ["jest", "@testing-library/jest-dom", "node"],
     "allowJs": true,
     "skipLibCheck": true,
     "strict": true,

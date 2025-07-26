@@ -1,0 +1,52 @@
+config:
+  target: 'http://localhost:3000'
+  phases:
+    - duration: 90
+      arrivalRate: 6
+      name: "System API Load Test"
+  defaults:
+    headers:
+      'Accept': 'application/json'
+      'X-API-Key': 'test-api-key'
+
+scenarios:
+  - name: "System Status Checks"
+    weight: 40
+    flow:
+      - get:
+          url: "/api/system/status"
+          name: "System Status"
+          expect:
+            - statusCode: [200, 503]
+            - contentType: json
+
+  - name: "Performance Metrics"
+    weight: 30
+    flow:
+      - get:
+          url: "/api/performance"
+          name: "Performance Metrics"
+          expect:
+            - statusCode: 200
+            - contentType: json
+            - hasProperty: "metrics"
+
+  - name: "Circuit Breaker Status"
+    weight: 20
+    flow:
+      - get:
+          url: "/api/system/circuit-breakers"
+          name: "Circuit Breaker Status"
+          expect:
+            - statusCode: 200
+            - contentType: json
+
+  - name: "Resource Monitoring"
+    weight: 10
+    flow:
+      - get:
+          url: "/api/system/resources"
+          name: "Resource Monitoring"
+          expect:
+            - statusCode: 200
+            - contentType: json

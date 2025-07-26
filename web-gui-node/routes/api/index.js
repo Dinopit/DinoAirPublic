@@ -10,6 +10,7 @@ const router = express.Router();
 const chatRoutes = require('./chat');
 const v1Routes = require('./v1');
 const healthRoutes = require('./health');
+const alertsRoutes = require('./alerts');
 const ollamaRoutes = require('./ollama');
 const docsRoutes = require('./docs');
 
@@ -17,6 +18,7 @@ const docsRoutes = require('./docs');
 router.use('/chat', chatRoutes);
 router.use('/v1', v1Routes);
 router.use('/health', healthRoutes);
+router.use('/alerts', alertsRoutes);
 router.use('/ollama', ollamaRoutes);
 router.use('/docs', docsRoutes);
 router.use('/openapi', docsRoutes); // Alias for docs
@@ -31,6 +33,7 @@ router.get('/', (req, res) => {
       chat: '/api/chat',
       v1: '/api/v1',
       health: '/api/health',
+      alerts: '/api/alerts',
       ollama: '/api/ollama',
       docs: '/api/docs'
     }

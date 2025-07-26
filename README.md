@@ -395,6 +395,9 @@ Access the Swagger UI at `http://localhost:3000/api-docs` for:
 | `/api/health` | GET | Health check |
 | `/api/health/comfyui` | GET | ComfyUI status |
 | `/api/health/ollama` | GET | Ollama status |
+| `/api/alerts/status` | GET | Alerting system status |
+| `/api/alerts/test` | POST | Send test alert |
+| `/api/alerts/config` | GET | Alerting configuration |
 
 ### Authentication
 
@@ -405,6 +408,45 @@ curl -H "X-API-Key: your-api-key" http://localhost:3000/api/health
 ```
 
 ## 🧪 Testing
+
+DinoAir includes comprehensive testing capabilities:
+
+### Accessibility Testing
+```bash
+# Run accessibility tests
+cd web-gui
+npx playwright test e2e/accessibility*.spec.ts
+
+# Run with specific browser
+npx playwright test e2e/accessibility*.spec.ts --project=chromium
+```
+
+### Load Testing
+```bash
+# Quick load test
+cd web-gui-node
+npm run load-test:quick
+
+# Full load test suite
+npm run load-test:all
+
+# Specific endpoint tests
+npm run load-test:health
+npm run load-test:chat
+npm run load-test:auth
+npm run load-test:system
+```
+
+### Alerting System Testing
+```bash
+# Test alerting configuration
+curl -X POST http://localhost:3000/api/alerts/test \
+  -H "Content-Type: application/json" \
+  -d '{"severity": "warning", "message": "Test alert"}'
+
+# Check alerting status
+curl http://localhost:3000/api/alerts/status
+```
 
 ### Unit and Integration Tests
 
@@ -522,7 +564,7 @@ cd web-gui && vercel
 - [ ] Set secure API keys and secrets
 - [ ] Enable HTTPS
 - [ ] Configure rate limiting
-- [ ] Set up monitoring alerts
+- [x] Set up monitoring alerts
 - [ ] Enable error tracking
 - [ ] Configure automated backups
 - [ ] Test rollback procedures
