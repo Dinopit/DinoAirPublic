@@ -3,6 +3,12 @@
  * Migrated from Next.js to pure Node.js for consistency
  */
 
+require('./lib/apm').initialize({
+  serviceName: 'dinoair-web-gui-node',
+  serviceVersion: '1.0.0',
+  environment: process.env.NODE_ENV || 'development'
+});
+
 const express = require('express');
 const http = require('http');
 const socketIo = require('socket.io');
@@ -14,6 +20,7 @@ require('dotenv').config();
 
 const { resourceManager } = require('./lib/resource-manager');
 const { memoryMonitor } = require('./lib/memory-monitor');
+const { middleware: apmMiddleware, shutdown: apmShutdown } = require('./lib/apm');
 
 // Import route modules
 const apiRoutes = require('./routes/api');
@@ -48,6 +55,9 @@ app.use(cors({
 // Compression middleware
 app.use(compression());
 
+// APM monitoring middleware
+app.use(apmMiddleware());
+
 // Body parsing middleware
 app.use(express.json({ limit: '10mb' }));
 app.use(express.urlencoded({ extended: true, limit: '10mb' }));
@@ -69,6 +79,7 @@ app.use((req, res, next) => {
 app.use('/api', apiRoutes);
 app.use('/api/system', require('./routes/api/system'));
 app.use('/api/health/database', require('./routes/api/health/database'));
+app.use('/api/performance', require('./routes/api/performance'));
 app.use('/', pageRoutes);
 
 // Socket.io connection handling
@@ -152,7 +163,8 @@ app.use((req, res) => {
 // Graceful shutdown
 process.on('SIGTERM', () => {
   console.log('SIGTERM received, shutting down gracefully');
-  server.close(() => {
+  server.close(async () => {
+    await apmShutdown();
     console.log('Server closed');
     process.exit(0);
   });
@@ -160,7 +172,8 @@ process.on('SIGTERM', () => {
 
 process.on('SIGINT', () => {
   console.log('SIGINT received, shutting down gracefully');
-  server.close(() => {
+  server.close(async () => {
+    await apmShutdown();
     console.log('Server closed');
     process.exit(0);
   });

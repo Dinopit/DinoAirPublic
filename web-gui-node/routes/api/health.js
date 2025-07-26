@@ -9,6 +9,7 @@ const { resourceManager } = require('../../lib/resource-manager');
 const { rateLimits } = require('../../middleware/validation');
 const { ollamaBreaker, comfyuiBreaker } = require('../../lib/circuit-breaker');
 const { withRetry, isRetryableError } = require('../../lib/retry');
+const { getPerformanceMetrics, createSpan, getCorrelationId } = require('../../lib/apm');
 const router = express.Router();
 
 // Configuration
@@ -147,6 +148,13 @@ async function performDeepServiceCheck(serviceName, baseUrl, timeout = CONFIG.he
 // GET /api/health - Enhanced main health check endpoint
 router.get('/', rateLimits.api, async (req, res) => {
   const startTime = Date.now();
+  const correlationId = getCorrelationId(req);
+  const span = createSpan('health_check_main', {
+    attributes: {
+      'correlation.id': correlationId,
+      'health.check.type': 'main'
+    }
+  });
   
   try {
     // Perform deep health checks
@@ -188,10 +196,12 @@ router.get('/', rateLimits.api, async (req, res) => {
     }
     
     const totalResponseTime = Date.now() - startTime;
+    const performanceMetrics = getPerformanceMetrics();
     
     const health = {
       status: overallStatus,
       timestamp: new Date().toISOString(),
+      correlationId,
       version: CONFIG.version,
       uptime: process.uptime(),
       responseTime: {
@@ -234,7 +244,8 @@ router.get('/', rateLimits.api, async (req, res) => {
           ollama: CONFIG.ollamaUrl,
           comfyui: CONFIG.comfyuiUrl
         }
-      }
+      },
+      performance: performanceMetrics
     };
     
     // Check for Socket.io (if available)
@@ -249,6 +260,16 @@ router.get('/', rateLimits.api, async (req, res) => {
       };
     }
     
+    if (span) {
+      span.setAttributes({
+        'health.check.status': overallStatus,
+        'health.check.response_time_ms': totalResponseTime,
+        'health.services.ollama.status': ollamaHealth.status,
+        'health.services.comfyui.status': comfyuiHealth.status
+      });
+      span.end();
+    }
+    
     // Set response status based on overall health
     const statusCode = overallStatus === 'healthy' ? 200 : 
                       overallStatus === 'degraded' ? 200 : 503;
@@ -256,10 +277,15 @@ router.get('/', rateLimits.api, async (req, res) => {
     res.status(statusCode).json(health);
     
   } catch (error) {
+    if (span) {
+      span.recordException(error);
+      span.end();
+    }
     console.error('Health check error:', error);
     res.status(500).json({
       status: 'unhealthy',
       timestamp: new Date().toISOString(),
+      correlationId,
       error: 'Health check failed',
       message: error.message
     });
@@ -452,10 +478,12 @@ router.get('/detailed', rateLimits.api, async (req, res) => {
 router.get('/ping', rateLimits.api, (req, res) => {
   const timestamp = new Date().toISOString();
   const uptime = process.uptime();
+  const correlationId = getCorrelationId(req);
   
   res.json({
     status: 'ok',
     timestamp,
+    correlationId,
     message: 'pong',
     uptime: `${Math.round(uptime)}s`,
     version: CONFIG.version,
