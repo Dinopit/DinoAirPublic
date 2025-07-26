@@ -309,7 +309,7 @@ const httpRequestDuration = new Histogram({
 - [x] Dependencies regularly updated (Dependabot)
 - [x] Docker image uses non-root user
 - [x] Secrets not committed to repository
-- [ ] SSL/TLS certificate configured
+- [x] SSL/TLS certificate configured
 - [ ] WAF rules configured (if using CDN)
 - [ ] Regular security audits scheduled
 

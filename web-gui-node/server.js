@@ -3,11 +3,15 @@
  * Migrated from Next.js to pure Node.js for consistency
  */
 
+console.log(`[${new Date().toISOString()}] 🚀 DinoAir Server initialization starting...`);
+
+console.log(`[${new Date().toISOString()}] 📊 Initializing APM monitoring...`);
 require('./lib/apm').initialize({
   serviceName: 'dinoair-web-gui-node',
   serviceVersion: '1.0.0',
   environment: process.env.NODE_ENV || 'development'
 });
+console.log(`[${new Date().toISOString()}] ✅ APM monitoring initialized`);
 
 const express = require('express');
 const http = require('http');
@@ -23,64 +27,103 @@ const { memoryMonitor } = require('./lib/memory-monitor');
 const { middleware: apmMiddleware, shutdown: apmShutdown } = require('./lib/apm');
 
 // Import route modules
+console.log(`[${new Date().toISOString()}] 📁 Loading route modules...`);
 const apiRoutes = require('./routes/api');
+console.log(`[${new Date().toISOString()}] ✅ API routes loaded`);
 const pageRoutes = require('./routes/pages');
+console.log(`[${new Date().toISOString()}] ✅ Page routes loaded`);
+const { smartRateLimit } = require('./middleware/auth-middleware');
+console.log(`[${new Date().toISOString()}] ✅ Rate limiting middleware loaded`);
 
 // Create Express app
+console.log(`[${new Date().toISOString()}] 🏗️  Creating Express app and HTTP server...`);
 const app = express();
 const server = http.createServer(app);
+console.log(`[${new Date().toISOString()}] ✅ Express app and HTTP server created`);
+
+console.log(`[${new Date().toISOString()}] 🔌 Initializing Socket.IO...`);
 const io = socketIo(server, {
   cors: {
     origin: process.env.CORS_ORIGIN || "http://localhost:3000",
     methods: ["GET", "POST"]
   }
 });
+console.log(`[${new Date().toISOString()}] ✅ Socket.IO initialized successfully`);
 
 // Configuration
 const PORT = process.env.PORT || 3000;
 const NODE_ENV = process.env.NODE_ENV || 'development';
 
 // Security middleware
+console.log(`[${new Date().toISOString()}] 🛡️  Loading security middleware...`);
 const { cspMiddleware, cspViolationHandler, reportToMiddleware } = require('./middleware/csp');
+console.log(`[${new Date().toISOString()}] ✅ CSP middleware loaded`);
 app.use(reportToMiddleware);
+console.log(`[${new Date().toISOString()}] ✅ Report-To middleware applied`);
 app.use(cspViolationHandler);
+console.log(`[${new Date().toISOString()}] ✅ CSP violation handler applied`);
 app.use(cspMiddleware);
+console.log(`[${new Date().toISOString()}] ✅ CSP middleware applied`);
 
 // CORS configuration
+console.log(`[${new Date().toISOString()}] 🌐 Configuring CORS...`);
 app.use(cors({
   origin: process.env.CORS_ORIGIN || "http://localhost:3000",
   credentials: true
 }));
+console.log(`[${new Date().toISOString()}] ✅ CORS configured`);
 
 // Compression middleware
+console.log(`[${new Date().toISOString()}] 🗜️  Loading compression middleware...`);
 app.use(compression());
+console.log(`[${new Date().toISOString()}] ✅ Compression middleware loaded`);
 
 // APM monitoring middleware
+console.log(`[${new Date().toISOString()}] 📊 Loading APM monitoring middleware...`);
 app.use(apmMiddleware());
+console.log(`[${new Date().toISOString()}] ✅ APM monitoring middleware loaded`);
 
 // Body parsing middleware
+console.log(`[${new Date().toISOString()}] 📝 Loading body parsing middleware...`);
 app.use(express.json({ limit: '10mb' }));
 app.use(express.urlencoded({ extended: true, limit: '10mb' }));
+console.log(`[${new Date().toISOString()}] ✅ Body parsing middleware loaded`);
 
 // Static file serving
+console.log(`[${new Date().toISOString()}] 📁 Configuring static file serving...`);
 app.use(express.static(path.join(__dirname, 'public')));
+console.log(`[${new Date().toISOString()}] ✅ Static file serving configured`);
 
 // View engine setup
+console.log(`[${new Date().toISOString()}] 🎨 Setting up view engine...`);
 app.set('view engine', 'ejs');
 app.set('views', path.join(__dirname, 'views'));
+console.log(`[${new Date().toISOString()}] ✅ View engine configured`);
 
 // Make Socket.io available to routes
+console.log(`[${new Date().toISOString()}] 🔌 Making Socket.IO available to routes...`);
 app.use((req, res, next) => {
   req.io = io;
   next();
 });
+console.log(`[${new Date().toISOString()}] ✅ Socket.IO middleware configured`);
+
+console.log(`[${new Date().toISOString()}] 🚦 Applying rate limiting to API routes...`);
+app.use('/api', smartRateLimit);
+console.log(`[${new Date().toISOString()}] ✅ Rate limiting applied to API routes`);
 
 // Routes
+console.log(`[${new Date().toISOString()}] 🛣️  Mounting routes...`);
 app.use('/api', apiRoutes);
+console.log(`[${new Date().toISOString()}] ✅ Main API routes mounted`);
 app.use('/api/system', require('./routes/api/system'));
+console.log(`[${new Date().toISOString()}] ✅ System API routes mounted`);
 app.use('/api/health/database', require('./routes/api/health/database'));
+console.log(`[${new Date().toISOString()}] ✅ Database health routes mounted`);
 app.use('/api/performance', require('./routes/api/performance'));
+console.log(`[${new Date().toISOString()}] ✅ Performance API routes mounted`);
 app.use('/', pageRoutes);
+console.log(`[${new Date().toISOString()}] ✅ Page routes mounted`);
 
 // Socket.io connection handling
 io.on('connection', (socket) => {
@@ -102,9 +145,27 @@ io.on('connection', (socket) => {
   });
 });
 
-// Error handling middleware
 app.use((err, req, res, next) => {
-  console.error('Server error:', err);
+  const timestamp = new Date().toISOString();
+  const requestInfo = {
+    method: req.method,
+    path: req.path,
+    ip: req.ip || req.connection.remoteAddress || 'unknown',
+    userAgent: req.get('User-Agent')?.substring(0, 100) || 'unknown',
+    timestamp
+  };
+  
+  console.error(`🚨 [${timestamp}] ErrorMiddleware: Server error caught:`, {
+    error: {
+      name: err.name,
+      message: err.message,
+      stack: err.stack,
+      code: err.code,
+      status: err.status
+    },
+    request: requestInfo,
+    isAsync: err.isAsync || false
+  });
   
   let userMessage = 'We encountered an unexpected issue. Please try again.';
   let category = 'server_error';
@@ -131,32 +192,83 @@ app.use((err, req, res, next) => {
     userMessage = 'We\'re having trouble connecting to our services. Please try again in a few moments.';
     category = 'service_unavailable';
     statusCode = 503;
+  } else if (err.name === 'TimeoutError' || err.message?.includes('timeout')) {
+    userMessage = 'The request took too long to process. Please try again.';
+    category = 'timeout_error';
+    statusCode = 408;
   }
   
   const errorResponse = {
     error: userMessage,
     category,
-    timestamp: new Date().toISOString()
+    timestamp,
+    requestId: `${Date.now()}-${Math.random().toString(36).substr(2, 9)}`
   };
   
   if (NODE_ENV === 'development') {
     errorResponse.technical = {
       message: err.message,
-      stack: err.stack
+      stack: err.stack,
+      code: err.code,
+      request: requestInfo
     };
   }
   
-  res.status(statusCode).json(errorResponse);
+  if (!res.headersSent) {
+    res.status(statusCode).json(errorResponse);
+  } else {
+    console.error(`🚨 [${timestamp}] ErrorMiddleware: Headers already sent, cannot send error response`);
+  }
 });
 
 // 404 handler
 app.use((req, res) => {
-  res.status(404).render('error', {
-    title: 'Page Not Found',
-    error: {
-      status: 404,
-      message: 'The requested page could not be found.'
-    }
+  if (req.path.startsWith('/api/')) {
+    return res.status(404).json({
+      error: 'API endpoint not found',
+      category: 'not_found',
+      path: req.path,
+      timestamp: new Date().toISOString()
+    });
+  }
+  
+  res.status(404).json({
+    error: 'Page not found',
+    category: 'not_found',
+    path: req.path,
+    timestamp: new Date().toISOString()
+  });
+});
+
+process.on('unhandledRejection', (reason, promise) => {
+  const timestamp = new Date().toISOString();
+  console.error(`🚨 [${timestamp}] UnhandledRejection: Unhandled Promise Rejection detected:`, {
+    reason: reason?.message || reason,
+    stack: reason?.stack,
+    promise: promise.toString().substring(0, 200),
+    timestamp
+  });
+  
+  if (NODE_ENV === 'development') {
+    console.error(`🚨 [${timestamp}] UnhandledRejection: This might indicate an async error in auth or other middleware`);
+  }
+});
+
+process.on('uncaughtException', (error) => {
+  const timestamp = new Date().toISOString();
+  console.error(`🚨 [${timestamp}] UncaughtException: Uncaught Exception detected:`, {
+    name: error.name,
+    message: error.message,
+    stack: error.stack,
+    timestamp
+  });
+  
+  // Graceful shutdown on uncaught exception
+  console.error(`🚨 [${timestamp}] UncaughtException: Initiating graceful shutdown...`);
+  server.close(async () => {
+    await apmShutdown();
+    console.log(`🚨 [${timestamp}] UncaughtException: Server closed due to uncaught exception`);
+    process.exit(1);
   });
 });
 
@@ -180,13 +292,17 @@ process.on('SIGINT', () => {
 });
 
 // Start server
+console.log(`[${new Date().toISOString()}] 🚀 Starting server on port ${PORT}...`);
 server.listen(PORT, () => {
-  console.log(`DinoAir Web GUI Server running on port ${PORT}`);
-  console.log(`Environment: ${NODE_ENV}`);
-  console.log(`Access the application at: http://localhost:${PORT}`);
+  console.log(`[${new Date().toISOString()}] ✅ DinoAir Web GUI Server successfully started and listening on port ${PORT}`);
+  console.log(`[${new Date().toISOString()}] 🌍 Environment: ${NODE_ENV}`);
+  console.log(`[${new Date().toISOString()}] 🔗 Access the application at: http://localhost:${PORT}`);
   
+  console.log(`[${new Date().toISOString()}] 🧠 Starting memory monitoring...`);
   memoryMonitor.start();
-  console.log('🧠 Memory monitoring enabled');
+  console.log(`[${new Date().toISOString()}] ✅ Memory monitoring enabled`);
+  
+  console.log(`[${new Date().toISOString()}] 🎉 DinoAir server is ready to accept connections!`);
 });
 
 // Register server for graceful shutdown
