@@ -27,7 +27,9 @@
     "load-test:artifacts": "npx artillery run load-tests/scenarios/artifacts-api.yml",
     "load-test:auth": "npx artillery run load-tests/scenarios/auth-api.yml",
     "load-test:system": "npx artillery run load-tests/scenarios/system-api.yml",
-    "load-test:all": "npm run load-test:health && npm run load-test:chat && npm run load-test:artifacts && npm run load-test:auth && npm run load-test:system"
+    "load-test:all": "npm run load-test:health && npm run load-test:chat && npm run load-test:artifacts && npm run load-test:auth && npm run load-test:system",
+    "prepare": "cd .. && husky install",
+    "lint:fix-safe": "eslint --fix . || true"
   },
   "dependencies": {
     "@opentelemetry/api": "^1.9.0",

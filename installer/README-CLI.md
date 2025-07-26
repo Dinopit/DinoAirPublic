@@ -6,6 +6,12 @@ A Node.js-based command-line installer for the DinoAir Progressive Mode System, 
 
 This CLI installer provides all the functionality of the original Electron installer but in a lightweight, terminal-based interface. It uses native Node.js modules and integrates seamlessly with the Python backend components.
 
+## Documentation
+
+- **[User Manual](USER-MANUAL.md)**: Step-by-step installation guide for end users
+- **[Video Tutorials](VIDEO-TUTORIALS.md)**: Comprehensive video tutorial series
+- **[Technical Documentation](README-CLI.md)**: This document - technical details and architecture
+
 ## Features
 
 - **Interactive CLI Interface**: Uses inquirer for user-friendly prompts
