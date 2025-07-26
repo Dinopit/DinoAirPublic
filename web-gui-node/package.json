@@ -4,8 +4,8 @@
   "description": "DinoAir Web GUI - Node.js version with Express server",
   "main": "server.js",
   "scripts": {
-    "start": "node server.js",
-    "dev": "nodemon server.js",
+    "start": "node --trace-warnings server.js",
+    "dev": "nodemon --trace-warnings server.js",
     "test": "jest",
     "test:contracts:provider": "jest --config jest.contracts.config.js",
     "contracts:verify": "npm run test:contracts:provider",

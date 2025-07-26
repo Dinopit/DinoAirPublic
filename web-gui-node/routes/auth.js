@@ -6,8 +6,38 @@ const db = require('../lib/db');
 const { supabaseAdmin } = require('../lib/supabase');
 const { rateLimits, authValidation, sanitizeInput } = require('../middleware/validation');
 
+const authTimeout = (timeoutMs = 30000) => {
+  return (req, res, next) => {
+    console.log(`⏱️  [${new Date().toISOString()}] AuthTimeout: Setting ${timeoutMs}ms timeout for ${req.method} ${req.originalUrl}`);
+    
+    const timeout = setTimeout(() => {
+      if (!res.headersSent) {
+        console.error(`⏱️  [${new Date().toISOString()}] AuthTimeout: Request timeout after ${timeoutMs}ms for ${req.method} ${req.originalUrl} from ${req.ip}`);
+        res.status(408).json({
+          error: 'Request timeout',
+          message: 'The authentication request took too long to process. Please try again.',
+          category: 'timeout_error',
+          timeout: timeoutMs
+        });
+      }
+    }, timeoutMs);
+
+    res.on('finish', () => {
+      console.log(`⏱️  [${new Date().toISOString()}] AuthTimeout: Request completed successfully for ${req.method} ${req.originalUrl}`);
+      clearTimeout(timeout);
+    });
+
+    res.on('error', () => {
+      console.log(`⏱️  [${new Date().toISOString()}] AuthTimeout: Request errored, clearing timeout for ${req.method} ${req.originalUrl}`);
+      clearTimeout(timeout);
+    });
+
+    next();
+  };
+};
+
 // Sign up route
-router.post('/signup', rateLimits.auth, sanitizeInput, authValidation.signup, async (req, res) => {
+router.post('/signup', authTimeout(30000), rateLimits.auth, sanitizeInput, authValidation.signup, async (req, res) => {
   try {
     const { email, password, name } = req.body;
     const ip = req.ip || req.connection.remoteAddress || req.socket.remoteAddress || 'unknown';
@@ -69,7 +99,7 @@ router.post('/signup', rateLimits.auth, sanitizeInput, authValidation.signup, as
 });
 
 // Sign in route
-router.post('/signin', rateLimits.auth, sanitizeInput, authValidation.signin, async (req, res) => {
+router.post('/signin', authTimeout(30000), rateLimits.auth, sanitizeInput, authValidation.signin, async (req, res) => {
   try {
     const { email, password } = req.body;
     const ip = req.ip || req.connection.remoteAddress || req.socket.remoteAddress || 'unknown';
@@ -126,7 +156,7 @@ router.post('/signin', rateLimits.auth, sanitizeInput, authValidation.signin, as
 });
 
 // Sign out route
-router.post('/signout', async (req, res) => {
+router.post('/signout', authTimeout(15000), async (req, res) => {
   try {
     const { error } = await auth.signOutUser();
 
@@ -148,7 +178,7 @@ router.post('/signout', async (req, res) => {
 });
 
 // Get current user route
-router.get('/me', async (req, res) => {
+router.get('/me', authTimeout(20000), async (req, res) => {
   try {
     const { user, error } = await auth.getCurrentUser();
 
@@ -175,7 +205,7 @@ router.get('/me', async (req, res) => {
 });
 
 // Reset password request route
-router.post('/reset-password', rateLimits.auth, sanitizeInput, authValidation.resetPassword, async (req, res) => {
+router.post('/reset-password', authTimeout(25000), rateLimits.auth, sanitizeInput, authValidation.resetPassword, async (req, res) => {
   try {
     const { email } = req.body;
 
@@ -196,7 +226,7 @@ router.post('/reset-password', rateLimits.auth, sanitizeInput, authValidation.re
 });
 
 // Update password route
-router.post('/update-password', rateLimits.auth, sanitizeInput, authValidation.updatePassword, async (req, res) => {
+router.post('/update-password', authTimeout(25000), rateLimits.auth, sanitizeInput, authValidation.updatePassword, async (req, res) => {
   try {
     const { password } = req.body;
 
@@ -217,7 +247,7 @@ router.post('/update-password', rateLimits.auth, sanitizeInput, authValidation.u
 });
 
 // Create API key route (requires authentication)
-router.post('/api-keys', rateLimits.auth, sanitizeInput, authValidation.createApiKey, async (req, res) => {
+router.post('/api-keys', authTimeout(20000), rateLimits.auth, sanitizeInput, authValidation.createApiKey, async (req, res) => {
   try {
     const { user, error: authError } = await auth.getCurrentUser();
 
@@ -266,7 +296,7 @@ router.post('/api-keys', rateLimits.auth, sanitizeInput, authValidation.createAp
 });
 
 // List API keys route (requires authentication)
-router.get('/api-keys', rateLimits.auth, async (req, res) => {
+router.get('/api-keys', authTimeout(15000), rateLimits.auth, async (req, res) => {
   try {
     const { user, error: authError } = await auth.getCurrentUser();
 
@@ -303,7 +333,7 @@ router.get('/api-keys', rateLimits.auth, async (req, res) => {
 });
 
 // Revoke API key route (requires authentication)
-router.delete('/api-keys/:keyId', rateLimits.auth, async (req, res) => {
+router.delete('/api-keys/:keyId', authTimeout(15000), rateLimits.auth, async (req, res) => {
   try {
     const { user, error: authError } = await auth.getCurrentUser();
 

@@ -1,7 +1,9 @@
 // Authentication utilities for Supabase
+console.log(`🔐 [${new Date().toISOString()}] Auth: Loading authentication module...`);
 const { supabase, supabaseAdmin } = require('./supabase');
 const crypto = require('crypto');
 const bcrypt = require('bcrypt');
+console.log(`🔐 [${new Date().toISOString()}] Auth: Authentication module dependencies loaded successfully`);
 
 const MAX_LOGIN_ATTEMPTS = 5;
 const LOCKOUT_DURATION = 15 * 60 * 1000; // 15 minutes
@@ -137,14 +139,26 @@ function clearFailedAttempts(identifier) {
  * @returns {Promise<Object>} Auth response with user data or error
  */
 async function signUpUser(email, password, ip = 'unknown') {
+  console.log(`🔐 [${new Date().toISOString()}] Auth: signUpUser called for ${email} from ${ip}`);
+  console.time('signUpUser');
+  
   try {
+    console.log(`🔐 [${new Date().toISOString()}] Auth: Validating email format for ${email}`);
     const emailRegex = /^[^\s@]+@[^\s@]+\.[^\s@]+$/;
     if (!emailRegex.test(email)) {
+      console.log(`🔐 [${new Date().toISOString()}] Auth: Invalid email format for ${email}`);
+      console.timeEnd('signUpUser');
       return { data: null, error: { message: 'Invalid email format' } };
     }
     
+    console.log(`🔐 [${new Date().toISOString()}] Auth: Validating password complexity for ${email}`);
+    console.time('passwordValidation');
     const passwordValidation = validatePasswordComplexity(password);
+    console.timeEnd('passwordValidation');
+    
     if (!passwordValidation.isValid) {
+      console.log(`🔐 [${new Date().toISOString()}] Auth: Password validation failed for ${email}:`, passwordValidation.errors);
+      console.timeEnd('signUpUser');
       return { 
         data: null, 
         error: { 
@@ -154,8 +168,14 @@ async function signUpUser(email, password, ip = 'unknown') {
       };
     }
     
+    console.log(`🔐 [${new Date().toISOString()}] Auth: Checking account lockout for ${ip}`);
+    console.time('lockoutCheck');
     const lockStatus = checkAccountLock(ip);
+    console.timeEnd('lockoutCheck');
+    
     if (lockStatus.isLocked) {
+      console.log(`🔐 [${new Date().toISOString()}] Auth: Account locked for ${ip}, remaining time: ${lockStatus.remainingTime}ms`);
+      console.timeEnd('signUpUser');
       return {
         data: null,
         error: {
@@ -165,23 +185,31 @@ async function signUpUser(email, password, ip = 'unknown') {
       };
     }
     
+    console.log(`🔐 [${new Date().toISOString()}] Auth: Creating user account via Supabase for ${email}`);
+    console.time('supabaseSignUp');
     const { data, error } = await supabase.auth.signUp({
       email,
       password,
     });
+    console.timeEnd('supabaseSignUp');
     
     if (error) {
+      console.error(`🔐 [${new Date().toISOString()}] Auth: Supabase signup failed for ${email}:`, error);
       recordFailedAttempt(ip);
-      console.log(`🚫 Signup failed for ${email} from ${ip}: ${error.message}`);
+      console.log(`🚫 [${new Date().toISOString()}] Auth: Signup failed for ${email} from ${ip}: ${error.message}`);
+      console.timeEnd('signUpUser');
       return { data, error };
     }
     
     clearFailedAttempts(ip);
-    console.log(`✅ User signup successful: ${email} from ${ip}`);
+    console.log(`✅ [${new Date().toISOString()}] Auth: User signup successful: ${email} from ${ip}`);
+    console.timeEnd('signUpUser');
+    console.log(`🔐 [${new Date().toISOString()}] Auth: signUpUser completed successfully for ${email}`);
     return { data, error };
     
   } catch (error) {
-    console.error('Signup error:', error);
+    console.error(`🔐 [${new Date().toISOString()}] Auth: signUpUser error for ${email}:`, error);
+    console.timeEnd('signUpUser');
     return { data: null, error: { message: 'Internal server error during signup' } };
   }
 }
@@ -195,20 +223,31 @@ async function signUpUser(email, password, ip = 'unknown') {
  * @returns {Promise<Object>} Auth response with session data or error
  */
 async function signInUser(email, password, ip = 'unknown', userAgent = 'unknown') {
+  console.log(`🔐 [${new Date().toISOString()}] Auth: signInUser called for ${email} from ${ip}`);
+  console.log(`🔐 [${new Date().toISOString()}] Auth: User agent: ${userAgent?.substring(0, 100)}`);
+  console.time('signInUser');
+  
   try {
+    console.log(`🔐 [${new Date().toISOString()}] Auth: Validating email format for signin: ${email}`);
     const emailRegex = /^[^\s@]+@[^\s@]+\.[^\s@]+$/;
     if (!emailRegex.test(email)) {
+      console.log(`🔐 [${new Date().toISOString()}] Auth: Invalid email format for signin: ${email}`);
       recordFailedAttempt(email);
       recordFailedAttempt(ip);
+      console.timeEnd('signInUser');
       return { data: null, error: { message: 'Invalid email format' } };
     }
     
+    console.log(`🔐 [${new Date().toISOString()}] Auth: Checking account lockout for signin: ${email} and ${ip}`);
+    console.time('signinLockoutCheck');
     const emailLockStatus = checkAccountLock(email);
     const ipLockStatus = checkAccountLock(ip);
+    console.timeEnd('signinLockoutCheck');
     
     if (emailLockStatus.isLocked || ipLockStatus.isLocked) {
       const maxRemainingTime = Math.max(emailLockStatus.remainingTime, ipLockStatus.remainingTime);
-      console.log(`🔒 Login blocked for ${email} from ${ip}: account locked`);
+      console.log(`🔒 [${new Date().toISOString()}] Auth: Login blocked for ${email} from ${ip}: account locked, remaining time: ${maxRemainingTime}ms`);
+      console.timeEnd('signInUser');
       return {
         data: null,
         error: {
@@ -218,15 +257,20 @@ async function signInUser(email, password, ip = 'unknown', userAgent = 'unknown'
       };
     }
     
+    console.log(`🔐 [${new Date().toISOString()}] Auth: Attempting Supabase signin for ${email}`);
+    console.time('supabaseSignIn');
     const { data, error } = await supabase.auth.signInWithPassword({
       email,
       password,
     });
+    console.timeEnd('supabaseSignIn');
     
     if (error) {
+      console.error(`🔐 [${new Date().toISOString()}] Auth: Supabase signin failed for ${email}:`, error);
       recordFailedAttempt(email);
       recordFailedAttempt(ip);
-      console.log(`🚫 Login failed for ${email} from ${ip}: ${error.message}`);
+      console.log(`🚫 [${new Date().toISOString()}] Auth: Login failed for ${email} from ${ip}: ${error.message}`);
+      console.timeEnd('signInUser');
       
       return { 
         data: null, 
@@ -234,18 +278,22 @@ async function signInUser(email, password, ip = 'unknown', userAgent = 'unknown'
       };
     }
     
+    console.log(`🔐 [${new Date().toISOString()}] Auth: Clearing failed attempts for successful signin: ${email}`);
     clearFailedAttempts(email);
     clearFailedAttempts(ip);
     
-    console.log(`✅ Login successful: ${email} from ${ip}`);
-    console.log(`🔐 Session created for user ${data.user?.id} with expiry ${data.session?.expires_at}`);
+    console.log(`✅ [${new Date().toISOString()}] Auth: Login successful: ${email} from ${ip}`);
+    console.log(`🔐 [${new Date().toISOString()}] Auth: Session created for user ${data.user?.id} with expiry ${data.session?.expires_at}`);
     
+    console.timeEnd('signInUser');
+    console.log(`🔐 [${new Date().toISOString()}] Auth: signInUser completed successfully for ${email}`);
     return { data, error };
     
   } catch (error) {
-    console.error('Signin error:', error);
+    console.error(`🔐 [${new Date().toISOString()}] Auth: signInUser error for ${email}:`, error);
     recordFailedAttempt(email);
     recordFailedAttempt(ip);
+    console.timeEnd('signInUser');
     return { data: null, error: { message: 'Internal server error during signin' } };
   }
 }
@@ -331,8 +379,25 @@ function generateSecureApiKey() {
  * @returns {Promise<string>} Hashed API key
  */
 async function hashApiKey(apiKey) {
+  console.log(`🔐 [${new Date().toISOString()}] Auth: hashApiKey called`);
+  console.time('hashApiKey');
+  console.time('bcryptHash');
+  
   const saltRounds = 10;
-  return await bcrypt.hash(apiKey, saltRounds);
+  console.log(`🔐 [${new Date().toISOString()}] Auth: Before bcrypt.hash with ${saltRounds} salt rounds`);
+  
+  try {
+    const hashedKey = await bcrypt.hash(apiKey, saltRounds);
+    console.timeEnd('bcryptHash');
+    console.log(`🔐 [${new Date().toISOString()}] Auth: After bcrypt.hash - success`);
+    console.timeEnd('hashApiKey');
+    return hashedKey;
+  } catch (error) {
+    console.timeEnd('bcryptHash');
+    console.timeEnd('hashApiKey');
+    console.error(`🔐 [${new Date().toISOString()}] Auth: bcrypt.hash error:`, error);
+    throw error;
+  }
 }
 
 /**
@@ -342,7 +407,24 @@ async function hashApiKey(apiKey) {
  * @returns {Promise<boolean>} Whether key matches
  */
 async function verifyApiKeyHash(apiKey, hashedKey) {
-  return await bcrypt.compare(apiKey, hashedKey);
+  console.log(`🔐 [${new Date().toISOString()}] Auth: verifyApiKeyHash called`);
+  console.time('verifyApiKeyHash');
+  console.time('bcryptCompare');
+  
+  console.log(`🔐 [${new Date().toISOString()}] Auth: Before bcrypt.compare`);
+  
+  try {
+    const isMatch = await bcrypt.compare(apiKey, hashedKey);
+    console.timeEnd('bcryptCompare');
+    console.log(`🔐 [${new Date().toISOString()}] Auth: After bcrypt.compare - result: ${isMatch}`);
+    console.timeEnd('verifyApiKeyHash');
+    return isMatch;
+  } catch (error) {
+    console.timeEnd('bcryptCompare');
+    console.timeEnd('verifyApiKeyHash');
+    console.error(`🔐 [${new Date().toISOString()}] Auth: bcrypt.compare error:`, error);
+    throw error;
+  }
 }
 
 /**
@@ -441,36 +523,58 @@ async function createApiKey(userId, name, options = {}) {
  * @returns {Promise<Object>} User data and key info or null if invalid
  */
 async function verifyApiKey(apiKey, ip = 'unknown') {
+  console.log(`🔐 [${new Date().toISOString()}] Auth: verifyApiKey called from ${ip}`);
+  console.time('verifyApiKey');
+  
   try {
+    console.log(`🔐 [${new Date().toISOString()}] Auth: Validating API key format`);
     if (!apiKey || typeof apiKey !== 'string') {
+      console.log(`🔐 [${new Date().toISOString()}] Auth: Invalid API key format from ${ip}`);
+      console.timeEnd('verifyApiKey');
       return { userId: null, keyData: null, error: { message: 'Invalid API key format' } };
     }
     
     if (!apiKey.startsWith('dinoair_')) {
-      console.log(`🚫 Invalid API key prefix from ${ip}`);
+      console.log(`🚫 [${new Date().toISOString()}] Auth: Invalid API key prefix from ${ip}`);
+      console.timeEnd('verifyApiKey');
       return { userId: null, keyData: null, error: { message: 'Invalid API key' } };
     }
     
+    console.log(`🔐 [${new Date().toISOString()}] Auth: Fetching active API keys from database`);
+    console.time('fetchApiKeys');
     const { data: apiKeys, error } = await supabaseAdmin
       .from('api_keys')
       .select('*')
       .eq('active', true)
       .gte('expires_at', new Date().toISOString()); // Only non-expired keys
+    console.timeEnd('fetchApiKeys');
 
     if (error) {
-      console.error('Error fetching API keys:', error);
+      console.error(`🔐 [${new Date().toISOString()}] Auth: Error fetching API keys:`, error);
+      console.timeEnd('verifyApiKey');
       return { userId: null, keyData: null, error: { message: 'Database error' } };
     }
 
     if (!apiKeys || apiKeys.length === 0) {
-      console.log(`🚫 No active API keys found for verification from ${ip}`);
+      console.log(`🚫 [${new Date().toISOString()}] Auth: No active API keys found for verification from ${ip}`);
+      console.timeEnd('verifyApiKey');
       return { userId: null, keyData: null, error: { message: 'Invalid API key' } };
     }
 
+    console.log(`🔐 [${new Date().toISOString()}] Auth: Checking ${apiKeys.length} API keys for match`);
+    console.time('apiKeyMatching');
+    
     for (const keyRecord of apiKeys) {
       try {
+        console.log(`🔐 [${new Date().toISOString()}] Auth: Verifying API key hash for key ${keyRecord.id}`);
         const isMatch = await verifyApiKeyHash(apiKey, keyRecord.key_hash);
+        
         if (isMatch) {
+          console.log(`🔐 [${new Date().toISOString()}] Auth: API key match found for key ${keyRecord.id}`);
+          console.timeEnd('apiKeyMatching');
+          
+          console.log(`🔐 [${new Date().toISOString()}] Auth: Updating API key usage statistics`);
+          console.time('updateKeyUsage');
           await supabaseAdmin
             .from('api_keys')
             .update({
@@ -478,19 +582,25 @@ async function verifyApiKey(apiKey, ip = 'unknown') {
               usage_count: (keyRecord.usage_count || 0) + 1
             })
             .eq('id', keyRecord.id);
+          console.timeEnd('updateKeyUsage');
 
+          console.log(`🔐 [${new Date().toISOString()}] Auth: Fetching user data for API key`);
+          console.time('fetchUserData');
           const { data: userData, error: userError } = await supabaseAdmin
             .from('users')
             .select('*')
             .eq('id', keyRecord.user_id)
             .single();
+          console.timeEnd('fetchUserData');
 
           if (userError || !userData) {
-            console.error(`User not found for API key: ${keyRecord.user_id}`);
+            console.error(`🔐 [${new Date().toISOString()}] Auth: User not found for API key: ${keyRecord.user_id}`);
+            console.timeEnd('verifyApiKey');
             return { userId: null, keyData: null, error: { message: 'User not found' } };
           }
 
-          console.log(`✅ API key verified for user ${userData.id} from ${ip}`);
+          console.log(`✅ [${new Date().toISOString()}] Auth: API key verified for user ${userData.id} from ${ip}`);
+          console.timeEnd('verifyApiKey');
           
           return {
             userId: userData.id,
@@ -506,16 +616,19 @@ async function verifyApiKey(apiKey, ip = 'unknown') {
           };
         }
       } catch (hashError) {
-        console.error('Error verifying API key hash:', hashError);
+        console.error(`🔐 [${new Date().toISOString()}] Auth: Error verifying API key hash:`, hashError);
         continue; // Try next key
       }
     }
 
-    console.log(`🚫 Invalid API key from ${ip}: ${apiKey.substring(0, 12)}...`);
+    console.timeEnd('apiKeyMatching');
+    console.log(`🚫 [${new Date().toISOString()}] Auth: Invalid API key from ${ip}: ${apiKey.substring(0, 12)}...`);
+    console.timeEnd('verifyApiKey');
     return { userId: null, keyData: null, error: { message: 'Invalid API key' } };
     
   } catch (error) {
-    console.error('API key verification error:', error);
+    console.error(`🔐 [${new Date().toISOString()}] Auth: API key verification error:`, error);
+    console.timeEnd('verifyApiKey');
     return { userId: null, keyData: null, error: { message: 'Internal server error' } };
   }
 }
