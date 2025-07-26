@@ -65,7 +65,3 @@ jobs:
           CREATE_LOG_FILE: true
           LOG_LEVEL: INFO
           SUPPRESS_POSSUM: true
-          
-          # Disable problematic linters for this codebase
-          VALIDATE_JSCPD: false
-          VALIDATE_NATURAL_LANGUAGE: false
