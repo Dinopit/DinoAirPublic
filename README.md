@@ -84,6 +84,7 @@ While DinoAir has received significant stability improvements, users should stil
 - [Architecture](#-architecture)
 - [Contributing](#-contributing)
 - [Troubleshooting](#-troubleshooting)
+- [FAQ](#-faq)
 - [License](#-license)
 
 ## ✨ Features
@@ -688,33 +689,63 @@ We welcome contributions! Please see our [Contributing Guidelines](CONTRIBUTING.
 
 ## 🔧 Troubleshooting
 
-### Common Issues
+> **📖 For comprehensive troubleshooting, see [TROUBLESHOOTING.md](TROUBLESHOOTING.md)**
 
-**Port Already in Use**
+### Quick Fixes for Common Issues
+
+**🚨 Emergency Commands**
 ```bash
-# Kill processes on specific ports
-# Windows
-netstat -ano | findstr :3000
-taskkill /PID <PID> /F
+# Stop all DinoAir services
+python stop.py
 
-# Linux/Mac
-lsof -ti:3000 | xargs kill
+# Kill stuck processes
+lsof -ti:3000,8188,11434 | xargs kill  # Linux/Mac
+netstat -ano | findstr ":3000 :8188 :11434" | findstr LISTENING  # Windows
 ```
 
-**Model Download Failures**
-- Check disk space (need ~8GB free)
-- Verify internet connection
-- Use `download_models.py --resume` to continue
+**🔍 Health Check**
+```bash
+# Verify all services are running
+curl http://localhost:3000/api/health      # Web GUI
+curl http://localhost:8188/system_stats    # ComfyUI  
+curl http://localhost:11434/api/tags       # Ollama
+```
 
-**API Authentication Errors**
-- Verify API key in `.env.local`
-- Check rate limit hasn't been exceeded
-- Ensure CORS is properly configured
+**⚡ Common Quick Fixes**
 
-**ComfyUI Connection Issues**
-- Confirm ComfyUI is running on port 8188
-- Check firewall settings
-- Verify workflow files are present
+| Issue | Quick Solution |
+|-------|---------------|
+| **Port conflicts** | `python stop.py && python start.py` |
+| **Web UI blank/broken** | Clear browser cache, try incognito mode |
+| **Model download fails** | Check disk space (need 8GB+), `python download_models.py --resume` |
+| **Authentication hangs** | Wait 60 seconds (rate limiting), restart services |
+| **ComfyUI not loading** | Check port 8188 is free, verify GPU/CPU resources |
+| **Ollama chat fails** | `ollama list` to verify models, `ollama serve` to restart |
+| **High memory usage** | Restart services, use smaller models |
+
+**📊 System Requirements Check**
+```bash
+# Verify your system meets minimum requirements
+python -c "
+import psutil, shutil
+print(f'Memory: {psutil.virtual_memory().total // 1024**3}GB (need 8GB+)')
+print(f'CPU cores: {psutil.cpu_count()} (need 4+)')  
+print(f'Free disk: {shutil.disk_usage(\".\")[2] // 1024**3}GB (need 20GB+)')
+"
+```
+
+### 📚 Detailed Troubleshooting Guides
+
+For comprehensive troubleshooting by component:
+
+- **🚀 [Installation Issues](TROUBLESHOOTING.md#-installation--setup-issues)** - Prerequisites, permissions, disk space
+- **🎨 [ComfyUI Problems](TROUBLESHOOTING.md#-comfyui-troubleshooting)** - Image generation, model loading, workflows  
+- **🤖 [Ollama Issues](TROUBLESHOOTING.md#-ollama-troubleshooting)** - Chat functionality, model downloads, API connectivity
+- **🌐 [Web GUI Problems](TROUBLESHOOTING.md#-web-gui-troubleshooting)** - UI loading, authentication, PrismJS errors
+- **🖥️ [Performance Issues](TROUBLESHOOTING.md#-system-resources--performance)** - Memory, CPU, disk optimization
+- **🔍 [Diagnostic Tools](TROUBLESHOOTING.md#-diagnostic-tools--commands)** - System monitoring, log analysis
+- **❓ [FAQ](FAQ.md)** - Quick answers to common questions
+- **❓ [Detailed FAQ](TROUBLESHOOTING.md#-frequently-asked-questions-faq)** - Technical Q&A in troubleshooting guide
 
 ### Debug Mode
 
@@ -734,6 +765,35 @@ DEBUG=dinoair:*
 - 🐛 Report issues on [GitHub](https://github.com/yourusername/DinoAir/issues)
 - 💬 Join our the discord! https://discord.gg/GVd4jSh3
 - 📧 Contact support: Admin@dinopitstudios-llc.com 
+
+## ❓ FAQ
+
+> **📖 For complete FAQ, see [FAQ.md](FAQ.md)**
+
+### Quick Answers
+
+**Q: What are the minimum requirements?**  
+A: 8GB RAM, 4 CPU cores, 20GB disk space, Python 3.10+, Node.js 18+
+
+**Q: Can I run this without internet?**  
+A: Yes, after initial setup. Chat and image generation work offline.
+
+**Q: Do I need a GPU?**  
+A: Not required, but highly recommended for fast image generation (10-100x speedup).
+
+**Q: Why is it using so much memory?**  
+A: Language models (4-8GB) + image models (2-4GB) + web services (1-2GB). This is normal.
+
+**Q: Installation failed - what now?**  
+A: Try `python install_safe.py`, check Python 3.10+/Node.js 18+, ensure 20GB+ disk space.
+
+**Q: Web page is blank/broken?**  
+A: Clear browser cache (Ctrl+F5), try incognito mode, check browser console for errors.
+
+**Q: ComfyUI/Ollama won't start?**  
+A: Check ports 8188/11434 aren't in use, verify system resources, restart services.
+
+[📚 **See FAQ.md for 30+ more questions and detailed answers**](FAQ.md)
 
 ## 📄 License
 
