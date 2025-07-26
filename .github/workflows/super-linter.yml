@@ -49,6 +49,10 @@ jobs:
           VALIDATE_HTML: true
           VALIDATE_XML: true
           
+          # Explicitly disable problematic linters to avoid VALIDATE conflict
+          VALIDATE_JSCPD: false
+          VALIDATE_NATURAL_LANGUAGE: false
+          
           # Configuration files
           TYPESCRIPT_ES_CONFIG_FILE: web-gui/.eslintrc.json
           JAVASCRIPT_ES_CONFIG_FILE: web-gui/.eslintrc.json
