@@ -3,7 +3,7 @@
  * Provides correlation ID generation, storage, and propagation across requests
  */
 
-import { randomBytes } from 'crypto';
+// Browser-compatible random bytes generation
 
 /**
  * Header name for correlation IDs
@@ -21,7 +21,17 @@ export const CORRELATION_ID_CONTEXT_KEY = 'correlationId';
  */
 export function generateCorrelationId(): string {
   const timestamp = Date.now().toString(36);
-  const random = randomBytes(8).toString('hex');
+  
+  let random: string;
+  if (typeof crypto !== 'undefined' && crypto.getRandomValues) {
+    const array = new Uint8Array(8);
+    crypto.getRandomValues(array);
+    random = Array.from(array, byte => byte.toString(16).padStart(2, '0')).join('');
+  } else {
+    // Fallback for environments without crypto.getRandomValues
+    random = Math.random().toString(36).substring(2, 10).padEnd(16, '0');
+  }
+  
   return `${timestamp}-${random}`;
 }
 

@@ -1,12 +1,29 @@
-const { NodeSDK } = require('@opentelemetry/sdk-node');
-const { getNodeAutoInstrumentations } = require('@opentelemetry/auto-instrumentations-node');
-const { Resource } = require('@opentelemetry/resources');
-const { SemanticResourceAttributes } = require('@opentelemetry/semantic-conventions');
-const { OTLPTraceExporter } = require('@opentelemetry/exporter-trace-otlp-http');
-const { OTLPMetricExporter } = require('@opentelemetry/exporter-metrics-otlp-http');
-const { PeriodicExportingMetricReader } = require('@opentelemetry/sdk-metrics');
-const { trace, metrics, context } = require('@opentelemetry/api');
-const { v4: uuidv4 } = require('uuid');
+let NodeSDK, getNodeAutoInstrumentations, Resource, SemanticResourceAttributes;
+let OTLPTraceExporter, OTLPMetricExporter, PeriodicExportingMetricReader;
+let trace, metrics, context, uuidv4;
+let apmAvailable = false;
+
+try {
+  ({ NodeSDK } = require('@opentelemetry/sdk-node'));
+  ({ getNodeAutoInstrumentations } = require('@opentelemetry/auto-instrumentations-node'));
+  ({ Resource } = require('@opentelemetry/resources'));
+  ({ SemanticResourceAttributes } = require('@opentelemetry/semantic-conventions'));
+  ({ OTLPTraceExporter } = require('@opentelemetry/exporter-trace-otlp-http'));
+  ({ OTLPMetricExporter } = require('@opentelemetry/exporter-metrics-otlp-http'));
+  ({ PeriodicExportingMetricReader } = require('@opentelemetry/sdk-metrics'));
+  ({ trace, metrics, context } = require('@opentelemetry/api'));
+  ({ v4: uuidv4 } = require('uuid'));
+  apmAvailable = true;
+  console.log('✅ APM monitoring dependencies loaded successfully');
+} catch (error) {
+  console.warn('⚠️  APM monitoring dependencies not available, running without telemetry:', error.message);
+  apmAvailable = false;
+  uuidv4 = () => 'xxxxxxxx-xxxx-4xxx-yxxx-xxxxxxxxxxxx'.replace(/[xy]/g, function(c) {
+    const r = Math.random() * 16 | 0;
+    const v = c == 'x' ? r : (r & 0x3 | 0x8);
+    return v.toString(16);
+  });
+}
 
 class APMManager {
   constructor() {
@@ -28,6 +45,11 @@ class APMManager {
 
   initialize(config = {}) {
     if (this.isInitialized) {
+      return;
+    }
+
+    if (!apmAvailable) {
+      console.log('📊 APM monitoring skipped - dependencies not available');
       return;
     }
 

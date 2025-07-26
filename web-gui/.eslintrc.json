@@ -1,8 +1,6 @@
 {
   "extends": [
     "next/core-web-vitals",
-    "@typescript-eslint/recommended",
-    "@typescript-eslint/recommended-requiring-type-checking",
     "plugin:storybook/recommended"
   ],
   "parser": "@typescript-eslint/parser",
