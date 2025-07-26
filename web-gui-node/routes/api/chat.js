@@ -246,11 +246,14 @@ router.post('/', rateLimits.chat, sanitizeInput, chatValidation.chat, async (req
         // Check if Ollama is not running
         if (error.message.includes('ECONNREFUSED')) {
           res.status(503).json({
-            error: 'Ollama service is not running. Please start Ollama first.'
+            error: 'The AI chat service is temporarily unavailable. Please try again in a few moments.',
+            details: 'Unable to connect to the language model service.',
+            category: 'service_unavailable'
           });
         } else {
           res.status(500).json({
-            error: 'Failed to connect to Ollama API'
+            error: 'We\'re experiencing technical difficulties with the chat service. Please try again.',
+            category: 'chat_error'
           });
         }
       } else {
@@ -263,7 +266,8 @@ router.post('/', rateLimits.chat, sanitizeInput, chatValidation.chat, async (req
     
     if (!res.headersSent) {
       res.status(500).json({
-        error: 'Failed to process chat request'
+        error: 'We encountered an issue processing your message. Please try again.',
+        category: 'processing_error'
       });
     }
   }
@@ -333,11 +337,13 @@ router.get('/models', async (req, res) => {
     
     if (error.message.includes('ECONNREFUSED')) {
       res.status(503).json({
-        error: 'Ollama service is not running. Please start Ollama first.'
+        error: 'The AI model service is temporarily unavailable. Please try again in a few moments.',
+        category: 'service_unavailable'
       });
     } else {
       res.status(500).json({
-        error: 'Failed to fetch available models'
+        error: 'Unable to load available AI models. Please try again.',
+        category: 'models_error'
       });
     }
   }

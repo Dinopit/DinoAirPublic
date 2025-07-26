@@ -32,7 +32,10 @@ router.post('/signup', rateLimits.auth, sanitizeInput, authValidation.signup, as
     });
   } catch (error) {
     console.error('Sign up error:', error);
-    return res.status(500).json({ error: 'Internal server error' });
+    return res.status(500).json({ 
+      error: 'We encountered an issue creating your account. Please try again.',
+      category: 'signup_error'
+    });
   }
 });
 
@@ -59,7 +62,10 @@ router.post('/signin', rateLimits.auth, sanitizeInput, authValidation.signin, as
     });
   } catch (error) {
     console.error('Sign in error:', error);
-    return res.status(500).json({ error: 'Internal server error' });
+    return res.status(500).json({ 
+      error: 'We encountered an issue signing you in. Please try again.',
+      category: 'signin_error'
+    });
   }
 });
 
@@ -78,7 +84,10 @@ router.post('/signout', async (req, res) => {
     return res.status(200).json({ message: 'Sign out successful' });
   } catch (error) {
     console.error('Sign out error:', error);
-    return res.status(500).json({ error: 'Internal server error' });
+    return res.status(500).json({ 
+      error: 'We encountered an issue signing you out. Please try again.',
+      category: 'signout_error'
+    });
   }
 });
 
@@ -102,7 +111,10 @@ router.get('/me', async (req, res) => {
     });
   } catch (error) {
     console.error('Get current user error:', error);
-    return res.status(500).json({ error: 'Internal server error' });
+    return res.status(500).json({ 
+      error: 'We encountered an issue loading your profile. Please try again.',
+      category: 'profile_error'
+    });
   }
 });
 
@@ -120,7 +132,10 @@ router.post('/reset-password', rateLimits.auth, sanitizeInput, authValidation.re
     return res.status(200).json({ message: 'Password reset email sent' });
   } catch (error) {
     console.error('Reset password error:', error);
-    return res.status(500).json({ error: 'Internal server error' });
+    return res.status(500).json({ 
+      error: 'We encountered an issue sending the password reset email. Please try again.',
+      category: 'password_reset_error'
+    });
   }
 });
 
@@ -138,7 +153,10 @@ router.post('/update-password', rateLimits.auth, sanitizeInput, authValidation.u
     return res.status(200).json({ message: 'Password updated successfully' });
   } catch (error) {
     console.error('Update password error:', error);
-    return res.status(500).json({ error: 'Internal server error' });
+    return res.status(500).json({ 
+      error: 'We encountered an issue updating your password. Please try again.',
+      category: 'password_update_error'
+    });
   }
 });
 
@@ -162,7 +180,10 @@ router.post('/api-keys', rateLimits.auth, sanitizeInput, authValidation.createAp
     return res.status(201).json({ apiKey });
   } catch (error) {
     console.error('Create API key error:', error);
-    return res.status(500).json({ error: 'Internal server error' });
+    return res.status(500).json({ 
+      error: 'We encountered an issue creating your API key. Please try again.',
+      category: 'api_key_error'
+    });
   }
 });
 

@@ -1,0 +1,271 @@
+/**
+ * Loading States CSS
+ * Provides consistent styling for loading indicators and progress bars
+ */
+
+/* Loading Container */
+.loading-container {
+  display: flex;
+  flex-direction: column;
+  align-items: center;
+  justify-content: center;
+  gap: 12px;
+  padding: 16px;
+  min-height: 60px;
+}
+
+/* Loading Spinner */
+.loading-spinner {
+  display: flex;
+  align-items: center;
+  justify-content: center;
+}
+
+.spinner-ring {
+  width: 24px;
+  height: 24px;
+  border: 3px solid #f3f3f3;
+  border-top: 3px solid #007bff;
+  border-radius: 50%;
+  animation: spin 1s linear infinite;
+}
+
+@keyframes spin {
+  0% { transform: rotate(0deg); }
+  100% { transform: rotate(360deg); }
+}
+
+/* Large spinner for main content areas */
+.loading-container.large .spinner-ring {
+  width: 40px;
+  height: 40px;
+  border-width: 4px;
+}
+
+/* Small spinner for buttons */
+.loading-button .spinner-ring {
+  width: 16px;
+  height: 16px;
+  border-width: 2px;
+}
+
+/* Loading Progress Bar */
+.loading-progress {
+  width: 100%;
+  max-width: 300px;
+  display: flex;
+  flex-direction: column;
+  gap: 8px;
+}
+
+.loading-progress-bar-container {
+  width: 100%;
+  height: 8px;
+  background-color: #e9ecef;
+  border-radius: 4px;
+  overflow: hidden;
+}
+
+.loading-progress-bar {
+  height: 100%;
+  background: linear-gradient(90deg, #007bff, #0056b3);
+  border-radius: 4px;
+  transition: width 0.3s ease;
+  animation: progress-shimmer 2s infinite;
+}
+
+@keyframes progress-shimmer {
+  0% { background-position: -200px 0; }
+  100% { background-position: 200px 0; }
+}
+
+.loading-progress-text {
+  font-size: 14px;
+  color: #6c757d;
+  text-align: center;
+}
+
+/* Loading Message */
+.loading-message {
+  font-size: 14px;
+  color: #495057;
+  text-align: center;
+  font-weight: 500;
+}
+
+/* Button Loading States */
+.loading-button {
+  position: relative;
+  pointer-events: none;
+  opacity: 0.7;
+}
+
+.loading-button .loading-container {
+  min-height: auto;
+  padding: 0;
+  gap: 8px;
+}
+
+.loading-button .loading-message {
+  font-size: inherit;
+  color: inherit;
+  font-weight: inherit;
+}
+
+/* Form Loading Overlay */
+.loading-overlay {
+  position: absolute;
+  top: 0;
+  left: 0;
+  right: 0;
+  bottom: 0;
+  background: rgba(255, 255, 255, 0.9);
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  z-index: 1000;
+  border-radius: inherit;
+}
+
+/* Content Loading States */
+.loading-content {
+  min-height: 120px;
+  display: flex;
+  align-items: center;
+  justify-content: center;
+}
+
+.loading-disabled {
+  pointer-events: none;
+  opacity: 0.6;
+}
+
+/* Chat Loading States */
+.chat-loading {
+  padding: 16px;
+  background: #f8f9fa;
+  border-radius: 8px;
+  margin: 8px 0;
+  border-left: 4px solid #007bff;
+}
+
+.chat-loading .loading-container {
+  flex-direction: row;
+  min-height: auto;
+  padding: 0;
+  gap: 12px;
+}
+
+.chat-loading .loading-message {
+  font-style: italic;
+  color: #007bff;
+}
+
+/* Upload Loading States */
+.upload-loading {
+  border: 2px dashed #007bff;
+  background: #f8f9fa;
+  border-radius: 8px;
+  padding: 24px;
+}
+
+.upload-loading .loading-progress {
+  max-width: 100%;
+}
+
+/* Skeleton Loading for Content */
+.skeleton-loading {
+  background: linear-gradient(90deg, #f0f0f0 25%, #e0e0e0 50%, #f0f0f0 75%);
+  background-size: 200% 100%;
+  animation: skeleton-shimmer 2s infinite;
+  border-radius: 4px;
+}
+
+@keyframes skeleton-shimmer {
+  0% { background-position: -200% 0; }
+  100% { background-position: 200% 0; }
+}
+
+.skeleton-text {
+  height: 16px;
+  margin: 8px 0;
+}
+
+.skeleton-text.large {
+  height: 24px;
+}
+
+.skeleton-text.small {
+  height: 12px;
+  width: 60%;
+}
+
+/* Responsive Design */
+@media (max-width: 768px) {
+  .loading-container {
+    padding: 12px;
+    gap: 8px;
+  }
+  
+  .loading-progress {
+    max-width: 250px;
+  }
+  
+  .loading-message {
+    font-size: 13px;
+  }
+}
+
+/* Dark Mode Support */
+@media (prefers-color-scheme: dark) {
+  .loading-overlay {
+    background: rgba(33, 37, 41, 0.9);
+  }
+  
+  .loading-message {
+    color: #adb5bd;
+  }
+  
+  .loading-progress-text {
+    color: #6c757d;
+  }
+  
+  .loading-progress-bar-container {
+    background-color: #495057;
+  }
+  
+  .chat-loading {
+    background: #343a40;
+    border-left-color: #0d6efd;
+  }
+  
+  .upload-loading {
+    background: #343a40;
+    border-color: #0d6efd;
+  }
+  
+  .skeleton-loading {
+    background: linear-gradient(90deg, #495057 25%, #6c757d 50%, #495057 75%);
+    background-size: 200% 100%;
+  }
+}
+
+/* Accessibility */
+@media (prefers-reduced-motion: reduce) {
+  .spinner-ring,
+  .loading-progress-bar,
+  .skeleton-loading {
+    animation: none;
+  }
+  
+  .loading-progress-bar {
+    transition: none;
+  }
+}
+
+/* Focus states for accessibility */
+.loading-button:focus,
+.loading-content:focus {
+  outline: 2px solid #007bff;
+  outline-offset: 2px;
+}
