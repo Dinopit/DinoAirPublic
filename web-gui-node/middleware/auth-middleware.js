@@ -65,22 +65,10 @@ try {
 }
 
 /**
- * Middleware to check if user is authenticated via JWT token with rate limiting
+ * Middleware to check if user is authenticated via JWT token
  */
 const requireAuth = async (req, res, next) => {
-  const apiRateLimit = rateLimiters.api;
-  const rateLimitInfo = addRateLimitInfo('api');
-  
   try {
-    await new Promise((resolve, reject) => {
-      apiRateLimit(req, res, (err) => {
-        if (err) reject(err);
-        else resolve();
-      });
-    });
-    
-    rateLimitInfo(req, res, () => {});
-    
     // Check for JWT token in Authorization header
     const authHeader = req.headers.authorization;
     if (!authHeader || !authHeader.startsWith('Bearer ')) {
@@ -118,37 +106,16 @@ const requireAuth = async (req, res, next) => {
     
     next();
   } catch (error) {
-    if (error.status === 429 || error.message?.includes('rate limit')) {
-      return res.status(429).json({
-        error: 'Rate limit exceeded',
-        message: 'Too many authentication requests. Please wait before trying again.',
-        category: 'rate_limit_error',
-        retryAfter: error.retryAfter || 60
-      });
-    }
-    
     console.error('Auth middleware error:', error);
     return res.status(500).json({ error: 'Internal server error' });
   }
 };
 
 /**
- * Middleware to check if request has valid API key with enhanced rate limiting
+ * Middleware to check if request has valid API key
  */
 const requireApiKey = async (req, res, next) => {
-  const apiRateLimit = rateLimiters.api;
-  const rateLimitInfo = addRateLimitInfo('api');
-  
   try {
-    await new Promise((resolve, reject) => {
-      apiRateLimit(req, res, (err) => {
-        if (err) reject(err);
-        else resolve();
-      });
-    });
-    
-    rateLimitInfo(req, res, () => {});
-    
     // Check for API key in Authorization header
     const authHeader = req.headers.authorization;
     if (!authHeader) {
@@ -205,16 +172,6 @@ const requireApiKey = async (req, res, next) => {
 
     next();
   } catch (error) {
-    if (error.status === 429 || error.message?.includes('rate limit')) {
-      return res.status(429).json({
-        error: 'Rate limit exceeded',
-        message: 'Too many API requests. Please wait before trying again.',
-        category: 'rate_limit_error',
-        retryAfter: error.retryAfter || 60,
-        upgradeMessage: 'Consider upgrading your plan for higher rate limits'
-      });
-    }
-    
     console.error('API key middleware error:', error);
     return res.status(500).json({ error: 'Internal server error' });
   }
