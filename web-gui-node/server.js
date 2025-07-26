@@ -25,6 +25,7 @@ require('dotenv').config();
 const { resourceManager } = require('./lib/resource-manager');
 const { memoryMonitor } = require('./lib/memory-monitor');
 const { middleware: apmMiddleware, shutdown: apmShutdown } = require('./lib/apm');
+const { AlertingManager } = require('./lib/alerting');
 
 // Import route modules
 console.log(`[${new Date().toISOString()}] 📁 Loading route modules...`);
@@ -364,6 +365,11 @@ server.listen(PORT, () => {
   console.log(`[${new Date().toISOString()}] 🧠 Starting memory monitoring...`);
   memoryMonitor.start();
   console.log(`[${new Date().toISOString()}] ✅ Memory monitoring enabled`);
+
+  console.log(`[${new Date().toISOString()}] 🚨 Starting alerting system...`);
+  const alertingManager = new AlertingManager();
+  alertingManager.startHealthMonitoring();
+  console.log(`[${new Date().toISOString()}] ✅ Alerting system enabled`);
 
   console.log(`[${new Date().toISOString()}] 🎉 DinoAir server is ready to accept connections!`);
 });

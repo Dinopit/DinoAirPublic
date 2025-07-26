@@ -10,6 +10,7 @@ const { rateLimits } = require('../../middleware/validation');
 const { ollamaBreaker, comfyuiBreaker } = require('../../lib/circuit-breaker');
 const { withRetry, isRetryableError } = require('../../lib/retry');
 const { getPerformanceMetrics, createSpan, getCorrelationId } = require('../../lib/apm');
+const { AlertingManager } = require('../../lib/alerting');
 const router = express.Router();
 
 // Configuration
@@ -24,6 +25,8 @@ const CONFIG = {
 // Health check cache to avoid excessive requests
 const healthCache = new Map();
 const CACHE_TTL = 5000; // 5 seconds
+
+const alertingManager = new AlertingManager();
 
 async function performDeepServiceCheck(serviceName, baseUrl, timeout = CONFIG.healthCheckTimeout) {
   const startTime = Date.now();
@@ -268,6 +271,35 @@ router.get('/', rateLimits.api, async (req, res) => {
       span.end();
     }
 
+    // Check for critical alerts
+    if (overallStatus === 'unhealthy') {
+      alertingManager.sendAlert({
+        severity: 'critical',
+        component: 'system',
+        type: 'service-unhealthy',
+        message: `System health check failed: ${overallStatus}`,
+        description: `Health check indicates system is unhealthy. Services: ${JSON.stringify(health.summary)}`,
+        metrics: {
+          healthyServices: healthyCount,
+          unhealthyServices: unhealthyCount,
+          totalResponseTime: totalResponseTime
+        }
+      });
+    } else if (overallStatus === 'degraded') {
+      alertingManager.sendAlert({
+        severity: 'warning',
+        component: 'system',
+        type: 'service-degraded',
+        message: `System performance degraded: ${overallStatus}`,
+        description: `Some services are experiencing issues. Services: ${JSON.stringify(health.summary)}`,
+        metrics: {
+          healthyServices: healthyCount,
+          unhealthyServices: unhealthyCount,
+          totalResponseTime: totalResponseTime
+        }
+      });
+    }
+
     // Set response status based on overall health
     const statusCode = overallStatus === 'healthy' ? 200 : overallStatus === 'degraded' ? 200 : 503;
 
@@ -455,6 +487,18 @@ router.get('/detailed', rateLimits.api, async (req, res) => {
         systemResourcesOK: systemInfo.memory.used < 1000, // Less than 1GB
         criticalPathsOperational: services.every(s => s.name === 'web-gui-node' || s.endpoints.length > 0)
       }
+    };
+
+    detailedHealth.alerting = {
+      enabled: true,
+      webhookConfigured: Boolean(process.env.ALERT_WEBHOOK_URL),
+      slackConfigured: Boolean(process.env.ALERT_SLACK_WEBHOOK_URL),
+      emailConfigured: process.env.ALERT_EMAIL_ENABLED === 'true',
+      lastHealthCheck: new Date().toISOString(),
+      alertHistory: Array.from(alertingManager.alertHistory.entries()).map(([key, timestamp]) => ({
+        alert: key,
+        lastSent: new Date(timestamp).toISOString()
+      }))
     };
 
     res.json(detailedHealth);

@@ -58,12 +58,77 @@ jobs:
       - name: Run quick load test
         if: github.event.inputs.test_type == 'quick' || github.event.inputs.test_type == ''
         working-directory: ./web-gui-node
-        run: npm run load-test:quick
+        run: |
+          npm run load-test:quick
+          
+          # Check for performance thresholds
+          if [ -f artillery-report.json ]; then
+            node -e "
+              const report = require('./artillery-report.json');
+              const avgResponseTime = report.aggregate.summaries['http.response_time']?.mean || 0;
+              const p95ResponseTime = report.aggregate.summaries['http.response_time']?.p95 || 0;
+              const errorRate = (report.aggregate.counters['http.codes.5xx'] || 0) / (report.aggregate.counters['http.requests'] || 1);
+              
+              console.log('Performance Metrics:');
+              console.log('Average Response Time:', avgResponseTime + 'ms');
+              console.log('95th Percentile:', p95ResponseTime + 'ms');
+              console.log('Error Rate:', (errorRate * 100).toFixed(2) + '%');
+              
+              if (avgResponseTime > 5000) {
+                console.error('❌ FAIL: Average response time exceeds 5s threshold');
+                process.exit(1);
+              }
+              if (p95ResponseTime > 10000) {
+                console.error('❌ FAIL: 95th percentile exceeds 10s threshold');
+                process.exit(1);
+              }
+              if (errorRate > 0.05) {
+                console.error('❌ FAIL: Error rate exceeds 5% threshold');
+                process.exit(1);
+              }
+              console.log('✅ All performance thresholds passed');
+            "
+          fi
 
       - name: Run full load test
         if: github.event.inputs.test_type == 'full'
         working-directory: ./web-gui-node
-        run: npm run load-test
+        run: |
+          npm run load-test
+          
+          # Enhanced performance analysis for full tests
+          if [ -f artillery-report.json ]; then
+            node -e "
+              const report = require('./artillery-report.json');
+              const avgResponseTime = report.aggregate.summaries['http.response_time']?.mean || 0;
+              const p95ResponseTime = report.aggregate.summaries['http.response_time']?.p95 || 0;
+              const p99ResponseTime = report.aggregate.summaries['http.response_time']?.p99 || 0;
+              const errorRate = (report.aggregate.counters['http.codes.5xx'] || 0) / (report.aggregate.counters['http.requests'] || 1);
+              const requestRate = report.aggregate.rates['http.request_rate'] || 0;
+              
+              console.log('Full Load Test Performance Metrics:');
+              console.log('Average Response Time:', avgResponseTime + 'ms');
+              console.log('95th Percentile:', p95ResponseTime + 'ms');
+              console.log('99th Percentile:', p99ResponseTime + 'ms');
+              console.log('Request Rate:', requestRate + ' req/s');
+              console.log('Error Rate:', (errorRate * 100).toFixed(2) + '%');
+              
+              // Stricter thresholds for full load tests
+              if (avgResponseTime > 3000) {
+                console.error('❌ FAIL: Average response time exceeds 3s threshold for full load');
+                process.exit(1);
+              }
+              if (p95ResponseTime > 8000) {
+                console.error('❌ FAIL: 95th percentile exceeds 8s threshold for full load');
+                process.exit(1);
+              }
+              if (errorRate > 0.02) {
+                console.error('❌ FAIL: Error rate exceeds 2% threshold for full load');
+                process.exit(1);
+              }
+              console.log('✅ All full load test thresholds passed');
+            "
+          fi
 
       - name: Run chat API load test
         if: github.event.inputs.test_type == 'chat-only'

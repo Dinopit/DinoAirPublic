@@ -24,7 +24,10 @@
     "load-test:quick": "./load-tests/quick-test.sh",
     "load-test:chat": "npx artillery run load-tests/scenarios/chat-api.yml",
     "load-test:health": "npx artillery run load-tests/scenarios/health-api.yml",
-    "load-test:artifacts": "npx artillery run load-tests/scenarios/artifacts-api.yml"
+    "load-test:artifacts": "npx artillery run load-tests/scenarios/artifacts-api.yml",
+    "load-test:auth": "npx artillery run load-tests/scenarios/auth-api.yml",
+    "load-test:system": "npx artillery run load-tests/scenarios/system-api.yml",
+    "load-test:all": "npm run load-test:health && npm run load-test:chat && npm run load-test:artifacts && npm run load-test:auth && npm run load-test:system"
   },
   "dependencies": {
     "@opentelemetry/api": "^1.9.0",
