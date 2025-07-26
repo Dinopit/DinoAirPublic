@@ -18,7 +18,7 @@ const http = require('http');
 const socketIo = require('socket.io');
 const path = require('path');
 const cors = require('cors');
-const helmet = require('helmet');
+// const helmet = require('helmet');
 const compression = require('compression');
 require('dotenv').config();
 
@@ -44,8 +44,8 @@ console.log(`[${new Date().toISOString()}] ✅ Express app and HTTP server creat
 console.log(`[${new Date().toISOString()}] 🔌 Initializing Socket.IO...`);
 const io = socketIo(server, {
   cors: {
-    origin: process.env.CORS_ORIGIN || "http://localhost:3000",
-    methods: ["GET", "POST"]
+    origin: process.env.CORS_ORIGIN || 'http://localhost:3000',
+    methods: ['GET', 'POST']
   }
 });
 console.log(`[${new Date().toISOString()}] ✅ Socket.IO initialized successfully`);
@@ -67,10 +67,12 @@ console.log(`[${new Date().toISOString()}] ✅ CSP middleware applied`);
 
 // CORS configuration
 console.log(`[${new Date().toISOString()}] 🌐 Configuring CORS...`);
-app.use(cors({
-  origin: process.env.CORS_ORIGIN || "http://localhost:3000",
-  credentials: true
-}));
+app.use(
+  cors({
+    origin: process.env.CORS_ORIGIN || 'http://localhost:3000',
+    credentials: true
+  })
+);
 console.log(`[${new Date().toISOString()}] ✅ CORS configured`);
 
 // Compression middleware
@@ -100,6 +102,53 @@ app.set('view engine', 'ejs');
 app.set('views', path.join(__dirname, 'views'));
 console.log(`[${new Date().toISOString()}] ✅ View engine configured`);
 
+console.log(`[${new Date().toISOString()}] 🔍 Adding correlation ID middleware...`);
+app.use((req, res, next) => {
+  const correlationId = req.headers['x-correlation-id'] || `${Date.now()}-${Math.random().toString(36).substr(2, 9)}`;
+
+  req.correlationId = correlationId;
+  res.setHeader('X-Correlation-ID', correlationId);
+
+  const startTime = Date.now();
+  const requestInfo = {
+    correlationId,
+    method: req.method,
+    url: req.originalUrl,
+    ip: req.ip || req.connection.remoteAddress || 'unknown',
+    userAgent: req.get('User-Agent')?.substring(0, 100) || 'unknown',
+    timestamp: new Date().toISOString()
+  };
+
+  console.log(
+    `📥 [${requestInfo.timestamp}] Request: ${req.method} ${req.originalUrl} [${correlationId}] from ${requestInfo.ip}`
+  );
+
+  res.on('finish', () => {
+    const duration = Date.now() - startTime;
+    const responseInfo = {
+      ...requestInfo,
+      statusCode: res.statusCode,
+      duration: `${duration}ms`,
+      contentLength: res.get('Content-Length') || 0
+    };
+
+    const logLevel = res.statusCode >= 400 ? '🚨' : res.statusCode >= 300 ? '⚠️' : '✅';
+    console.log(
+      `📤 [${new Date().toISOString()}] Response: ${logLevel} ${res.statusCode} ${req.method} ${req.originalUrl} [${correlationId}] - ${duration}ms`
+    );
+
+    if (duration > 5000) {
+      console.warn(
+        `🐌 [${new Date().toISOString()}] SlowRequest: Request took ${duration}ms [${correlationId}]:`,
+        responseInfo
+      );
+    }
+  });
+
+  next();
+});
+console.log(`[${new Date().toISOString()}] ✅ Correlation ID middleware configured`);
+
 // Make Socket.io available to routes
 console.log(`[${new Date().toISOString()}] 🔌 Making Socket.IO available to routes...`);
 app.use((req, res, next) => {
@@ -120,22 +169,24 @@ app.use('/api/system', require('./routes/api/system'));
 console.log(`[${new Date().toISOString()}] ✅ System API routes mounted`);
 app.use('/api/health/database', require('./routes/api/health/database'));
 console.log(`[${new Date().toISOString()}] ✅ Database health routes mounted`);
+app.use('/api/health', require('./routes/api/health'));
+console.log(`[${new Date().toISOString()}] ✅ Enhanced health check routes mounted`);
 app.use('/api/performance', require('./routes/api/performance'));
 console.log(`[${new Date().toISOString()}] ✅ Performance API routes mounted`);
 app.use('/', pageRoutes);
 console.log(`[${new Date().toISOString()}] ✅ Page routes mounted`);
 
 // Socket.io connection handling
-io.on('connection', (socket) => {
+io.on('connection', socket => {
   console.log('Client connected:', socket.id);
 
   // Handle chat events
-  socket.on('join-chat', (data) => {
+  socket.on('join-chat', data => {
     console.log('User joined chat:', data);
     socket.join('chat-room');
   });
 
-  socket.on('leave-chat', (data) => {
+  socket.on('leave-chat', data => {
     console.log('User left chat:', data);
     socket.leave('chat-room');
   });
@@ -145,32 +196,39 @@ io.on('connection', (socket) => {
   });
 });
 
-app.use((err, req, res, next) => {
+app.use((err, req, res, _next) => {
   const timestamp = new Date().toISOString();
+  const correlationId = req.correlationId || 'unknown';
   const requestInfo = {
+    correlationId,
     method: req.method,
     path: req.path,
     ip: req.ip || req.connection.remoteAddress || 'unknown',
     userAgent: req.get('User-Agent')?.substring(0, 100) || 'unknown',
     timestamp
   };
-  
-  console.error(`🚨 [${timestamp}] ErrorMiddleware: Server error caught:`, {
+
+  const errorDetails = {
+    correlationId,
     error: {
       name: err.name,
       message: err.message,
-      stack: err.stack,
+      stack: NODE_ENV === 'development' ? err.stack : err.stack?.split('\n')[0],
       code: err.code,
-      status: err.status
+      status: err.status,
+      type: err.constructor.name
     },
     request: requestInfo,
-    isAsync: err.isAsync || false
-  });
-  
+    isAsync: err.isAsync || false,
+    severity: err.status >= 500 ? 'error' : err.status >= 400 ? 'warn' : 'info'
+  };
+
+  console.error(`🚨 [${timestamp}] ErrorMiddleware: Server error caught [${correlationId}]:`, errorDetails);
+
   let userMessage = 'We encountered an unexpected issue. Please try again.';
   let category = 'server_error';
   let statusCode = 500;
-  
+
   // Handle specific error types
   if (err.name === 'ValidationError') {
     userMessage = 'Please check the information you entered and try again.';
@@ -181,15 +239,15 @@ app.use((err, req, res, next) => {
     category = 'authentication_error';
     statusCode = 401;
   } else if (err.status === 403) {
-    userMessage = 'You don\'t have permission to access this feature.';
+    userMessage = "You don't have permission to access this feature.";
     category = 'authorization_error';
     statusCode = 403;
   } else if (err.status === 429 || err.message?.includes('rate limit')) {
-    userMessage = 'You\'re making requests too quickly. Please wait a moment and try again.';
+    userMessage = "You're making requests too quickly. Please wait a moment and try again.";
     category = 'rate_limit_error';
     statusCode = 429;
   } else if (err.code === 'ECONNREFUSED' || err.code === 'ENOTFOUND') {
-    userMessage = 'We\'re having trouble connecting to our services. Please try again in a few moments.';
+    userMessage = "We're having trouble connecting to our services. Please try again in a few moments.";
     category = 'service_unavailable';
     statusCode = 503;
   } else if (err.name === 'TimeoutError' || err.message?.includes('timeout')) {
@@ -197,14 +255,15 @@ app.use((err, req, res, next) => {
     category = 'timeout_error';
     statusCode = 408;
   }
-  
+
   const errorResponse = {
     error: userMessage,
     category,
     timestamp,
-    requestId: `${Date.now()}-${Math.random().toString(36).substr(2, 9)}`
+    correlationId,
+    requestId: correlationId // Use correlation ID as request ID for consistency
   };
-  
+
   if (NODE_ENV === 'development') {
     errorResponse.technical = {
       message: err.message,
@@ -213,7 +272,7 @@ app.use((err, req, res, next) => {
       request: requestInfo
     };
   }
-  
+
   if (!res.headersSent) {
     res.status(statusCode).json(errorResponse);
   } else {
@@ -231,7 +290,7 @@ app.use((req, res) => {
       timestamp: new Date().toISOString()
     });
   }
-  
+
   res.status(404).json({
     error: 'Page not found',
     category: 'not_found',
@@ -248,13 +307,15 @@ process.on('unhandledRejection', (reason, promise) => {
     promise: promise.toString().substring(0, 200),
     timestamp
   });
-  
+
   if (NODE_ENV === 'development') {
-    console.error(`🚨 [${timestamp}] UnhandledRejection: This might indicate an async error in auth or other middleware`);
+    console.error(
+      `🚨 [${timestamp}] UnhandledRejection: This might indicate an async error in auth or other middleware`
+    );
   }
 });
 
-process.on('uncaughtException', (error) => {
+process.on('uncaughtException', error => {
   const timestamp = new Date().toISOString();
   console.error(`🚨 [${timestamp}] UncaughtException: Uncaught Exception detected:`, {
     name: error.name,
@@ -262,7 +323,7 @@ process.on('uncaughtException', (error) => {
     stack: error.stack,
     timestamp
   });
-  
+
   // Graceful shutdown on uncaught exception
   console.error(`🚨 [${timestamp}] UncaughtException: Initiating graceful shutdown...`);
   server.close(async () => {
@@ -294,20 +355,22 @@ process.on('SIGINT', () => {
 // Start server
 console.log(`[${new Date().toISOString()}] 🚀 Starting server on port ${PORT}...`);
 server.listen(PORT, () => {
-  console.log(`[${new Date().toISOString()}] ✅ DinoAir Web GUI Server successfully started and listening on port ${PORT}`);
+  console.log(
+    `[${new Date().toISOString()}] ✅ DinoAir Web GUI Server successfully started and listening on port ${PORT}`
+  );
   console.log(`[${new Date().toISOString()}] 🌍 Environment: ${NODE_ENV}`);
   console.log(`[${new Date().toISOString()}] 🔗 Access the application at: http://localhost:${PORT}`);
-  
+
   console.log(`[${new Date().toISOString()}] 🧠 Starting memory monitoring...`);
   memoryMonitor.start();
   console.log(`[${new Date().toISOString()}] ✅ Memory monitoring enabled`);
-  
+
   console.log(`[${new Date().toISOString()}] 🎉 DinoAir server is ready to accept connections!`);
 });
 
 // Register server for graceful shutdown
-resourceManager.registerResource('server', server, (server) => {
-  return new Promise((resolve) => {
+resourceManager.registerResource('server', server, server => {
+  return new Promise(resolve => {
     server.close(() => {
       console.log('HTTP server closed');
       resolve();
