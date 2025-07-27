@@ -288,9 +288,9 @@ export function withPerformanceTracking<P extends object>(
   componentName: string,
   options?: UsePerformanceMetricsOptions
 ) {
-  const WrappedComponent = (props: P) => {
+  const WrappedComponent: React.FC<P> = (props: P) => {
     usePerformanceMetrics(componentName, options);
-    return <Component {...props} />;
+    return React.createElement(Component, props);
   };
   
   WrappedComponent.displayName = `withPerformanceTracking(${componentName})`;

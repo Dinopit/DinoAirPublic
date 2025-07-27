@@ -3,6 +3,7 @@
 import React, { useState, useRef, useCallback, useEffect } from 'react';
 import LocalChatView from './LocalChatView';
 import LocalArtifactsView from './LocalArtifactsView';
+import DinoLocalAssistant from './DinoLocalAssistant';
 import { ThemeToggle } from '../ui/theme-toggle';
 import { useKeyboardShortcuts, KeyboardShortcut } from '../../hooks/useKeyboardShortcuts';
 import { KeyboardShortcutsModal } from '../ui/keyboard-shortcuts-modal';
@@ -13,7 +14,7 @@ import { Menu, X, Settings, Keyboard, Bug } from 'lucide-react';
 import { DebugProvider, useDebug } from '../../contexts/debug-context';
 import DebugPanel from '../ui/debug-panel';
 
-type Tab = 'chat' | 'artifacts';
+type Tab = 'chat' | 'artifacts' | 'local-tools';
 
 const LocalGuiContent = () => {
   const [activeTab, setActiveTab] = useState<Tab>('chat');
@@ -209,6 +210,16 @@ const LocalGuiContent = () => {
             >
               Artifacts
             </button>
+            <button
+              className={`px-6 py-3 font-medium transition-colors ${
+                activeTab === 'local-tools'
+                  ? 'border-b-2 border-primary text-primary'
+                  : 'text-muted-foreground hover:text-foreground'
+              }`}
+              onClick={() => handleTabChange('local-tools')}
+            >
+              🦖 Local Tools
+            </button>
           </div>
         </div>
 
@@ -269,12 +280,24 @@ const LocalGuiContent = () => {
           >
             Artifacts
           </button>
+          <button
+            className={`w-full px-6 py-3 text-left font-medium transition-colors ${
+              activeTab === 'local-tools'
+                ? 'bg-muted text-primary'
+                : 'text-muted-foreground hover:bg-muted'
+            }`}
+            onClick={() => handleTabChange('local-tools')}
+          >
+            🦖 Local Tools
+          </button>
         </div>
       )}
 
       {/* Main content */}
       <div className="flex-grow overflow-hidden">
-        {activeTab === 'chat' ? <LocalChatView /> : <LocalArtifactsView />}
+        {activeTab === 'chat' && <LocalChatView />}
+        {activeTab === 'artifacts' && <LocalArtifactsView />}
+        {activeTab === 'local-tools' && <DinoLocalAssistant />}
       </div>
 
       {/* Keyboard shortcuts modal */}
