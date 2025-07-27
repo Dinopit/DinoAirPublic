@@ -42,10 +42,10 @@ export class ChatController {
           // Easy win: Add timeout handling
           const timeoutId = setTimeout(() => {
             controller.error(new Error('Request timeout'));
-          }, this.REQUEST_TIMEOUT);
+          }, ChatController.REQUEST_TIMEOUT);
 
           try {
-            const response = await fetch(`${this.OLLAMA_BASE_URL}/api/generate`, {
+            const response = await fetch(`${ChatController.OLLAMA_BASE_URL}/api/generate`, {
               method: 'POST',
               headers: {
                 'Content-Type': 'application/json',
