@@ -21,8 +21,8 @@ const ModelCard: React.FC<ModelCardProps> = ({
   const formatSize = (bytes: number): string => {
     if (bytes === 0) return 'Unknown';
     const sizes = ['B', 'KB', 'MB', 'GB', 'TB'];
-    const i = Math.floor(Math.log(bytes) / Math.log(1024));
-    return Math.round(bytes / Math.pow(1024, i) * 100) / 100 + ' ' + sizes[i];
+    const i = Math.floor(Math.log(bytes) / Math.log(BYTES_PER_KB));
+    return Math.round(bytes / Math.pow(BYTES_PER_KB, i) * 100) / 100 + ' ' + sizes[i];
   };
 
   const formatCategory = (category: string): string => {
