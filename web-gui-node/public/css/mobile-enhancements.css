@@ -1,0 +1,358 @@
+/**
+ * Mobile-Specific Enhancements
+ * Additional styling for improved mobile user experience
+ */
+
+/* iOS-specific fixes */
+@supports (-webkit-touch-callout: none) {
+  /* iOS Safari fixes */
+  .chat-input {
+    border-radius: 12px !important;
+    font-size: 16px !important; /* Prevent zoom */
+  }
+  
+  .btn {
+    border-radius: 12px !important;
+  }
+  
+  /* Fix iOS input shadow */
+  .form-control:focus {
+    box-shadow: 0 0 0 3px rgba(37, 99, 235, 0.2) !important;
+  }
+  
+  /* Better iOS scrolling */
+  .chat-messages {
+    -webkit-overflow-scrolling: touch;
+    overflow: auto;
+  }
+}
+
+/* Android-specific fixes */
+@media screen and (-webkit-min-device-pixel-ratio: 0) {
+  .chat-input {
+    font-size: 16px; /* Prevent zoom on Android */
+  }
+}
+
+/* Enhanced touch feedback */
+@media (pointer: coarse) {
+  /* Better touch targets */
+  .btn, .nav-link, .form-control {
+    min-height: 44px;
+    min-width: 44px;
+  }
+  
+  /* Enhanced press states */
+  .btn:active {
+    transform: scale(0.96);
+    box-shadow: 0 2px 4px rgba(0, 0, 0, 0.2);
+    transition: all 0.1s ease;
+  }
+  
+  .nav-link:active {
+    background-color: var(--primary-light);
+    transform: scale(0.98);
+    transition: all 0.1s ease;
+  }
+  
+  .message-bubble:active {
+    transform: scale(0.99);
+    transition: all 0.1s ease;
+  }
+}
+
+/* Mobile-specific animations */
+@media (max-width: 768px) {
+  /* Smoother transitions on mobile */
+  * {
+    -webkit-tap-highlight-color: transparent;
+  }
+  
+  /* Enhanced loading states for mobile */
+  .loading-overlay {
+    backdrop-filter: blur(4px);
+    background: rgba(255, 255, 255, 0.8);
+  }
+  
+  [data-theme="dark"] .loading-overlay {
+    background: rgba(0, 0, 0, 0.8);
+  }
+  
+  /* Better modal presentation on mobile */
+  .modal {
+    padding: 8px;
+  }
+  
+  .modal-content {
+    border-radius: 16px;
+    box-shadow: 0 20px 40px rgba(0, 0, 0, 0.3);
+    max-height: calc(100vh - 32px);
+    overflow-y: auto;
+  }
+  
+  /* Enhanced toast notifications for mobile */
+  .toast {
+    margin: 8px;
+    border-radius: 12px;
+    box-shadow: 0 8px 16px rgba(0, 0, 0, 0.2);
+    min-height: 48px;
+    font-size: var(--text-base);
+  }
+  
+  /* Mobile-friendly error states */
+  .error-state {
+    padding: var(--space-8) var(--space-4);
+  }
+  
+  .error-state .btn {
+    min-height: 52px;
+    font-size: var(--text-lg);
+    border-radius: 16px;
+  }
+}
+
+/* Small screen optimizations */
+@media (max-width: 480px) {
+  /* Better spacing for very small screens */
+  .container {
+    padding: 0 12px;
+  }
+  
+  /* Enhanced button sizing */
+  .btn {
+    min-height: 48px;
+    font-size: var(--text-base);
+    font-weight: 600;
+    border-radius: 14px;
+  }
+  
+  .btn-sm {
+    min-height: 40px;
+    font-size: var(--text-sm);
+  }
+  
+  .btn-lg {
+    min-height: 56px;
+    font-size: var(--text-lg);
+    border-radius: 16px;
+  }
+  
+  /* Better form elements */
+  .form-control {
+    min-height: 52px;
+    padding: 16px;
+    border-radius: 14px;
+    border-width: 2px;
+  }
+  
+  .form-control:focus {
+    border-width: 2px;
+    box-shadow: 0 0 0 4px rgba(37, 99, 235, 0.15);
+  }
+  
+  /* Enhanced navigation */
+  .nav-link {
+    min-height: 48px;
+    padding: 12px 16px;
+    border-radius: 12px;
+    font-weight: 500;
+  }
+  
+  /* Better typography */
+  h1 { font-size: 1.75rem; }
+  h2 { font-size: 1.5rem; }
+  h3 { font-size: 1.25rem; }
+  
+  p {
+    font-size: var(--text-base);
+    line-height: 1.6;
+  }
+}
+
+/* Landscape orientation optimizations */
+@media (max-height: 480px) and (orientation: landscape) {
+  .chat-container {
+    height: calc(100vh - 60px);
+  }
+  
+  .chat-input-container {
+    padding: var(--space-2) var(--space-3);
+  }
+  
+  .input-group {
+    padding: var(--space-2);
+  }
+  
+  .chat-input {
+    min-height: 36px;
+  }
+  
+  .input-actions .btn {
+    min-height: 36px;
+    padding: var(--space-2) var(--space-3);
+    font-size: var(--text-sm);
+  }
+  
+  .navbar {
+    min-height: 50px;
+    padding: var(--space-1) 0;
+  }
+  
+  .main-content {
+    padding: var(--space-2) 0;
+  }
+}
+
+/* High DPI display optimizations */
+@media (-webkit-min-device-pixel-ratio: 2), (min-resolution: 192dpi) {
+  /* Crisper borders on high DPI */
+  .btn,
+  .form-control,
+  .message-bubble {
+    border-width: 0.5px;
+  }
+  
+  /* Better shadows on high DPI */
+  .chat-container {
+    box-shadow: 0 4px 20px rgba(0, 0, 0, 0.15);
+  }
+  
+  .modal-content {
+    box-shadow: 0 10px 40px rgba(0, 0, 0, 0.2);
+  }
+}
+
+/* Dark mode mobile enhancements */
+@media (prefers-color-scheme: dark) and (max-width: 768px) {
+  .modal-content {
+    background: var(--bg-secondary);
+    border: 1px solid var(--border-medium);
+  }
+  
+  .loading-overlay {
+    background: rgba(17, 24, 39, 0.9);
+  }
+  
+  .toast {
+    background: var(--bg-secondary);
+    border: 1px solid var(--border-medium);
+    color: var(--text-primary);
+  }
+}
+
+/* Reduced motion preferences */
+@media (prefers-reduced-motion: reduce) {
+  /* Disable animations for users who prefer reduced motion */
+  .btn:active {
+    transform: none;
+    transition: none;
+  }
+  
+  .nav-link:active {
+    transform: none;
+    transition: none;
+  }
+  
+  .message-bubble:active {
+    transform: none;
+    transition: none;
+  }
+  
+  .modal-content {
+    animation: none;
+  }
+  
+  .toast {
+    animation: none;
+  }
+}
+
+/* Enhanced accessibility for mobile */
+@media (max-width: 768px) {
+  /* Better focus indicators on mobile */
+  .btn:focus-visible {
+    outline: 3px solid var(--primary-color);
+    outline-offset: 2px;
+  }
+  
+  .form-control:focus-visible {
+    outline: 3px solid var(--primary-color);
+    outline-offset: 2px;
+  }
+  
+  .nav-link:focus-visible {
+    outline: 2px solid var(--primary-color);
+    outline-offset: 1px;
+  }
+  
+  /* Better contrast for important elements */
+  .btn-primary {
+    font-weight: 600;
+  }
+  
+  .nav-link.active {
+    font-weight: 600;
+  }
+}
+
+/* Pull-to-refresh styling */
+.refresh-indicator {
+  position: absolute;
+  top: -50px;
+  left: 50%;
+  transform: translateX(-50%);
+  padding: 8px 16px;
+  background: var(--primary-color);
+  color: white;
+  border-radius: 20px;
+  font-size: 14px;
+  display: flex;
+  align-items: center;
+  gap: 8px;
+  z-index: 1000;
+  transition: top 0.3s ease;
+  box-shadow: 0 4px 12px rgba(0, 0, 0, 0.2);
+}
+
+.refresh-spinner {
+  animation: spin 1s linear infinite;
+  font-size: 16px;
+}
+
+@keyframes spin {
+  from { transform: rotate(0deg); }
+  to { transform: rotate(360deg); }
+}
+
+/* Mobile menu enhancements */
+.nav-menu.mobile-open {
+  animation: slideDown 0.2s ease-out;
+}
+
+@keyframes slideDown {
+  from {
+    opacity: 0;
+    transform: translateY(-10px);
+  }
+  to {
+    opacity: 1;
+    transform: translateY(0);
+  }
+}
+
+/* Better chat message spacing on mobile */
+@media (max-width: 480px) {
+  .message + .message {
+    margin-top: var(--space-4);
+  }
+  
+  .message.user + .message.user,
+  .message.assistant + .message.assistant {
+    margin-top: var(--space-2);
+  }
+  
+  .message.user + .message.assistant,
+  .message.assistant + .message.user {
+    margin-top: var(--space-6);
+  }
+}

@@ -1,0 +1,290 @@
+/**
+ * Connection Status Indicator Styles
+ * Shows network connectivity and server status
+ */
+
+/* App Header (if created) */
+.app-header {
+  background: var(--bg-primary);
+  border-bottom: 1px solid var(--border-light);
+  padding: var(--space-2) var(--space-4);
+  display: flex;
+  justify-content: flex-end;
+  align-items: center;
+  position: sticky;
+  top: 0;
+  z-index: 100;
+}
+
+/* Connection Status Component */
+.connection-status {
+  display: flex;
+  align-items: center;
+  gap: var(--space-2);
+  padding: var(--space-1) var(--space-3);
+  border-radius: var(--radius-full);
+  font-size: var(--text-sm);
+  transition: all var(--transition-fast);
+  background: var(--bg-secondary);
+  border: 1px solid var(--border-light);
+  min-width: 120px;
+}
+
+/* Status States */
+.connection-status.online {
+  background: var(--success-color);
+  color: white;
+  border-color: var(--success-color);
+}
+
+.connection-status.offline {
+  background: var(--error-color);
+  color: white;
+  border-color: var(--error-color);
+  animation: pulse-error 2s infinite;
+}
+
+.connection-status.checking {
+  background: var(--info-color);
+  color: white;
+  border-color: var(--info-color);
+}
+
+.connection-status.reconnecting {
+  background: var(--warning-color);
+  color: white;
+  border-color: var(--warning-color);
+  animation: pulse-warning 2s infinite;
+}
+
+.connection-status.failed {
+  background: var(--error-color);
+  color: white;
+  border-color: var(--error-color);
+}
+
+/* Connection Icon */
+.connection-icon {
+  font-size: var(--text-base);
+  line-height: 1;
+  flex-shrink: 0;
+}
+
+.connection-status.checking .connection-icon,
+.connection-status.reconnecting .connection-icon {
+  animation: spin 1s linear infinite;
+}
+
+/* Connection Text */
+.connection-text {
+  flex: 1;
+  min-width: 0;
+  display: flex;
+  flex-direction: column;
+  gap: 1px;
+}
+
+.connection-label {
+  font-weight: 500;
+  line-height: var(--leading-tight);
+}
+
+.connection-details {
+  font-size: var(--text-xs);
+  opacity: 0.9;
+  line-height: var(--leading-tight);
+  white-space: nowrap;
+  overflow: hidden;
+  text-overflow: ellipsis;
+}
+
+/* Connection Actions */
+.connection-actions {
+  flex-shrink: 0;
+}
+
+.connection-retry {
+  font-size: var(--text-xs);
+  padding: var(--space-1) var(--space-2);
+  background: rgba(255, 255, 255, 0.2);
+  border: 1px solid rgba(255, 255, 255, 0.3);
+  color: white;
+  border-radius: var(--radius-md);
+  cursor: pointer;
+  transition: all var(--transition-fast);
+}
+
+.connection-retry:hover {
+  background: rgba(255, 255, 255, 0.3);
+  border-color: rgba(255, 255, 255, 0.5);
+}
+
+.connection-retry:active {
+  transform: translateY(1px);
+}
+
+.connection-retry.hidden {
+  display: none;
+}
+
+/* Animations */
+@keyframes pulse-error {
+  0%, 100% {
+    opacity: 1;
+  }
+  50% {
+    opacity: 0.7;
+  }
+}
+
+@keyframes pulse-warning {
+  0%, 100% {
+    opacity: 1;
+  }
+  50% {
+    opacity: 0.8;
+  }
+}
+
+@keyframes spin {
+  0% { 
+    transform: rotate(0deg); 
+  }
+  100% { 
+    transform: rotate(360deg); 
+  }
+}
+
+/* Compact Mode */
+.connection-status.compact {
+  min-width: auto;
+  padding: var(--space-1) var(--space-2);
+}
+
+.connection-status.compact .connection-text {
+  display: none;
+}
+
+.connection-status.compact .connection-actions {
+  margin-left: var(--space-1);
+}
+
+/* Mobile Responsiveness */
+@media (max-width: 768px) {
+  .app-header {
+    padding: var(--space-2) var(--space-3);
+  }
+  
+  .connection-status {
+    min-width: auto;
+    padding: var(--space-1) var(--space-2);
+  }
+  
+  .connection-details {
+    display: none;
+  }
+  
+  .connection-retry {
+    padding: var(--space-1);
+    min-width: 60px;
+  }
+}
+
+@media (max-width: 480px) {
+  .connection-status .connection-text {
+    display: none;
+  }
+  
+  .connection-status {
+    min-width: auto;
+    width: auto;
+  }
+}
+
+/* Position Variations */
+.connection-status.floating {
+  position: fixed;
+  top: var(--space-4);
+  right: var(--space-4);
+  z-index: 1000;
+  box-shadow: var(--shadow-lg);
+}
+
+.connection-status.bottom {
+  position: fixed;
+  bottom: var(--space-4);
+  right: var(--space-4);
+  z-index: 1000;
+  box-shadow: var(--shadow-lg);
+}
+
+/* Integration with Chat Interface */
+.chat-container .connection-status {
+  position: absolute;
+  top: var(--space-2);
+  right: var(--space-2);
+  z-index: 10;
+}
+
+/* Dark Mode */
+@media (prefers-color-scheme: dark) {
+  .app-header {
+    background: var(--bg-dark);
+    border-bottom-color: var(--gray-700);
+  }
+  
+  .connection-status {
+    background: var(--bg-darker);
+    border-color: var(--gray-600);
+    color: var(--text-inverse);
+  }
+  
+  .connection-retry {
+    background: rgba(255, 255, 255, 0.1);
+    border-color: rgba(255, 255, 255, 0.2);
+  }
+  
+  .connection-retry:hover {
+    background: rgba(255, 255, 255, 0.2);
+  }
+}
+
+/* High Contrast Mode */
+@media (prefers-contrast: high) {
+  .connection-status {
+    border-width: 2px;
+    font-weight: 600;
+  }
+  
+  .connection-status.online {
+    background: #007700;
+  }
+  
+  .connection-status.offline,
+  .connection-status.failed {
+    background: #CC0000;
+  }
+  
+  .connection-status.checking,
+  .connection-status.reconnecting {
+    background: #0066CC;
+  }
+}
+
+/* Reduced Motion */
+@media (prefers-reduced-motion: reduce) {
+  .connection-status {
+    transition: none;
+  }
+  
+  @keyframes pulse-error,
+  @keyframes pulse-warning,
+  @keyframes spin {
+    /* Disable animations */
+  }
+  
+  .connection-status.checking .connection-icon,
+  .connection-status.reconnecting .connection-icon {
+    animation: none;
+  }
+}

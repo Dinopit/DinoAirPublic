@@ -1,0 +1,300 @@
+/**
+ * Error Notification Styles
+ * User-friendly error displays and toast notifications
+ */
+
+/* Toast Container */
+.error-toast-container {
+  position: fixed;
+  top: 20px;
+  right: 20px;
+  z-index: 1000;
+  max-width: 400px;
+  pointer-events: none;
+}
+
+/* Error Notification Base */
+.error-notification {
+  background: white;
+  border-radius: var(--radius-lg);
+  box-shadow: var(--shadow-xl);
+  border-left: 4px solid var(--error-color);
+  padding: var(--space-4);
+  margin-bottom: var(--space-3);
+  pointer-events: auto;
+  opacity: 0;
+  transform: translateX(100%);
+  transition: all 0.3s ease-in-out;
+  max-width: 100%;
+  word-wrap: break-word;
+}
+
+.error-notification.show {
+  opacity: 1;
+  transform: translateX(0);
+}
+
+.error-notification.hiding {
+  opacity: 0;
+  transform: translateX(100%);
+}
+
+/* Error Type Variants */
+.error-notification.network {
+  border-left-color: var(--warning-color);
+}
+
+.error-notification.authentication {
+  border-left-color: var(--info-color);
+}
+
+.error-notification.permission {
+  border-left-color: var(--error-color);
+}
+
+.error-notification.rate_limit {
+  border-left-color: var(--warning-color);
+}
+
+.error-notification.service_offline {
+  border-left-color: var(--warning-color);
+}
+
+.error-notification.server {
+  border-left-color: var(--error-color);
+}
+
+/* Error Content Layout */
+.error-content {
+  display: flex;
+  align-items: flex-start;
+  gap: var(--space-3);
+}
+
+.error-icon {
+  font-size: var(--text-xl);
+  line-height: 1;
+  flex-shrink: 0;
+  margin-top: 2px;
+}
+
+.error-text {
+  flex: 1;
+  min-width: 0;
+}
+
+.error-title {
+  font-size: var(--text-base);
+  font-weight: 600;
+  color: var(--text-primary);
+  margin: 0 0 var(--space-1) 0;
+  line-height: var(--leading-tight);
+}
+
+.error-message {
+  font-size: var(--text-sm);
+  color: var(--text-secondary);
+  margin: 0 0 var(--space-2) 0;
+  line-height: var(--leading-normal);
+}
+
+/* Error Details */
+.error-details {
+  margin-top: var(--space-2);
+}
+
+.error-details summary {
+  font-size: var(--text-xs);
+  color: var(--text-tertiary);
+  cursor: pointer;
+  margin-bottom: var(--space-1);
+  outline: none;
+}
+
+.error-details summary:hover {
+  color: var(--text-secondary);
+}
+
+.error-details summary:focus {
+  color: var(--primary-color);
+}
+
+.error-details p {
+  font-size: var(--text-xs);
+  color: var(--text-tertiary);
+  margin: var(--space-1) 0 0 0;
+  line-height: var(--leading-normal);
+  padding-left: var(--space-4);
+}
+
+/* Error Actions */
+.error-actions {
+  display: flex;
+  flex-direction: column;
+  gap: var(--space-1);
+  align-items: flex-end;
+  flex-shrink: 0;
+}
+
+.error-actions .btn {
+  font-size: var(--text-xs);
+  padding: var(--space-1) var(--space-3);
+  min-width: auto;
+  white-space: nowrap;
+}
+
+/* Inline Error Styles */
+.error-notification.inline {
+  position: relative;
+  margin: var(--space-4) 0;
+  transform: none;
+  opacity: 1;
+}
+
+/* Chat-specific Error Styles */
+.chat-error {
+  background: var(--bg-secondary);
+  border: 1px solid var(--border-light);
+  border-left: 4px solid var(--error-color);
+  border-radius: var(--radius-md);
+  padding: var(--space-3);
+  margin: var(--space-3) 0;
+}
+
+.chat-error .error-content {
+  gap: var(--space-2);
+}
+
+.chat-error .error-icon {
+  font-size: var(--text-lg);
+}
+
+.chat-error .error-title {
+  font-size: var(--text-sm);
+  font-weight: 500;
+}
+
+.chat-error .error-message {
+  font-size: var(--text-xs);
+}
+
+.chat-error .error-actions {
+  flex-direction: row;
+  margin-top: var(--space-2);
+}
+
+/* Loading State for Retry */
+.error-notification .btn[data-retry] {
+  position: relative;
+}
+
+.error-notification .btn[data-retry]:disabled {
+  opacity: 0.7;
+  cursor: not-allowed;
+}
+
+.error-notification .btn[data-retry].loading::after {
+  content: '';
+  position: absolute;
+  top: 50%;
+  left: 50%;
+  width: 12px;
+  height: 12px;
+  margin: -6px 0 0 -6px;
+  border: 2px solid transparent;
+  border-top: 2px solid currentColor;
+  border-radius: 50%;
+  animation: spin 1s linear infinite;
+}
+
+/* Animation for spinner */
+@keyframes spin {
+  0% { transform: rotate(0deg); }
+  100% { transform: rotate(360deg); }
+}
+
+/* Responsive Design */
+@media (max-width: 768px) {
+  .error-toast-container {
+    top: 10px;
+    right: 10px;
+    left: 10px;
+    max-width: none;
+  }
+  
+  .error-notification {
+    margin-bottom: var(--space-2);
+  }
+  
+  .error-content {
+    gap: var(--space-2);
+  }
+  
+  .error-actions {
+    flex-direction: row;
+    margin-top: var(--space-2);
+  }
+  
+  .error-actions .btn {
+    font-size: var(--text-xs);
+    padding: var(--space-1) var(--space-2);
+  }
+}
+
+/* Dark Mode Support */
+@media (prefers-color-scheme: dark) {
+  .error-notification {
+    background: var(--bg-dark);
+    color: var(--text-inverse);
+  }
+  
+  .error-title {
+    color: var(--text-inverse);
+  }
+  
+  .error-message {
+    color: var(--gray-300);
+  }
+  
+  .error-details summary,
+  .error-details p {
+    color: var(--gray-400);
+  }
+  
+  .chat-error {
+    background: var(--bg-darker);
+    border-color: var(--gray-700);
+  }
+}
+
+/* High Contrast Mode */
+@media (prefers-contrast: high) {
+  .error-notification {
+    border-left-width: 6px;
+    box-shadow: 0 0 0 2px var(--border-dark);
+  }
+  
+  .error-title {
+    font-weight: 700;
+  }
+}
+
+/* Reduced Motion */
+@media (prefers-reduced-motion: reduce) {
+  .error-notification {
+    transition: opacity 0.2s ease;
+  }
+  
+  .error-notification.show {
+    transform: translateX(0);
+  }
+  
+  .error-notification.hiding {
+    transform: translateX(0);
+  }
+  
+  @keyframes spin {
+    0% { transform: rotate(0deg); }
+    100% { transform: rotate(360deg); }
+  }
+}

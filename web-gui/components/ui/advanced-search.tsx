@@ -1,6 +1,6 @@
 'use client';
 
-import React, { useState, useEffect, useMemo, useCallback } from 'react';
+import React, { useState, useEffect, useCallback } from 'react';
 import { useDebounce } from '@/lib/hooks/useDebounce';
 
 export interface SearchFilter {
@@ -51,11 +51,11 @@ interface AdvancedSearchProps {
 }
 
 export function AdvancedSearch({
-  placeholder = "Search...",
+  placeholder = 'Search...',
   filters = [],
   onSearch,
   onResultClick,
-  className = "",
+  className = '',
   showFilters = true,
   showSorting = true,
   showPagination = true,
@@ -71,7 +71,7 @@ export function AdvancedSearch({
 
   const [results, setResults] = useState<SearchResult[]>([]);
   const [total, setTotal] = useState(0);
-  const [facets, setFacets] = useState<Record<string, { value: string; count: number }[]>>({});
+  const [, setFacets] = useState<Record<string, { value: string; count: number }[]>>({});
   const [isLoading, setIsLoading] = useState(false);
   const [isFiltersExpanded, setIsFiltersExpanded] = useState(false);
 
@@ -80,7 +80,13 @@ export function AdvancedSearch({
   // Perform search when query or filters change
   useEffect(() => {
     performSearch();
-  }, [debouncedQuery, searchState.filters, searchState.sortBy, searchState.sortOrder, searchState.page]);
+  }, [
+    debouncedQuery,
+    searchState.filters,
+    searchState.sortBy,
+    searchState.sortOrder,
+    searchState.page,
+  ]);
 
   const performSearch = useCallback(async () => {
     if (!debouncedQuery.trim() && Object.keys(searchState.filters).length === 0) {
@@ -96,7 +102,7 @@ export function AdvancedSearch({
         ...searchState,
         query: debouncedQuery,
       });
-      
+
       setResults(response.results);
       setTotal(response.total);
       setFacets(response.facets || {});
@@ -111,7 +117,7 @@ export function AdvancedSearch({
   }, [debouncedQuery, searchState, onSearch]);
 
   const updateSearchState = (updates: Partial<SearchState>) => {
-    setSearchState(prev => ({
+    setSearchState((prev) => ({
       ...prev,
       ...updates,
       page: updates.page !== undefined ? updates.page : 1, // Reset to first page unless explicitly set
@@ -212,9 +218,7 @@ export function AdvancedSearch({
               onChange={(e) => updateFilter(filter.id, parseInt(e.target.value))}
               className="w-full"
             />
-            <div className="text-sm text-gray-600">
-              Value: {value || filter.min || 0}
-            </div>
+            <div className="text-sm text-gray-600">Value: {value || filter.min || 0}</div>
           </div>
         );
 
@@ -237,8 +241,10 @@ export function AdvancedSearch({
   };
 
   const activeFiltersCount = Object.keys(searchState.filters).filter(
-    key => searchState.filters[key] !== undefined && searchState.filters[key] !== '' && 
-           (Array.isArray(searchState.filters[key]) ? searchState.filters[key].length > 0 : true)
+    (key) =>
+      searchState.filters[key] !== undefined &&
+      searchState.filters[key] !== '' &&
+      (Array.isArray(searchState.filters[key]) ? searchState.filters[key].length > 0 : true)
   ).length;
 
   return (
@@ -256,8 +262,18 @@ export function AdvancedSearch({
           {isLoading ? (
             <div className="animate-spin h-5 w-5 border-2 border-blue-500 border-t-transparent rounded-full"></div>
           ) : (
-            <svg className="h-5 w-5 text-gray-400" fill="none" stroke="currentColor" viewBox="0 0 24 24">
-              <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M21 21l-6-6m2-5a7 7 0 11-14 0 7 7 0 0114 0z" />
+            <svg
+              className="h-5 w-5 text-gray-400"
+              fill="none"
+              stroke="currentColor"
+              viewBox="0 0 24 24"
+            >
+              <path
+                strokeLinecap="round"
+                strokeLinejoin="round"
+                strokeWidth={2}
+                d="M21 21l-6-6m2-5a7 7 0 11-14 0 7 7 0 0114 0z"
+              />
             </svg>
           )}
         </div>
@@ -272,7 +288,12 @@ export function AdvancedSearch({
           >
             <div className="flex items-center space-x-2">
               <svg className="h-4 w-4" fill="none" stroke="currentColor" viewBox="0 0 24 24">
-                <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M3 4a1 1 0 011-1h16a1 1 0 011 1v2.586a1 1 0 01-.293.707l-6.414 6.414a1 1 0 00-.293.707V17l-4 4v-6.586a1 1 0 00-.293-.707L3.293 7.293A1 1 0 013 6.586V4z" />
+                <path
+                  strokeLinecap="round"
+                  strokeLinejoin="round"
+                  strokeWidth={2}
+                  d="M3 4a1 1 0 011-1h16a1 1 0 011 1v2.586a1 1 0 01-.293.707l-6.414 6.414a1 1 0 00-.293.707V17l-4 4v-6.586a1 1 0 00-.293-.707L3.293 7.293A1 1 0 013 6.586V4z"
+                />
               </svg>
               <span className="font-medium">Filters</span>
               {activeFiltersCount > 0 && (
@@ -287,7 +308,12 @@ export function AdvancedSearch({
               stroke="currentColor"
               viewBox="0 0 24 24"
             >
-              <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M19 9l-7 7-7-7" />
+              <path
+                strokeLinecap="round"
+                strokeLinejoin="round"
+                strokeWidth={2}
+                d="M19 9l-7 7-7-7"
+              />
             </svg>
           </button>
         </div>
@@ -314,13 +340,10 @@ export function AdvancedSearch({
               </div>
             ))}
           </div>
-          
+
           {activeFiltersCount > 0 && (
             <div className="mt-4 pt-4 border-t">
-              <button
-                onClick={clearAllFilters}
-                className="text-sm text-red-500 hover:text-red-700"
-              >
+              <button onClick={clearAllFilters} className="text-sm text-red-500 hover:text-red-700">
                 Clear all filters
               </button>
             </div>
@@ -343,9 +366,11 @@ export function AdvancedSearch({
             <option value="type">Type</option>
           </select>
           <button
-            onClick={() => updateSearchState({ 
-              sortOrder: searchState.sortOrder === 'asc' ? 'desc' : 'asc' 
-            })}
+            onClick={() =>
+              updateSearchState({
+                sortOrder: searchState.sortOrder === 'asc' ? 'desc' : 'asc',
+              })
+            }
             className="p-2 border rounded-md hover:bg-gray-50"
           >
             {searchState.sortOrder === 'asc' ? '↑' : '↓'}
@@ -355,11 +380,7 @@ export function AdvancedSearch({
 
       {/* Results */}
       <div className="space-y-4">
-        {results.length > 0 && (
-          <div className="text-sm text-gray-600">
-            {total} results found
-          </div>
-        )}
+        {results.length > 0 && <div className="text-sm text-gray-600">{total} results found</div>}
 
         {results.map((result) => (
           <div
@@ -379,7 +400,10 @@ export function AdvancedSearch({
                 {result.tags.length > 0 && (
                   <div className="flex flex-wrap gap-1 mt-2">
                     {result.tags.map((tag) => (
-                      <span key={tag} className="bg-blue-100 text-blue-800 text-xs px-2 py-1 rounded">
+                      <span
+                        key={tag}
+                        className="bg-blue-100 text-blue-800 text-xs px-2 py-1 rounded"
+                      >
                         {tag}
                       </span>
                     ))}
@@ -404,7 +428,7 @@ export function AdvancedSearch({
       {showPagination && total > searchState.pageSize && (
         <div className="flex items-center justify-between mt-6">
           <div className="text-sm text-gray-600">
-            Showing {((searchState.page - 1) * searchState.pageSize) + 1} to{' '}
+            Showing {(searchState.page - 1) * searchState.pageSize + 1} to{' '}
             {Math.min(searchState.page * searchState.pageSize, total)} of {total} results
           </div>
           <div className="flex space-x-2">

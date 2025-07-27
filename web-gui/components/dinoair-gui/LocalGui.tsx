@@ -63,13 +63,13 @@ const LocalGuiContent = () => {
       addToast({
         type: 'success',
         title: 'Conversation saved',
-        message: 'Your conversation has been saved successfully.'
+        message: 'Your conversation has been saved successfully.',
       });
     } else {
       addToast({
         type: 'info',
         title: 'No active conversation',
-        message: 'Start a conversation first before saving.'
+        message: 'Start a conversation first before saving.',
       });
     }
   }, [addToast]);
@@ -96,7 +96,9 @@ const LocalGuiContent = () => {
   const handleFocusChatInput = useCallback(() => {
     if (activeTab === 'chat') {
       // Find the chat input in the LocalChatView
-      const chatInput = document.querySelector('textarea[placeholder="Type your message..."]') as HTMLTextAreaElement;
+      const chatInput = document.querySelector(
+        'textarea[placeholder="Type your message..."]'
+      ) as HTMLTextAreaElement;
       if (chatInput) {
         chatInput.focus();
       }
@@ -109,56 +111,56 @@ const LocalGuiContent = () => {
       ctrl: true,
       cmd: true,
       description: 'Focus on chat input',
-      action: handleFocusChatInput
+      action: handleFocusChatInput,
     },
     {
       key: '1',
       ctrl: true,
       cmd: true,
       description: 'Switch to Chat tab',
-      action: () => setActiveTab('chat')
+      action: () => setActiveTab('chat'),
     },
     {
       key: '2',
       ctrl: true,
       cmd: true,
       description: 'Switch to Artifacts tab',
-      action: () => setActiveTab('artifacts')
+      action: () => setActiveTab('artifacts'),
     },
     {
       key: '3',
       ctrl: true,
       cmd: true,
       description: 'Switch to Plugins tab',
-      action: () => setActiveTab('plugins')
+      action: () => setActiveTab('plugins'),
     },
     {
       key: '/',
       ctrl: true,
       cmd: true,
       description: 'Show keyboard shortcuts',
-      action: () => setShowShortcutsModal(true)
+      action: () => setShowShortcutsModal(true),
     },
     {
       key: 's',
       ctrl: true,
       cmd: true,
       description: 'Save current conversation',
-      action: handleSaveConversation
+      action: handleSaveConversation,
     },
     {
       key: 'n',
       ctrl: true,
       cmd: true,
       description: 'New chat',
-      action: handleNewChat
+      action: handleNewChat,
     },
     {
       key: 'd',
       ctrl: true,
       cmd: true,
       description: 'Toggle dark mode',
-      action: handleToggleDarkMode
+      action: handleToggleDarkMode,
     },
     {
       key: 'd',
@@ -174,23 +176,25 @@ const LocalGuiContent = () => {
         addToast({
           type: 'info',
           title: debugMode ? 'Debug mode disabled' : 'Debug mode enabled',
-          message: debugMode ? 'Debug logging has been turned off' : 'Debug panel can be opened from the toolbar'
+          message: debugMode
+            ? 'Debug logging has been turned off'
+            : 'Debug panel can be opened from the toolbar',
         });
-      }
+      },
     },
     {
       key: ',',
       ctrl: true,
       cmd: true,
       description: 'Open settings',
-      action: handleOpenSettings
+      action: handleOpenSettings,
     },
     {
       key: 'm',
       ctrl: true,
       cmd: true,
       description: 'Open monitoring dashboard',
-      action: handleOpenMonitoring
+      action: handleOpenMonitoring,
     },
     {
       key: 'Escape',
@@ -200,8 +204,8 @@ const LocalGuiContent = () => {
         setShowSettings(false);
         setShowDebugPanel(false);
         setIsMobileMenuOpen(false);
-      }
-    }
+      },
+    },
   ];
 
   useKeyboardShortcuts({ shortcuts });
@@ -209,11 +213,12 @@ const LocalGuiContent = () => {
   const handleTabChange = (tab: Tab) => {
     setActiveTab(tab);
     setIsMobileMenuOpen(false);
-    
+
     const tabNames = {
       chat: 'Chat',
-      artifacts: 'Artifacts', 
-      plugins: 'Plugins'
+      artifacts: 'Artifacts',
+      plugins: 'Plugins',
+      'local-tools': 'Local Tools',
     };
     announceNavigation(`${tabNames[tab]} tab`);
   };
@@ -222,7 +227,7 @@ const LocalGuiContent = () => {
     <div className="flex flex-col h-screen bg-background">
       {/* Offline indicator */}
       <OfflineIndicator />
-      
+
       {/* Skip to main content link for screen readers */}
       <a
         href="#main-content"
@@ -238,7 +243,7 @@ const LocalGuiContent = () => {
           <button
             className="md:hidden p-4 hover:bg-muted rounded-lg transition-colors"
             onClick={() => setIsMobileMenuOpen(!isMobileMenuOpen)}
-            aria-label={isMobileMenuOpen ? "Close navigation menu" : "Open navigation menu"}
+            aria-label={isMobileMenuOpen ? 'Close navigation menu' : 'Open navigation menu'}
             aria-expanded={isMobileMenuOpen}
             aria-controls="mobile-navigation"
           >
@@ -304,7 +309,11 @@ const LocalGuiContent = () => {
         </div>
 
         {/* Right side controls */}
-        <div className="flex items-center gap-2 px-4" role="toolbar" aria-label="Application controls">
+        <div
+          className="flex items-center gap-2 px-4"
+          role="toolbar"
+          aria-label="Application controls"
+        >
           {debugMode && (
             <button
               onClick={() => setShowDebugPanel(true)}
@@ -363,7 +372,7 @@ const LocalGuiContent = () => {
 
       {/* Mobile menu */}
       {isMobileMenuOpen && (
-        <nav 
+        <nav
           className="md:hidden absolute top-[57px] left-0 right-0 bg-card border-b shadow-lg z-20"
           id="mobile-navigation"
           role="navigation"
@@ -430,8 +439,8 @@ const LocalGuiContent = () => {
       )}
 
       {/* Main content */}
-      <main 
-        className="flex-grow overflow-hidden" 
+      <main
+        className="flex-grow overflow-hidden"
         id="main-content"
         role="main"
         aria-label="Application content"
@@ -491,7 +500,7 @@ const LocalGuiContent = () => {
           addToast({
             type: 'success',
             title: 'Tutorial completed!',
-            message: 'You can always access help via the keyboard shortcuts.'
+            message: 'You can always access help via the keyboard shortcuts.',
           });
         }}
       />

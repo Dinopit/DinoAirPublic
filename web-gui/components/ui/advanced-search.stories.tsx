@@ -4,8 +4,8 @@ import { AdvancedSearch, SearchFilter, SearchResult } from './advanced-search';
 // Mock search function for Storybook
 const mockSearch = async (searchState: any) => {
   // Simulate API delay
-  await new Promise(resolve => setTimeout(resolve, 500));
-  
+  await new Promise((resolve) => setTimeout(resolve, 500));
+
   const mockResults: SearchResult[] = [
     {
       id: '1',
@@ -17,19 +17,20 @@ const mockSearch = async (searchState: any) => {
       createdAt: '2024-01-15T10:00:00Z',
       updatedAt: '2024-01-20T14:30:00Z',
       relevanceScore: 0.95,
-      metadata: { readTime: 5, difficulty: 'beginner', views: 1250 }
+      metadata: { readTime: 5, difficulty: 'beginner', views: 1250 },
     },
     {
       id: '2',
       title: 'Advanced Chat Configuration',
-      description: 'Learn how to configure advanced chat settings and customize your AI interactions.',
+      description:
+        'Learn how to configure advanced chat settings and customize your AI interactions.',
       type: 'documentation',
       category: 'configuration',
       tags: ['chat', 'advanced', 'configuration'],
       createdAt: '2024-01-10T09:15:00Z',
       updatedAt: '2024-01-25T16:45:00Z',
       relevanceScore: 0.87,
-      metadata: { readTime: 8, difficulty: 'intermediate', views: 890 }
+      metadata: { readTime: 8, difficulty: 'intermediate', views: 890 },
     },
     {
       id: '3',
@@ -41,15 +42,16 @@ const mockSearch = async (searchState: any) => {
       createdAt: '2024-01-05T11:30:00Z',
       updatedAt: '2024-01-22T13:20:00Z',
       relevanceScore: 0.82,
-      metadata: { readTime: 12, difficulty: 'advanced', views: 2100 }
+      metadata: { readTime: 12, difficulty: 'advanced', views: 2100 },
     },
   ];
 
   // Filter results based on query
-  const filteredResults = searchState.query 
-    ? mockResults.filter(result => 
-        result.title.toLowerCase().includes(searchState.query.toLowerCase()) ||
-        result.description.toLowerCase().includes(searchState.query.toLowerCase())
+  const filteredResults = searchState.query
+    ? mockResults.filter(
+        (result) =>
+          result.title.toLowerCase().includes(searchState.query.toLowerCase()) ||
+          result.description.toLowerCase().includes(searchState.query.toLowerCase())
       )
     : mockResults;
 
@@ -159,7 +161,8 @@ const meta: Meta<typeof AdvancedSearch> = {
     layout: 'fullscreen',
     docs: {
       description: {
-        component: 'A comprehensive search component with advanced filtering, sorting, and pagination capabilities. Supports multiple filter types including text, select, multiselect, date ranges, and boolean filters.',
+        component:
+          'A comprehensive search component with advanced filtering, sorting, and pagination capabilities. Supports multiple filter types including text, select, multiselect, date ranges, and boolean filters.',
       },
     },
   },
@@ -200,7 +203,7 @@ export const Default: Story = {
     placeholder: 'Search documentation, articles, and guides...',
     filters: sampleFilters,
     onSearch: mockSearch,
-    onResultClick: (result) => console.log('Clicked result:', result),
+    onResultClick: (result: any) => console.log('Clicked result:', result),
     showFilters: true,
     showSorting: true,
     showPagination: true,
@@ -212,7 +215,7 @@ export const WithoutFilters: Story = {
     placeholder: 'Simple search without filters...',
     filters: [],
     onSearch: mockSearch,
-    onResultClick: (result) => console.log('Clicked result:', result),
+    onResultClick: (result: any) => console.log('Clicked result:', result),
     showFilters: false,
     showSorting: true,
     showPagination: true,
@@ -231,7 +234,7 @@ export const MinimalSearch: Story = {
     placeholder: 'Minimal search interface...',
     filters: [],
     onSearch: mockSearch,
-    onResultClick: (result) => console.log('Clicked result:', result),
+    onResultClick: (result: any) => console.log('Clicked result:', result),
     showFilters: false,
     showSorting: false,
     showPagination: false,
@@ -250,7 +253,7 @@ export const WithBasicFilters: Story = {
     placeholder: 'Search with basic filters...',
     filters: sampleFilters.slice(0, 3), // Only first 3 filters
     onSearch: mockSearch,
-    onResultClick: (result) => console.log('Clicked result:', result),
+    onResultClick: (result: any) => console.log('Clicked result:', result),
     showFilters: true,
     showSorting: true,
     showPagination: true,
@@ -268,12 +271,12 @@ export const LoadingState: Story = {
   args: {
     placeholder: 'Search with loading state...',
     filters: sampleFilters,
-    onSearch: async (searchState) => {
+    onSearch: async (searchState: any) => {
       // Simulate longer loading
-      await new Promise(resolve => setTimeout(resolve, 2000));
+      await new Promise((resolve) => setTimeout(resolve, 2000));
       return mockSearch(searchState);
     },
-    onResultClick: (result) => console.log('Clicked result:', result),
+    onResultClick: (result: any) => console.log('Clicked result:', result),
     showFilters: true,
     showSorting: true,
     showPagination: true,
@@ -296,7 +299,7 @@ export const EmptyResults: Story = {
       total: 0,
       facets: {},
     }),
-    onResultClick: (result) => console.log('Clicked result:', result),
+    onResultClick: (result: any) => console.log('Clicked result:', result),
     showFilters: true,
     showSorting: true,
     showPagination: true,
@@ -315,7 +318,7 @@ export const MobileView: Story = {
     placeholder: 'Mobile search interface...',
     filters: sampleFilters,
     onSearch: mockSearch,
-    onResultClick: (result) => console.log('Clicked result:', result),
+    onResultClick: (result: any) => console.log('Clicked result:', result),
     showFilters: true,
     showSorting: true,
     showPagination: true,
@@ -337,7 +340,7 @@ export const DarkTheme: Story = {
     placeholder: 'Search in dark theme...',
     filters: sampleFilters,
     onSearch: mockSearch,
-    onResultClick: (result) => console.log('Clicked result:', result),
+    onResultClick: (result: any) => console.log('Clicked result:', result),
     showFilters: true,
     showSorting: true,
     showPagination: true,
@@ -367,7 +370,7 @@ export const InteractiveDemo: Story = {
     placeholder: 'Try searching for "chat", "setup", or "advanced"...',
     filters: sampleFilters,
     onSearch: mockSearch,
-    onResultClick: (result) => console.log('Clicked result:', result),
+    onResultClick: (result: any) => console.log('Clicked result:', result),
     showFilters: true,
     showSorting: true,
     showPagination: true,
@@ -375,7 +378,8 @@ export const InteractiveDemo: Story = {
   parameters: {
     docs: {
       description: {
-        story: 'An interactive demo. Try searching for different terms and using the filters to see how the component responds.',
+        story:
+          'An interactive demo. Try searching for different terms and using the filters to see how the component responds.',
       },
     },
   },
