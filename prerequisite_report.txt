@@ -1,0 +1,94 @@
+DinoAir Installation Prerequisite Check Report
+============================================================
+Timestamp: 2025-07-27T14:37:49.542269
+Platform: Windows-11-10.0.26100-SP0
+
+SUMMARY
+--------------------
+Total Checks: 9
+Passed: 7
+Warnings: 1
+Failed: 1
+
+DETAILED RESULTS
+--------------------
+
+✓ Operating System
+  Status: passed
+  Message: Windows 10.0.26100 (AMD64)
+  Details: {
+    "os": "Windows",
+    "version": "10.0.26100",
+    "arch": "AMD64"
+}
+
+✓ System Resources
+  Status: passed
+  Message: Memory: 125.6GB, Disk: 927.6GB free, CPU: 32 cores
+  Details: {
+    "total_memory_gb": 125.64,
+    "available_memory_gb": 101.44,
+    "free_disk_gb": 927.6,
+    "cpu_cores": 32
+}
+
+✓ Python Version
+  Status: passed
+  Message: Python 3.12.10
+  Details: {
+    "version": "3.12.10"
+}
+
+✗ Python Packages
+  Status: failed
+  Message: Missing packages: setuptools
+  Details: {
+    "missing": [
+        "setuptools"
+    ],
+    "installed": {
+        "pip": "25.1.1",
+        "wheel": "0.45.1"
+    }
+}
+  Recovery: Run: pip install setuptools
+
+⚠ Node.js/npm
+  Status: warning
+  Message: Node.js v24.3.0, npm found but version unknown
+  Details: {
+    "node_path": "C:\\Program Files\\nodejs\\node.EXE",
+    "npm_path": "C:\\Program Files\\nodejs\\npm.CMD"
+}
+
+✓ Git
+  Status: passed
+  Message: Git 2.50.0.windows.2
+  Details: {
+    "path": "C:\\Program Files\\Git\\mingw64\\bin\\git.EXE",
+    "version": "2.50.0.windows.2"
+}
+
+✓ Ollama
+  Status: passed
+  Message: Ollama Warning: could not connect to a running Ollama instance
+Warning: client version is 0.9.6
+  Details: {
+    "path": "C:\\Users\\DinoP\\AppData\\Local\\Programs\\Ollama\\ollama.EXE",
+    "version": "Warning: could not connect to a running Ollama instance\nWarning: client version is 0.9.6"
+}
+
+✓ Network Connectivity
+  Status: passed
+  Message: All required services reachable
+
+✓ File Permissions
+  Status: passed
+  Message: Read/write permissions verified
+
+
+CRITICAL FAILURES REQUIRING ATTENTION
+----------------------------------------
+
+- Python Packages: Missing packages: setuptools
+  Action: Run: pip install setuptools
