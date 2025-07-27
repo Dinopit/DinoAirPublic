@@ -95,7 +95,8 @@ router.get('/search',
   rateLimits.api,
   [
     query('q').isString().isLength({ min: 3, max: 500 })
-      .withMessage('Query must be between 3 and 500 characters'),
+      .withMessage('Query must be between 3 and 500 characters')
+      .escape(),
     query('limit').optional().isInt({ min: 1, max: 20 })
       .withMessage('Limit must be between 1 and 20'),
     query('threshold').optional().isFloat({ min: 0, max: 1 })
