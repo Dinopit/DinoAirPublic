@@ -1,0 +1,6 @@
+This is an info message
+Failed to write structured log: Object of type LogLevel is not JSON serializable
+This is a warning message
+Failed to write structured log: Object of type LogLevel is not JSON serializable
+This is an error message
+Failed to write structured log: Object of type LogLevel is not JSON serializable

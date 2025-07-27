@@ -9,6 +9,12 @@ import signal
 import atexit
 import socket
 
+# Cross-platform terminal color support
+from colorama import init, Fore, Style
+
+# Initialize colorama for cross-platform support
+init(autoreset=True)
+
 # Initialize Sentry error tracking
 try:
     from sentry_config import init_sentry, capture_exception
@@ -21,13 +27,13 @@ except ImportError:
 # Track running processes
 running_processes = []
 
-# Color codes for terminal output
+# Color codes for terminal output using colorama for cross-platform support
 class Colors:
-    GREEN = '\033[92m'
-    YELLOW = '\033[93m'
-    RED = '\033[91m'
-    BLUE = '\033[94m'
-    END = '\033[0m'
+    GREEN = Fore.GREEN
+    YELLOW = Fore.YELLOW
+    RED = Fore.RED
+    BLUE = Fore.BLUE
+    END = Style.RESET_ALL
 
 def print_error(message):
     """Print error message in red."""

@@ -19,6 +19,12 @@ import logging
 import logging.handlers
 from contextlib import contextmanager
 
+# Cross-platform terminal color support
+from colorama import init, Fore, Style
+
+# Initialize colorama for cross-platform support
+init(autoreset=True)
+
 class LogLevel(Enum):
     """Log levels for structured logging."""
     TRACE = "TRACE"
@@ -197,12 +203,12 @@ class StructuredLogger:
         """Create formatter for console output."""
         class ColoredFormatter(logging.Formatter):
             COLORS = {
-                'DEBUG': '\033[36m',    # Cyan
-                'INFO': '\033[32m',     # Green
-                'WARNING': '\033[33m',  # Yellow
-                'ERROR': '\033[31m',    # Red
-                'CRITICAL': '\033[35m', # Magenta
-                'RESET': '\033[0m'      # Reset
+                'DEBUG': Fore.CYAN,      # Cyan
+                'INFO': Fore.GREEN,      # Green
+                'WARNING': Fore.YELLOW,  # Yellow
+                'ERROR': Fore.RED,       # Red
+                'CRITICAL': Fore.MAGENTA, # Magenta
+                'RESET': Style.RESET_ALL  # Reset
             }
             
             def format(self, record):
