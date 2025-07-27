@@ -757,12 +757,14 @@ A: Clear browser cache (Ctrl+F5), try incognito mode, check browser console for 
 **Q: ComfyUI/Ollama won't start?**  
 A: Check ports 8188/11434 aren't in use, verify system resources, restart services.
 
+> 💡If you made it this far and use runpod.io? Heres a referal link for  $5-500 worth of credits when you add $10 https://runpod.io?ref=xhye3m5r
+
 [📚 **See FAQ.md for 30+ more questions and detailed answers**](FAQ.md)
 
 ## 📄 License
 
 This project is licensed under the MIT License - see the [LICENSE](LICENSE) file for details.
-If you made it this far and use runpod.io? Heres a referal link for  $5-500 worth of credits when you add $10 https://runpod.io?ref=xhye3m5r
+
 ---
 
 <div align="center">
