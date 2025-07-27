@@ -387,10 +387,15 @@ class ShellUtils:
                 for item in os.listdir(temp_dir):
                     item_path = os.path.join(temp_dir, item)
                     try:
-                        if os.path.isfile(item_path):
+                        # Skip symbolic links
+                        if os.path.islink(item_path):
+                            continue
+                        
+                        # Validate file or directory before deletion
+                        if os.path.isfile(item_path) and item_path.endswith(".tmp"):
                             os.unlink(item_path)
                             cleared["files"] += 1
-                        elif os.path.isdir(item_path):
+                        elif os.path.isdir(item_path) and item.startswith("dino_"):
                             shutil.rmtree(item_path)
                             cleared["folders"] += 1
                     except (PermissionError, OSError):
