@@ -337,7 +337,7 @@ function generateFacets(items: any[]): Record<string, { value: string; count: nu
     // Tag facets
     facets.tags = facets.tags || {};
     item.tags.forEach((tag: string) => {
-      facets.tags[tag] = (facets.tags[tag] || 0) + 1;
+      facets.tags![tag] = (facets.tags![tag] || 0) + 1;
     });
     
     // Difficulty facets
@@ -413,7 +413,7 @@ async function handleSearch(request: NextRequest) {
       tags: item.tags,
       createdAt: item.createdAt,
       updatedAt: item.updatedAt,
-      relevanceScore: item.relevanceScore,
+      relevanceScore: (item as any).relevanceScore,
       metadata: item.metadata
     }));
 
