@@ -1,0 +1,31 @@
+{
+  "id": "sample-plugin-1",
+  "name": "Image Enhancer Pro",
+  "version": "1.2.0",
+  "description": "Advanced AI-powered image enhancement with noise reduction, upscaling, and color correction capabilities.",
+  "author": "DinoAir Team",
+  "category": "Image Processing",
+  "tags": ["image", "enhancement", "ai", "upscaling"],
+  "features": [
+    "AI-powered noise reduction",
+    "4x image upscaling",
+    "Automatic color correction",
+    "Batch processing support",
+    "Real-time preview"
+  ],
+  "permissions": [
+    "file-system-read",
+    "file-system-write",
+    "gpu-acceleration"
+  ],
+  "compatibility": {
+    "minVersion": "1.0.0",
+    "platforms": ["windows", "macos", "linux"]
+  },
+  "size": "45.2 MB",
+  "lastUpdated": "2024-12-15",
+  "downloadCount": 1247,
+  "rating": 4.8,
+  "homepage": "https://github.com/dinopit/image-enhancer-pro",
+  "documentation": "https://docs.dinoair.com/plugins/image-enhancer-pro"
+}
