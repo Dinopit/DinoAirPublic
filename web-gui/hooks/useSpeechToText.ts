@@ -2,6 +2,14 @@
 
 import { useState, useEffect, useCallback, useRef } from 'react';
 
+// Web Speech API types
+declare global {
+  interface Window {
+    SpeechRecognition: any;
+    webkitSpeechRecognition: any;
+  }
+}
+
 interface SpeechToTextOptions {
   continuous?: boolean;
   interimResults?: boolean;
@@ -35,7 +43,7 @@ export const useSpeechToText = (options: SpeechToTextOptions = {}): UseSpeechToT
   const [error, setError] = useState<string | null>(null);
   const [currentLanguage, setCurrentLanguage] = useState(language);
 
-  const recognitionRef = useRef<SpeechRecognition | null>(null);
+  const recognitionRef = useRef<any>(null);
   const isSupported =
     typeof window !== 'undefined' &&
     ('SpeechRecognition' in window || 'webkitSpeechRecognition' in window);
@@ -150,11 +158,3 @@ export const useSpeechToText = (options: SpeechToTextOptions = {}): UseSpeechToT
     setLanguage,
   };
 };
-
-// Type declarations for Web Speech API
-declare global {
-  interface Window {
-    SpeechRecognition: typeof SpeechRecognition;
-    webkitSpeechRecognition: typeof SpeechRecognition;
-  }
-}
