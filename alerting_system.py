@@ -4,20 +4,16 @@ Alerting System for Critical Failures
 Implements comprehensive alerting for DinoAir system failures and critical events.
 """
 
-import os
-import sys
 import json
 import time
 import smtplib
-import threading
 from datetime import datetime, timedelta
-from typing import Dict, List, Optional, Any, Callable
+from typing import Dict, List, Optional, Any
 from pathlib import Path
-from dataclasses import dataclass, asdict
+from dataclasses import dataclass
 from enum import Enum
 from email.mime.text import MIMEText
 from email.mime.multipart import MIMEMultipart
-import subprocess
 
 # Optional import for requests
 try:

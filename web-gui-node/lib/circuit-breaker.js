@@ -24,7 +24,7 @@ class CircuitBreaker extends EventEmitter {
       resetTimeout: config.resetTimeout || 60000,
       ...config
     };
-    
+
     this.state = CircuitState.CLOSED;
     this.failureCount = 0;
     this.successCount = 0;
@@ -50,11 +50,11 @@ class CircuitBreaker extends EventEmitter {
     try {
       const result = await Promise.race([
         fn(...args),
-        new Promise((_, reject) => 
+        new Promise((_, reject) =>
           setTimeout(() => reject(new Error(`Timeout after ${this.config.timeout}ms`)), this.config.timeout)
         )
       ]);
-      
+
       this._onSuccess();
       this.stats.successfulCalls++;
       return result;
@@ -69,7 +69,7 @@ class CircuitBreaker extends EventEmitter {
     if (this.state === CircuitState.CLOSED) {
       return true;
     }
-    
+
     if (this.state === CircuitState.OPEN) {
       if (Date.now() - this.lastFailureTime > this.config.resetTimeout) {
         this._transitionToHalfOpen();
@@ -77,21 +77,21 @@ class CircuitBreaker extends EventEmitter {
       }
       return false;
     }
-    
+
     if (this.state === CircuitState.HALF_OPEN) {
       return this.halfOpenCalls < this.config.successThreshold;
     }
-    
+
     return false;
   }
 
   _onSuccess() {
     this.failureCount = 0;
-    
+
     if (this.state === CircuitState.HALF_OPEN) {
       this.successCount++;
       this.halfOpenCalls++;
-      
+
       if (this.successCount >= this.config.successThreshold) {
         this._transitionToClosed();
       }
@@ -101,9 +101,9 @@ class CircuitBreaker extends EventEmitter {
   _onFailure(error) {
     this.failureCount++;
     this.lastFailureTime = Date.now();
-    
-    if (this.state === CircuitState.HALF_OPEN || 
-        this.failureCount >= this.config.failureThreshold) {
+
+    if (this.state === CircuitState.HALF_OPEN
+        || this.failureCount >= this.config.failureThreshold) {
       this._transitionToOpen();
     }
   }
@@ -176,7 +176,7 @@ const ollamaBreaker = new CircuitBreaker({
 });
 
 const comfyuiBreaker = new CircuitBreaker({
-  name: 'ComfyUI', 
+  name: 'ComfyUI',
   failureThreshold: 3,
   successThreshold: 2,
   timeout: 120000,

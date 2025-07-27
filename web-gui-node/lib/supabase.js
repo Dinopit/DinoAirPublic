@@ -49,12 +49,12 @@ async function testConnection() {
     const { data, error } = await supabase
       .from('chat_sessions')
       .select('count', { count: 'exact', head: true });
-    
+
     if (error && error.code !== 'PGRST116') { // PGRST116 = table doesn't exist
       console.error('Supabase connection test failed:', error);
       return false;
     }
-    
+
     console.log('Supabase connection successful');
     return true;
   } catch (error) {
@@ -86,10 +86,9 @@ async function initializeTables() {
       .limit(1);
 
     // If any table doesn't exist, we need to create them
-    if (sessionsError?.code === 'PGRST116' || 
-        messagesError?.code === 'PGRST116' || 
-        metricsError?.code === 'PGRST116') {
-      
+    if (sessionsError?.code === 'PGRST116'
+        || messagesError?.code === 'PGRST116'
+        || metricsError?.code === 'PGRST116') {
       console.log('Some tables are missing. Please run the database setup script.');
       console.log('Run: npm run db:setup');
       return false;
@@ -122,7 +121,7 @@ const chatSessions = {
         user_id: userId,
         created_at: new Date().toISOString(),
         updated_at: new Date().toISOString(),
-        metadata: metadata
+        metadata
       })
       .select()
       .single();
@@ -216,10 +215,10 @@ const chatMessages = {
       .from('chat_messages')
       .insert({
         session_id: sessionId,
-        role: role,
-        content: content,
+        role,
+        content,
         created_at: new Date().toISOString(),
-        metadata: metadata
+        metadata
       })
       .select()
       .single();
@@ -289,11 +288,11 @@ const chatMetrics = {
       .from('chat_metrics')
       .insert({
         session_id: sessionId,
-        model: model,
+        model,
         response_time_ms: responseTime,
         token_count: tokenCount,
         created_at: new Date().toISOString(),
-        metadata: metadata
+        metadata
       })
       .select()
       .single();
@@ -338,7 +337,7 @@ const chatMetrics = {
     // Calculate aggregations
     const metrics = data || [];
     const totalRequests = metrics.length;
-    const avgResponseTime = totalRequests > 0 
+    const avgResponseTime = totalRequests > 0
       ? Math.round(metrics.reduce((sum, m) => sum + m.response_time_ms, 0) / totalRequests)
       : 0;
     const totalTokens = metrics.reduce((sum, m) => sum + m.token_count, 0);
@@ -369,14 +368,14 @@ const artifacts = {
    */
   async create(artifactData) {
     const size = Buffer.byteLength(artifactData.content, 'utf8');
-    
+
     const { data, error } = await supabase
       .from('artifacts')
       .insert({
         name: artifactData.name,
         type: artifactData.type,
         content: artifactData.content,
-        size: size,
+        size,
         user_id: artifactData.user_id || null,
         tags: artifactData.tags || [],
         metadata: artifactData.metadata || {},
@@ -526,7 +525,7 @@ const artifacts = {
         name: artifactData.name || parent.name,
         type: artifactData.type || parent.type,
         content: artifactData.content,
-        size: size,
+        size,
         user_id: parent.user_id,
         version: newVersion,
         parent_id: parentId,

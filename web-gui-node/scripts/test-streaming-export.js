@@ -23,7 +23,7 @@ const testArtifacts = [
   {
     name: 'medium-script.py',
     type: 'python',
-    content: '# Medium Python script\n' + 'print("Hello World")\n'.repeat(100),
+    content: `# Medium Python script\n${'print("Hello World")\n'.repeat(100)}`,
     tags: ['python', 'script']
   },
   {
@@ -59,7 +59,7 @@ class StreamingExportTester {
   logTest(name, passed, message = '') {
     const result = { name, passed, message, timestamp: new Date().toISOString() };
     this.testResults.tests.push(result);
-    
+
     if (passed) {
       this.testResults.passed++;
       console.log(`✅ ${name}: ${message}`);
@@ -98,7 +98,7 @@ class StreamingExportTester {
    */
   async createTestArtifacts(artifacts) {
     console.log(`\n📝 Creating ${artifacts.length} test artifacts...`);
-    
+
     for (const artifact of artifacts) {
       try {
         const { response, data } = await this.apiRequest('/api/v1/artifacts', {
@@ -117,7 +117,7 @@ class StreamingExportTester {
       }
     }
 
-    this.logTest('Create Test Artifacts', this.createdArtifacts.length > 0, 
+    this.logTest('Create Test Artifacts', this.createdArtifacts.length > 0,
       `Created ${this.createdArtifacts.length} artifacts`);
   }
 
@@ -126,10 +126,10 @@ class StreamingExportTester {
    */
   async testSmallExport() {
     console.log('\n🔄 Testing small export (backwards compatibility)...');
-    
+
     try {
       const smallArtifactIds = this.createdArtifacts.slice(0, 3);
-      
+
       const { response, data } = await this.apiRequest('/api/v1/artifacts/export/bulk', {
         method: 'POST',
         body: JSON.stringify({
@@ -141,11 +141,11 @@ class StreamingExportTester {
 
       if (response.ok && response.headers.get('content-type') === 'application/zip') {
         const exportType = response.headers.get('x-export-type');
-        this.logTest('Small Export Backwards Compatibility', 
-          exportType === 'synchronous', 
+        this.logTest('Small Export Backwards Compatibility',
+          exportType === 'synchronous',
           'Synchronous export works correctly');
       } else {
-        this.logTest('Small Export Backwards Compatibility', false, 
+        this.logTest('Small Export Backwards Compatibility', false,
           `Expected ZIP file, got: ${response.headers.get('content-type')}`);
       }
     } catch (error) {
@@ -158,7 +158,7 @@ class StreamingExportTester {
    */
   async testLargeExport() {
     console.log('\n🚀 Testing large export with streaming...');
-    
+
     try {
       const { response, data } = await this.apiRequest('/api/v1/artifacts/export/bulk', {
         method: 'POST',
@@ -170,13 +170,13 @@ class StreamingExportTester {
       });
 
       if (response.ok && data.streaming === true) {
-        this.logTest('Large Export Streaming Initiation', true, 
+        this.logTest('Large Export Streaming Initiation', true,
           `Job started: ${data.data.jobId}`);
-        
+
         // Test progress tracking
         await this.testProgressTracking(data.data.jobId);
       } else {
-        this.logTest('Large Export Streaming Initiation', false, 
+        this.logTest('Large Export Streaming Initiation', false,
           `Expected streaming response, got: ${JSON.stringify(data)}`);
       }
     } catch (error) {
@@ -189,8 +189,8 @@ class StreamingExportTester {
    */
   async testProgressTracking(jobId) {
     console.log(`\n📊 Testing progress tracking for job: ${jobId}...`);
-    
-    return new Promise((resolve) => {
+
+    return new Promise(resolve => {
       const eventSource = new EventSource(`${BASE_URL}/api/v1/export-progress/stream/${jobId}`, {
         headers: { 'X-API-Key': API_KEY }
       });
@@ -203,17 +203,17 @@ class StreamingExportTester {
         resolve();
       }, 60000); // 60 second timeout
 
-      eventSource.onmessage = (event) => {
+      eventSource.onmessage = event => {
         try {
           const data = JSON.parse(event.data);
-          
+
           if (data.type === 'progress') {
             progressReceived = true;
             console.log(`Progress: ${data.data.progress}% (${data.data.processedItems}/${data.data.totalItems})`);
           } else if (data.type === 'completed') {
             completedReceived = true;
             console.log(`Export completed: ${data.data.downloadUrl}`);
-            
+
             // Test download
             this.testDownload(jobId, data.data.downloadUrl);
           }
@@ -222,7 +222,7 @@ class StreamingExportTester {
         }
       };
 
-      eventSource.onerror = (error) => {
+      eventSource.onerror = error => {
         console.error('SSE Error:', error);
         eventSource.close();
         clearTimeout(timeout);
@@ -233,7 +233,7 @@ class StreamingExportTester {
       eventSource.addEventListener('close', () => {
         eventSource.close();
         clearTimeout(timeout);
-        
+
         if (completedReceived) {
           this.logTest('SSE Progress Tracking', true, 'Received progress and completion events');
         } else if (progressReceived) {
@@ -241,7 +241,7 @@ class StreamingExportTester {
         } else {
           this.logTest('SSE Progress Tracking', false, 'No progress events received');
         }
-        
+
         resolve();
       });
     });
@@ -252,15 +252,15 @@ class StreamingExportTester {
    */
   async testPollingFallback(jobId) {
     console.log(`\n🔄 Testing polling fallback for job: ${jobId}...`);
-    
+
     try {
       const { response, data } = await this.apiRequest(`/api/v1/export-progress/poll/${jobId}`);
-      
+
       if (response.ok && data.success && data.data) {
-        this.logTest('Polling Fallback', true, 
+        this.logTest('Polling Fallback', true,
           `Status: ${data.data.status}, Progress: ${data.data.progress}%`);
       } else {
-        this.logTest('Polling Fallback', false, 
+        this.logTest('Polling Fallback', false,
           `Unexpected response: ${JSON.stringify(data)}`);
       }
     } catch (error) {
@@ -273,7 +273,7 @@ class StreamingExportTester {
    */
   async testDownload(jobId, downloadUrl) {
     console.log(`\n⬇️ Testing download for job: ${jobId}...`);
-    
+
     try {
       const response = await fetch(`${BASE_URL}${downloadUrl}`, {
         headers: { 'X-API-Key': API_KEY }
@@ -281,13 +281,13 @@ class StreamingExportTester {
 
       if (response.ok && response.headers.get('content-type') === 'application/zip') {
         const contentLength = response.headers.get('content-length');
-        this.logTest('Download Functionality', true, 
+        this.logTest('Download Functionality', true,
           `Downloaded ZIP file (${contentLength} bytes)`);
-        
+
         // Test range request (resumable download)
         await this.testRangeRequest(jobId);
       } else {
-        this.logTest('Download Functionality', false, 
+        this.logTest('Download Functionality', false,
           `Expected ZIP file, got: ${response.status} ${response.statusText}`);
       }
     } catch (error) {
@@ -300,21 +300,21 @@ class StreamingExportTester {
    */
   async testRangeRequest(jobId) {
     console.log(`\n📦 Testing range requests for job: ${jobId}...`);
-    
+
     try {
       const response = await fetch(`${BASE_URL}/api/v1/export-progress/download/${jobId}`, {
-        headers: { 
+        headers: {
           'X-API-Key': API_KEY,
-          'Range': 'bytes=0-1023' // First 1KB
+          Range: 'bytes=0-1023' // First 1KB
         }
       });
 
       if (response.status === 206) {
         const contentRange = response.headers.get('content-range');
-        this.logTest('Range Request Support', true, 
+        this.logTest('Range Request Support', true,
           `Partial content: ${contentRange}`);
       } else {
-        this.logTest('Range Request Support', false, 
+        this.logTest('Range Request Support', false,
           `Expected 206 status, got: ${response.status}`);
       }
     } catch (error) {
@@ -327,25 +327,25 @@ class StreamingExportTester {
    */
   async testApiDocumentation() {
     console.log('\n📚 Testing API documentation accessibility...');
-    
+
     try {
       // Test OpenAPI spec endpoint
       const { response: specResponse } = await this.apiRequest('/api/openapi');
-      
+
       if (specResponse.ok) {
         this.logTest('OpenAPI Spec Accessibility', true, 'OpenAPI spec is accessible');
       } else {
-        this.logTest('OpenAPI Spec Accessibility', false, 
+        this.logTest('OpenAPI Spec Accessibility', false,
           `OpenAPI spec not accessible: ${specResponse.status}`);
       }
 
       // Test Swagger UI endpoint
       const docsResponse = await fetch(`${BASE_URL}/docs/v1`);
-      
+
       if (docsResponse.ok) {
         this.logTest('Swagger UI Accessibility', true, 'Swagger UI is accessible');
       } else {
-        this.logTest('Swagger UI Accessibility', false, 
+        this.logTest('Swagger UI Accessibility', false,
           `Swagger UI not accessible: ${docsResponse.status}`);
       }
     } catch (error) {
@@ -358,7 +358,7 @@ class StreamingExportTester {
    */
   async cleanup() {
     console.log('\n🧹 Cleaning up test artifacts...');
-    
+
     for (const artifactId of this.createdArtifacts) {
       try {
         await this.apiRequest(`/api/v1/artifacts/${artifactId}`, {
@@ -368,7 +368,7 @@ class StreamingExportTester {
         console.error(`Error deleting artifact ${artifactId}:`, error.message);
       }
     }
-    
+
     console.log(`Cleaned up ${this.createdArtifacts.length} test artifacts`);
   }
 
@@ -377,11 +377,11 @@ class StreamingExportTester {
    */
   async runAllTests() {
     console.log('🚀 Starting Streaming Export Tests...\n');
-    
+
     try {
       // Create test artifacts
       await this.createTestArtifacts([...testArtifacts, ...largeArtifacts.slice(0, 10)]);
-      
+
       if (this.createdArtifacts.length === 0) {
         console.error('❌ No test artifacts created. Cannot proceed with tests.');
         return;
@@ -391,29 +391,28 @@ class StreamingExportTester {
       await this.testSmallExport();
       await this.testLargeExport();
       await this.testApiDocumentation();
-      
+
       // Clean up
       await this.cleanup();
-      
+
       // Print results
       console.log('\n📊 Test Results Summary:');
       console.log(`✅ Passed: ${this.testResults.passed}`);
       console.log(`❌ Failed: ${this.testResults.failed}`);
       console.log(`📝 Total: ${this.testResults.tests.length}`);
-      
+
       if (this.testResults.failed > 0) {
         console.log('\n❌ Failed Tests:');
         this.testResults.tests
           .filter(test => !test.passed)
           .forEach(test => console.log(`  - ${test.name}: ${test.message}`));
       }
-      
+
       // Save detailed results
       const resultsFile = path.join(__dirname, '..', 'test-results', 'streaming-export-results.json');
       fs.mkdirSync(path.dirname(resultsFile), { recursive: true });
       fs.writeFileSync(resultsFile, JSON.stringify(this.testResults, null, 2));
       console.log(`\n📄 Detailed results saved to: ${resultsFile}`);
-      
     } catch (error) {
       console.error('❌ Test execution failed:', error);
     }

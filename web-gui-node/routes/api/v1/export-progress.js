@@ -34,7 +34,7 @@ router.get('/stream/:jobId', requireAuth, rateLimits.export, (req, res) => {
   res.writeHead(200, {
     'Content-Type': 'text/event-stream',
     'Cache-Control': 'no-cache',
-    'Connection': 'keep-alive',
+    Connection: 'keep-alive',
     'Access-Control-Allow-Origin': '*',
     'Access-Control-Allow-Headers': 'Cache-Control',
     'X-Accel-Buffering': 'no' // Disable nginx buffering
@@ -75,7 +75,7 @@ router.get('/stream/:jobId', requireAuth, rateLimits.export, (req, res) => {
         },
         timestamp: new Date().toISOString()
       };
-      
+
       try {
         res.write(`data: ${JSON.stringify(progressData)}\n\n`);
       } catch (error) {
@@ -100,14 +100,14 @@ router.get('/stream/:jobId', requireAuth, rateLimits.export, (req, res) => {
         },
         timestamp: new Date().toISOString()
       };
-      
+
       try {
         res.write(`data: ${JSON.stringify(completedData)}\n\n`);
         res.write('event: close\ndata: Export completed\n\n');
       } catch (error) {
         console.error('Error sending completion update:', error);
       }
-      
+
       cleanup();
     }
   };
@@ -124,14 +124,14 @@ router.get('/stream/:jobId', requireAuth, rateLimits.export, (req, res) => {
         },
         timestamp: new Date().toISOString()
       };
-      
+
       try {
         res.write(`data: ${JSON.stringify(errorData)}\n\n`);
         res.write('event: close\ndata: Export failed\n\n');
       } catch (error) {
         console.error('Error sending error update:', error);
       }
-      
+
       cleanup();
     }
   };
@@ -147,14 +147,14 @@ router.get('/stream/:jobId', requireAuth, rateLimits.export, (req, res) => {
         },
         timestamp: new Date().toISOString()
       };
-      
+
       try {
         res.write(`data: ${JSON.stringify(cancelledData)}\n\n`);
         res.write('event: close\ndata: Export cancelled\n\n');
       } catch (error) {
         console.error('Error sending cancellation update:', error);
       }
-      
+
       cleanup();
     }
   };
@@ -172,7 +172,7 @@ router.get('/stream/:jobId', requireAuth, rateLimits.export, (req, res) => {
     streamingExportService.removeListener('failed', failedHandler);
     streamingExportService.removeListener('cancelled', cancelledHandler);
     activeConnections.delete(connectionId);
-    
+
     try {
       res.end();
     } catch (error) {
@@ -211,7 +211,7 @@ router.get('/poll/:jobId', requireAuth, rateLimits.export, (req, res) => {
 
   try {
     const jobStatus = streamingExportService.getJobStatus(jobId);
-    
+
     if (!jobStatus) {
       return res.status(404).json({
         success: false,
@@ -244,7 +244,7 @@ router.post('/cancel/:jobId', requireAuth, rateLimits.export, (req, res) => {
 
   try {
     const jobStatus = streamingExportService.getJobStatus(jobId);
-    
+
     if (!jobStatus) {
       return res.status(404).json({
         success: false,
@@ -253,7 +253,7 @@ router.post('/cancel/:jobId', requireAuth, rateLimits.export, (req, res) => {
     }
 
     const cancelled = streamingExportService.cancelJob(jobId);
-    
+
     if (cancelled) {
       res.json({
         success: true,
@@ -288,7 +288,7 @@ router.post('/cancel/:jobId', requireAuth, rateLimits.export, (req, res) => {
 router.get('/jobs', requireAuth, rateLimits.export, (req, res) => {
   try {
     const jobs = streamingExportService.getAllJobs();
-    
+
     res.json({
       success: true,
       data: {
@@ -315,26 +315,26 @@ router.get('/jobs', requireAuth, rateLimits.export, (req, res) => {
 router.get('/download/:jobId', requireAuth, rateLimits.export, (req, res) => {
   const { jobId } = req.params;
   const userId = req.user?.id;
-  const range = req.headers.range;
+  const { range } = req.headers;
 
   try {
     let downloadInfo;
-    
+
     if (range) {
       // Handle range requests for resumable downloads
-      const parts = range.replace(/bytes=/, "").split("-");
+      const parts = range.replace(/bytes=/, '').split('-');
       const start = parseInt(parts[0], 10);
       const end = parts[1] ? parseInt(parts[1], 10) : undefined;
-      
+
       downloadInfo = streamingExportService.getPartialDownloadStream(jobId, start, end);
-      
+
       if (!downloadInfo) {
         return res.status(404).json({
           success: false,
           error: 'Export file not found or not ready'
         });
       }
-      
+
       // Set partial content headers
       res.status(206);
       res.setHeader('Content-Range', `bytes ${downloadInfo.range.start}-${downloadInfo.range.end}/${downloadInfo.range.total}`);
@@ -343,14 +343,14 @@ router.get('/download/:jobId', requireAuth, rateLimits.export, (req, res) => {
     } else {
       // Handle full file download
       downloadInfo = streamingExportService.getDownloadStream(jobId);
-      
+
       if (!downloadInfo) {
         return res.status(404).json({
           success: false,
           error: 'Export file not found or not ready'
         });
       }
-      
+
       res.setHeader('Content-Length', downloadInfo.size);
     }
 
@@ -360,11 +360,11 @@ router.get('/download/:jobId', requireAuth, rateLimits.export, (req, res) => {
     res.setHeader('X-Content-Type-Options', 'nosniff');
     res.setHeader('Cache-Control', 'no-cache, no-store, must-revalidate');
     res.setHeader('ETag', `"${downloadInfo.hash}"`);
-    
+
     // Stream the file
     downloadInfo.stream.pipe(res);
-    
-    downloadInfo.stream.on('error', (error) => {
+
+    downloadInfo.stream.on('error', error => {
       console.error('Error streaming export file:', error);
       if (!res.headersSent) {
         res.status(500).json({
@@ -373,7 +373,6 @@ router.get('/download/:jobId', requireAuth, rateLimits.export, (req, res) => {
         });
       }
     });
-    
   } catch (error) {
     console.error('Error downloading export file:', error);
     if (!res.headersSent) {

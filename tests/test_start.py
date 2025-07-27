@@ -4,9 +4,8 @@ Tests for the refactored start.py functions
 """
 
 import sys
-import os
 import unittest
-from unittest.mock import patch, Mock, MagicMock
+from unittest.mock import patch, Mock
 from pathlib import Path
 
 # Add parent directory to path for imports

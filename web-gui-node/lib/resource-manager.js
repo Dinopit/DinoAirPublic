@@ -10,17 +10,17 @@ class ResourceManager extends EventEmitter {
     this.streams = new Set();
     this.eventListenerManager = new EventListenerManager();
     this.isShuttingDown = false;
-    
+
     this.setupGracefulShutdown();
   }
-  
+
   setupGracefulShutdown() {
-    const shutdown = async (signal) => {
-      if (this.isShuttingDown) return;
+    const shutdown = async signal => {
+      if (this.isShuttingDown) { return; }
       this.isShuttingDown = true;
-      
+
       console.log(`Received ${signal}, initiating graceful shutdown...`);
-      
+
       try {
         await this.cleanup();
         console.log('Resource cleanup completed successfully');
@@ -30,10 +30,10 @@ class ResourceManager extends EventEmitter {
         process.exit(1);
       }
     };
-    
+
     process.on('SIGTERM', () => shutdown('SIGTERM'));
     process.on('SIGINT', () => shutdown('SIGINT'));
-    process.on('uncaughtException', (error) => {
+    process.on('uncaughtException', error => {
       console.error('Uncaught exception:', error);
       shutdown('uncaughtException');
     });
@@ -42,56 +42,56 @@ class ResourceManager extends EventEmitter {
       shutdown('unhandledRejection');
     });
   }
-  
+
   registerTimer(timerId) {
     this.timers.add(timerId);
     return timerId;
   }
-  
+
   registerInterval(intervalId) {
     this.intervals.add(intervalId);
     return intervalId;
   }
-  
+
   registerEventListener(target, event, listener, options) {
     this.eventListenerManager.addEventListener(target, event, listener, options);
     return { target, event, listener, options };
   }
-  
+
   removeEventListener(target, event, listener, options) {
     this.eventListenerManager.removeEventListener(target, event, listener, options);
   }
-  
+
   registerStream(stream) {
     this.streams.add(stream);
-    
+
     stream.on('close', () => {
       this.streams.delete(stream);
     });
-    
-    stream.on('error', (error) => {
+
+    stream.on('error', error => {
       console.error('Stream error:', error);
       this.streams.delete(stream);
     });
-    
+
     return stream;
   }
-  
+
   registerResource(key, resource, cleanupFn) {
     this.resources.set(key, { resource, cleanupFn });
     return resource;
   }
-  
+
   clearTimer(timerId) {
     clearTimeout(timerId);
     this.timers.delete(timerId);
   }
-  
+
   clearInterval(intervalId) {
     clearInterval(intervalId);
     this.intervals.delete(intervalId);
   }
-  
+
   closeStream(stream) {
     if (stream && typeof stream.destroy === 'function') {
       stream.destroy();
@@ -100,22 +100,22 @@ class ResourceManager extends EventEmitter {
     }
     this.streams.delete(stream);
   }
-  
+
   async cleanup() {
     console.log('Starting resource cleanup...');
-    
+
     this.timers.forEach(timerId => {
       clearTimeout(timerId);
     });
     this.timers.clear();
     console.log('Cleared all timers');
-    
+
     this.intervals.forEach(intervalId => {
       clearInterval(intervalId);
     });
     this.intervals.clear();
     console.log('Cleared all intervals');
-    
+
     this.streams.forEach(stream => {
       try {
         if (stream && typeof stream.destroy === 'function') {
@@ -129,11 +129,11 @@ class ResourceManager extends EventEmitter {
     });
     this.streams.clear();
     console.log('Closed all streams');
-    
+
     // Clean up all event listeners
     this.eventListenerManager.cleanup();
     console.log('Cleaned up all event listeners');
-    
+
     for (const [key, { resource, cleanupFn }] of this.resources.entries()) {
       try {
         if (cleanupFn) {
@@ -145,10 +145,10 @@ class ResourceManager extends EventEmitter {
     }
     this.resources.clear();
     console.log('Cleaned up all registered resources');
-    
+
     this.emit('cleanup-complete');
   }
-  
+
   getStats() {
     const eventListenerStats = this.eventListenerManager.getStats();
     return {

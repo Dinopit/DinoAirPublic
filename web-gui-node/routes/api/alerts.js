@@ -8,7 +8,7 @@ const alertingManager = new AlertingManager();
 
 router.get('/status', rateLimits.api, (req, res) => {
   const correlationId = getCorrelationId(req);
-  
+
   const status = {
     enabled: true,
     timestamp: new Date().toISOString(),
@@ -69,7 +69,7 @@ router.post('/test', rateLimits.api, async (req, res) => {
       span.recordException(error);
       span.end();
     }
-    
+
     console.error('Test alert failed:', error);
     res.status(500).json({
       success: false,

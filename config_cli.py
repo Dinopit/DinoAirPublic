@@ -6,7 +6,6 @@ Command-line interface for configuration export, import, backup and restore oper
 
 import argparse
 import sys
-import os
 from pathlib import Path
 from typing import List, Optional
 
@@ -15,7 +14,7 @@ sys.path.insert(0, str(Path(__file__).parent))
 
 from lib.config import (
     ConfigExportImportManager, ExportFormat, ConfigSection, 
-    load_config, ConfigExportError, ConfigImportError, ConfigBackupError
+    load_config
 )
 
 

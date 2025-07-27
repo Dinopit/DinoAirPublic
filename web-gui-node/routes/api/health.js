@@ -282,7 +282,7 @@ router.get('/', rateLimits.api, async (req, res) => {
         metrics: {
           healthyServices: healthyCount,
           unhealthyServices: unhealthyCount,
-          totalResponseTime: totalResponseTime
+          totalResponseTime
         }
       });
     } else if (overallStatus === 'degraded') {
@@ -295,7 +295,7 @@ router.get('/', rateLimits.api, async (req, res) => {
         metrics: {
           healthyServices: healthyCount,
           unhealthyServices: unhealthyCount,
-          totalResponseTime: totalResponseTime
+          totalResponseTime
         }
       });
     }
@@ -457,8 +457,8 @@ router.get('/detailed', rateLimits.api, async (req, res) => {
         unhealthy: unhealthyCount,
         degraded: degradedCount,
         criticalServicesHealthy:
-          dependencyStatus.critical.ollama.status === 'healthy' &&
-          dependencyStatus.critical.comfyui.status === 'healthy',
+          dependencyStatus.critical.ollama.status === 'healthy'
+          && dependencyStatus.critical.comfyui.status === 'healthy',
         lastUpdate: new Date().toISOString()
       },
       system: systemInfo,

@@ -16,9 +16,9 @@ try {
   console.warn('⚠️  Session store not available, using memory-based sessions:', error.message);
   sessionStoreAvailable = false;
   sessionStore = {
-    get: (sessionId) => Promise.resolve(null),
+    get: sessionId => Promise.resolve(null),
     set: (sessionId, data) => Promise.resolve(),
-    destroy: (sessionId) => Promise.resolve(),
+    destroy: sessionId => Promise.resolve(),
     clear: () => Promise.resolve()
   };
 }
@@ -53,7 +53,7 @@ try {
   console.warn('⚠️  JWT manager not available, using fallback implementation:', error.message);
   jwtManagerAvailable = false;
   jwtManager = {
-    verifyAccessToken: (token) => {
+    verifyAccessToken: token => {
       try {
         const payload = JSON.parse(Buffer.from(token.split('.')[1], 'base64').toString());
         return payload;
@@ -61,8 +61,8 @@ try {
         return null;
       }
     },
-    generateAccessToken: (payload) => 'fallback-token',
-    generateRefreshToken: (payload) => 'fallback-refresh-token'
+    generateAccessToken: payload => 'fallback-token',
+    generateRefreshToken: payload => 'fallback-refresh-token'
   };
 }
 
@@ -72,7 +72,7 @@ try {
 const requireAuth = async (req, res, next) => {
   console.log(`🛡️  [${new Date().toISOString()}] AuthMiddleware: requireAuth called for ${req.method} ${req.originalUrl} from ${req.ip}`);
   console.time('requireAuth');
-  
+
   try {
     // Check for JWT token in Authorization header
     console.log(`🛡️  [${new Date().toISOString()}] AuthMiddleware: Checking JWT authorization header`);
@@ -85,12 +85,12 @@ const requireAuth = async (req, res, next) => {
 
     const token = authHeader.substring(7);
     console.log(`🛡️  [${new Date().toISOString()}] AuthMiddleware: Extracted JWT token (${token.substring(0, 20)}...)`);
-    
+
     console.log(`🛡️  [${new Date().toISOString()}] AuthMiddleware: Verifying JWT token with jwtManager`);
     console.time('jwtTokenVerification');
     const tokenPayload = jwtManager.verifyAccessToken(token);
     console.timeEnd('jwtTokenVerification');
-    
+
     if (!tokenPayload) {
       console.log(`🛡️  [${new Date().toISOString()}] AuthMiddleware: JWT token verification failed`);
       console.timeEnd('requireAuth');
@@ -102,7 +102,7 @@ const requireAuth = async (req, res, next) => {
     console.time('getUserData');
     const userData = await db.getUserById(tokenPayload.userId);
     console.timeEnd('getUserData');
-    
+
     if (!userData) {
       console.log(`🛡️  [${new Date().toISOString()}] AuthMiddleware: User not found for ${tokenPayload.userId}`);
       console.timeEnd('requireAuth');
@@ -116,7 +116,7 @@ const requireAuth = async (req, res, next) => {
       metadata: tokenPayload.metadata,
       profile: userData
     };
-    
+
     console.log(`✅ [${new Date().toISOString()}] AuthMiddleware: User authenticated:`, {
       userId: req.user.id,
       tier: getUserTier(req.user),
@@ -124,7 +124,7 @@ const requireAuth = async (req, res, next) => {
       ip: req.ip,
       userAgent: req.get('User-Agent')?.substring(0, 100)
     });
-    
+
     console.timeEnd('requireAuth');
     console.log(`🛡️  [${new Date().toISOString()}] AuthMiddleware: requireAuth completed successfully for ${req.user.id}`);
     next();
@@ -141,7 +141,7 @@ const requireAuth = async (req, res, next) => {
 const requireApiKey = async (req, res, next) => {
   console.log(`🔑 [${new Date().toISOString()}] AuthMiddleware: requireApiKey called for ${req.method} ${req.originalUrl} from ${req.ip}`);
   console.time('requireApiKey');
-  
+
   try {
     // Check for API key in Authorization header
     console.log(`🔑 [${new Date().toISOString()}] AuthMiddleware: Checking API key authorization header`);
@@ -153,10 +153,10 @@ const requireApiKey = async (req, res, next) => {
     }
 
     // Extract API key from header (with or without 'Bearer ' prefix)
-    const apiKey = authHeader.startsWith('Bearer ') 
-      ? authHeader.substring(7) 
+    const apiKey = authHeader.startsWith('Bearer ')
+      ? authHeader.substring(7)
       : authHeader;
-    
+
     console.log(`🔑 [${new Date().toISOString()}] AuthMiddleware: Extracted API key (${apiKey.substring(0, 12)}...)`);
 
     // Verify the API key with enhanced security
@@ -169,7 +169,7 @@ const requireApiKey = async (req, res, next) => {
     if (error || !userId) {
       console.log(`🔑 [${new Date().toISOString()}] AuthMiddleware: API key verification failed: ${error?.message}`);
       console.timeEnd('requireApiKey');
-      return res.status(401).json({ 
+      return res.status(401).json({
         error: 'Invalid API key',
         category: 'invalid_api_key'
       });
@@ -178,7 +178,7 @@ const requireApiKey = async (req, res, next) => {
     if (!userData) {
       console.log(`🔑 [${new Date().toISOString()}] AuthMiddleware: User data not found for API key`);
       console.timeEnd('requireApiKey');
-      return res.status(401).json({ 
+      return res.status(401).json({
         error: 'User not found',
         category: 'user_not_found'
       });
@@ -227,7 +227,7 @@ const requireApiKey = async (req, res, next) => {
 const anyAuth = async (req, res, next) => {
   const requestId = req.headers['x-request-id'] || `${Date.now()}-${Math.random()}`;
   const lockKey = `anyauth:${getCacheKey(req, 'any')}`;
-  
+
   try {
     const existingLock = authCache.get(lockKey);
     if (existingLock && existingLock.processing && (Date.now() - existingLock.timestamp) < 1000) {
@@ -238,7 +238,7 @@ const anyAuth = async (req, res, next) => {
           return res.status(401).json({ error: result.error });
         }
         req.user = result.user;
-        if (result.apiKey) req.apiKey = result.apiKey;
+        if (result.apiKey) { req.apiKey = result.apiKey; }
         return next();
       }
     }
@@ -256,8 +256,8 @@ const anyAuth = async (req, res, next) => {
     const authHeader = req.headers.authorization;
     if (authHeader) {
       try {
-        const apiKey = authHeader.startsWith('Bearer ') 
-          ? authHeader.substring(7) 
+        const apiKey = authHeader.startsWith('Bearer ')
+          ? authHeader.substring(7)
           : authHeader;
 
         const ip = req.ip || req.connection.remoteAddress || req.socket.remoteAddress || 'unknown';
@@ -280,7 +280,7 @@ const anyAuth = async (req, res, next) => {
     if (!authResult) {
       try {
         const { user, error } = await auth.getCurrentUser();
-        
+
         if (!error && user) {
           authResult = {
             user,
@@ -303,19 +303,17 @@ const anyAuth = async (req, res, next) => {
         timestamp: Date.now(),
         processing: false
       });
-      
+
       req.user = authResult.user;
-      if (authResult.apiKey) req.apiKey = authResult.apiKey;
+      if (authResult.apiKey) { req.apiKey = authResult.apiKey; }
       return next();
-    } else {
-      authCache.set(lockKey, {
-        error: authError || 'Authentication failed',
-        timestamp: Date.now(),
-        processing: false
-      });
-      return res.status(401).json({ error: authError || 'Not authenticated' });
     }
-    
+    authCache.set(lockKey, {
+      error: authError || 'Authentication failed',
+      timestamp: Date.now(),
+      processing: false
+    });
+    return res.status(401).json({ error: authError || 'Not authenticated' });
   } catch (error) {
     authCache.delete(lockKey);
     console.error('Auth middleware error:', error);
@@ -331,18 +329,18 @@ const withRateLimit = (category = 'api') => {
   return async (req, res, next) => {
     console.log(`🚦 [${new Date().toISOString()}] AuthMiddleware: withRateLimit called for category '${category}' on ${req.method} ${req.originalUrl} from ${req.ip}`);
     console.time(`rateLimit_${category}`);
-    
+
     const rateLimit = rateLimiters[category] || rateLimiters.api;
     const rateLimitInfo = addRateLimitInfo(category);
-    
+
     console.log(`🚦 [${new Date().toISOString()}] AuthMiddleware: Using rate limiter for category '${category}'`);
-    
+
     try {
       console.log(`🚦 [${new Date().toISOString()}] AuthMiddleware: Applying rate limit check`);
       console.time('rateLimitCheck');
-      
+
       await new Promise((resolve, reject) => {
-        rateLimit(req, res, (err) => {
+        rateLimit(req, res, err => {
           if (err) {
             console.log(`🚦 [${new Date().toISOString()}] AuthMiddleware: Rate limit check failed:`, err.message);
             reject(err);
@@ -352,22 +350,22 @@ const withRateLimit = (category = 'api') => {
           }
         });
       });
-      
+
       console.timeEnd('rateLimitCheck');
       console.log(`🚦 [${new Date().toISOString()}] AuthMiddleware: Adding rate limit info to response headers`);
       rateLimitInfo(req, res, () => {});
-      
+
       console.timeEnd(`rateLimit_${category}`);
       console.log(`🚦 [${new Date().toISOString()}] AuthMiddleware: Rate limiting completed successfully for ${category}`);
       next();
     } catch (error) {
       console.timeEnd('rateLimitCheck');
       console.timeEnd(`rateLimit_${category}`);
-      
+
       if (error.status === 429 || error.message?.includes('rate limit')) {
         const tier = getUserTier(req.user);
         console.log(`🚦 [${new Date().toISOString()}] AuthMiddleware: Rate limit exceeded for ${category} from ${req.ip}, tier: ${tier}, retryAfter: ${error.retryAfter || 60}`);
-        
+
         return res.status(429).json({
           error: 'Rate limit exceeded',
           message: `Too many ${category} requests. Please wait before trying again.`,
@@ -377,7 +375,7 @@ const withRateLimit = (category = 'api') => {
           upgradeMessage: tier === 'free' ? 'Upgrade to premium for higher limits' : null
         });
       }
-      
+
       console.error(`🚦 [${new Date().toISOString()}] AuthMiddleware: Rate limit middleware error:`, error);
       return res.status(500).json({ error: 'Internal server error' });
     }
@@ -391,11 +389,11 @@ const withRateLimit = (category = 'api') => {
 const smartRateLimit = (req, res, next) => {
   console.log(`🚦 [${new Date().toISOString()}] AuthMiddleware: smartRateLimit called for ${req.method} ${req.originalUrl} from ${req.ip}`);
   console.time('smartRateLimit');
-  
+
   let category = 'api'; // default
-  
+
   console.log(`🚦 [${new Date().toISOString()}] AuthMiddleware: Determining rate limit category for path: ${req.path}`);
-  
+
   if (req.path.includes('/auth/') || req.path.includes('/signin') || req.path.includes('/signup')) {
     category = 'auth';
   } else if (req.path.includes('/chat')) {
@@ -405,17 +403,17 @@ const smartRateLimit = (req, res, next) => {
   } else if (req.path.includes('/export') || req.path.includes('/download')) {
     category = 'export';
   }
-  
+
   console.log(`🚦 [${new Date().toISOString()}] AuthMiddleware: Selected rate limit category: '${category}' for ${req.path}`);
-  
+
   const middleware = withRateLimit(category);
-  
+
   const wrappedNext = () => {
     console.timeEnd('smartRateLimit');
     console.log(`🚦 [${new Date().toISOString()}] AuthMiddleware: smartRateLimit completed for category '${category}'`);
     next();
   };
-  
+
   middleware(req, res, wrappedNext);
 };
 

@@ -311,7 +311,7 @@ const createRLSPolicies = {
 async function executeSQLStatement(sql, description) {
   try {
     console.log(`Executing: ${description}...`);
-    
+
     const { data, error } = await supabaseAdmin.rpc('exec_sql', {
       sql_query: sql
     });
@@ -320,14 +320,14 @@ async function executeSQLStatement(sql, description) {
       // If the RPC function doesn't exist, try direct SQL execution
       if (error.code === '42883') {
         console.log('RPC function not available, trying alternative method...');
-        
+
         // For table creation, we can use the REST API with raw SQL
         const response = await fetch(`${process.env.SUPABASE_URL}/rest/v1/rpc/exec_sql`, {
           method: 'POST',
           headers: {
             'Content-Type': 'application/json',
-            'Authorization': `Bearer ${process.env.SUPABASE_SERVICE_ROLE_KEY}`,
-            'apikey': process.env.SUPABASE_SERVICE_ROLE_KEY
+            Authorization: `Bearer ${process.env.SUPABASE_SERVICE_ROLE_KEY}`,
+            apikey: process.env.SUPABASE_SERVICE_ROLE_KEY
           },
           body: JSON.stringify({ sql_query: sql })
         });
@@ -339,7 +339,7 @@ async function executeSQLStatement(sql, description) {
         console.log(`✅ ${description} completed successfully`);
         return;
       }
-      
+
       throw error;
     }
 
@@ -418,7 +418,7 @@ async function verifyTables() {
   console.log('\n🔍 Verifying table creation...\n');
 
   const tables = ['DinoAI', 'chat_sessions', 'chat_messages', 'chat_metrics', 'artifacts', 'user_sessions', 'refresh_tokens'];
-  
+
   for (const table of tables) {
     try {
       const { data, error } = await supabaseAdmin
@@ -451,11 +451,11 @@ async function setupDatabase() {
     // Test connection first
     console.log('🔗 Testing Supabase connection...');
     const { data, error } = await supabaseAdmin.from('information_schema.tables').select('table_name').limit(1);
-    
+
     if (error) {
       throw new Error(`Connection failed: ${error.message}`);
     }
-    
+
     console.log('✅ Supabase connection successful!\n');
 
     // Create tables
@@ -473,12 +473,11 @@ async function setupDatabase() {
 
     console.log('\n🎉 Database setup completed successfully!');
     console.log('\nYou can now use the DinoAir chat application with Supabase integration.');
-    
   } catch (error) {
     console.error('\n💥 Database setup failed:', error.message);
     console.log('\nPlease check your Supabase configuration and try again.');
     console.log('You may need to create the tables manually in the Supabase SQL editor.');
-    
+
     // Print the SQL statements for manual execution
     console.log('\n📋 SQL statements for manual execution:');
     console.log('\n-- Chat Sessions Table:');
@@ -487,7 +486,7 @@ async function setupDatabase() {
     console.log(createTablesSQL.chat_messages);
     console.log('\n-- Chat Metrics Table:');
     console.log(createTablesSQL.chat_metrics);
-    
+
     process.exit(1);
   }
 }

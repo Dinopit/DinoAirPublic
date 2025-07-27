@@ -1,6 +1,6 @@
-let NodeSDK, getNodeAutoInstrumentations, Resource, SemanticResourceAttributes;
-let OTLPTraceExporter, OTLPMetricExporter, PeriodicExportingMetricReader;
-let trace, metrics, context, uuidv4;
+let NodeSDK; let getNodeAutoInstrumentations; let Resource; let SemanticResourceAttributes;
+let OTLPTraceExporter; let OTLPMetricExporter; let PeriodicExportingMetricReader;
+let trace; let metrics; let context; let uuidv4;
 let apmAvailable = false;
 
 try {
@@ -18,7 +18,7 @@ try {
 } catch (error) {
   console.warn('⚠️  APM monitoring dependencies not available, running without telemetry:', error.message);
   apmAvailable = false;
-  uuidv4 = () => 'xxxxxxxx-xxxx-4xxx-yxxx-xxxxxxxxxxxx'.replace(/[xy]/g, function(c) {
+  uuidv4 = () => 'xxxxxxxx-xxxx-4xxx-yxxx-xxxxxxxxxxxx'.replace(/[xy]/g, c => {
     const r = Math.random() * 16 | 0;
     const v = c == 'x' ? r : (r & 0x3 | 0x8);
     return v.toString(16);
@@ -32,7 +32,7 @@ class APMManager {
     this.meter = null;
     this.isInitialized = false;
     this.correlationIds = new Map();
-    
+
     this.metrics = {
       requestDuration: null,
       requestCount: null,
@@ -60,15 +60,15 @@ class APMManager {
     const resource = new Resource({
       [SemanticResourceAttributes.SERVICE_NAME]: serviceName,
       [SemanticResourceAttributes.SERVICE_VERSION]: serviceVersion,
-      [SemanticResourceAttributes.DEPLOYMENT_ENVIRONMENT]: environment,
+      [SemanticResourceAttributes.DEPLOYMENT_ENVIRONMENT]: environment
     });
 
     const traceExporter = new OTLPTraceExporter({
-      url: config.traceEndpoint || process.env.OTEL_EXPORTER_OTLP_TRACES_ENDPOINT || 'http://localhost:4318/v1/traces',
+      url: config.traceEndpoint || process.env.OTEL_EXPORTER_OTLP_TRACES_ENDPOINT || 'http://localhost:4318/v1/traces'
     });
 
     const metricExporter = new OTLPMetricExporter({
-      url: config.metricEndpoint || process.env.OTEL_EXPORTER_OTLP_METRICS_ENDPOINT || 'http://localhost:4318/v1/metrics',
+      url: config.metricEndpoint || process.env.OTEL_EXPORTER_OTLP_METRICS_ENDPOINT || 'http://localhost:4318/v1/metrics'
     });
 
     this.sdk = new NodeSDK({
@@ -76,12 +76,12 @@ class APMManager {
       traceExporter,
       metricReader: new PeriodicExportingMetricReader({
         exporter: metricExporter,
-        exportIntervalMillis: config.metricExportInterval || 30000,
+        exportIntervalMillis: config.metricExportInterval || 30000
       }),
       instrumentations: [
         getNodeAutoInstrumentations({
           '@opentelemetry/instrumentation-fs': {
-            enabled: false,
+            enabled: false
           },
           '@opentelemetry/instrumentation-http': {
             enabled: true,
@@ -90,16 +90,16 @@ class APMManager {
               if (correlationId) {
                 span.setAttributes({
                   'correlation.id': correlationId,
-                  'http.route': request.url,
+                  'http.route': request.url
                 });
               }
-            },
+            }
           },
           '@opentelemetry/instrumentation-express': {
-            enabled: true,
-          },
-        }),
-      ],
+            enabled: true
+          }
+        })
+      ]
     });
 
     try {
@@ -117,32 +117,32 @@ class APMManager {
   initializeMetrics() {
     this.metrics.requestDuration = this.meter.createHistogram('http_request_duration_ms', {
       description: 'Duration of HTTP requests in milliseconds',
-      unit: 'ms',
+      unit: 'ms'
     });
 
     this.metrics.requestCount = this.meter.createCounter('http_requests_total', {
-      description: 'Total number of HTTP requests',
+      description: 'Total number of HTTP requests'
     });
 
     this.metrics.errorCount = this.meter.createCounter('http_errors_total', {
-      description: 'Total number of HTTP errors',
+      description: 'Total number of HTTP errors'
     });
 
     this.metrics.memoryUsage = this.meter.createObservableGauge('process_memory_usage_bytes', {
       description: 'Process memory usage in bytes',
-      unit: 'bytes',
+      unit: 'bytes'
     });
 
     this.metrics.cpuUsage = this.meter.createObservableGauge('process_cpu_usage_percent', {
       description: 'Process CPU usage percentage',
-      unit: 'percent',
+      unit: 'percent'
     });
 
     this.metrics.activeConnections = this.meter.createObservableGauge('active_connections_total', {
-      description: 'Number of active connections',
+      description: 'Number of active connections'
     });
 
-    this.metrics.memoryUsage.addCallback((result) => {
+    this.metrics.memoryUsage.addCallback(result => {
       const memUsage = process.memoryUsage();
       result.observe(memUsage.heapUsed, { type: 'heap_used' });
       result.observe(memUsage.heapTotal, { type: 'heap_total' });
@@ -150,7 +150,7 @@ class APMManager {
       result.observe(memUsage.external, { type: 'external' });
     });
 
-    this.metrics.cpuUsage.addCallback((result) => {
+    this.metrics.cpuUsage.addCallback(result => {
       const cpuUsage = process.cpuUsage();
       result.observe(cpuUsage.user / 1000, { type: 'user' });
       result.observe(cpuUsage.system / 1000, { type: 'system' });
@@ -197,7 +197,7 @@ class APMManager {
     return (req, res, next) => {
       const startTime = Date.now();
       const correlationId = req.headers['x-correlation-id'] || this.generateCorrelationId();
-      
+
       this.setCorrelationId(req, correlationId);
       res.setHeader('x-correlation-id', correlationId);
 
@@ -207,18 +207,18 @@ class APMManager {
           'http.url': req.url,
           'http.route': req.route?.path || req.path,
           'correlation.id': correlationId,
-          'user.agent': req.headers['user-agent'],
-        },
+          'user.agent': req.headers['user-agent']
+        }
       });
 
       if (span) {
         context.with(trace.setSpan(context.active(), span), () => {
           res.on('finish', () => {
             const duration = Date.now() - startTime;
-            
+
             span.setAttributes({
               'http.status_code': res.statusCode,
-              'http.response_size': res.get('content-length') || 0,
+              'http.response_size': res.get('content-length') || 0
             });
 
             if (res.statusCode >= 400) {
@@ -226,20 +226,20 @@ class APMManager {
               this.recordMetric('errorCount', 1, {
                 method: req.method,
                 route: req.route?.path || req.path,
-                status_code: res.statusCode.toString(),
+                status_code: res.statusCode.toString()
               });
             }
 
             this.recordMetric('requestDuration', duration, {
               method: req.method,
               route: req.route?.path || req.path,
-              status_code: res.statusCode.toString(),
+              status_code: res.statusCode.toString()
             });
 
             this.recordMetric('requestCount', 1, {
               method: req.method,
               route: req.route?.path || req.path,
-              status_code: res.statusCode.toString(),
+              status_code: res.statusCode.toString()
             });
 
             span.end();
@@ -256,7 +256,7 @@ class APMManager {
   getPerformanceMetrics() {
     const memUsage = process.memoryUsage();
     const cpuUsage = process.cpuUsage();
-    
+
     return {
       timestamp: new Date().toISOString(),
       memory: {
@@ -265,19 +265,19 @@ class APMManager {
         rss: memUsage.rss,
         external: memUsage.external,
         heapUsedMB: Math.round(memUsage.heapUsed / 1024 / 1024 * 100) / 100,
-        heapTotalMB: Math.round(memUsage.heapTotal / 1024 / 1024 * 100) / 100,
+        heapTotalMB: Math.round(memUsage.heapTotal / 1024 / 1024 * 100) / 100
       },
       cpu: {
         user: cpuUsage.user,
         system: cpuUsage.system,
         userMs: Math.round(cpuUsage.user / 1000),
-        systemMs: Math.round(cpuUsage.system / 1000),
+        systemMs: Math.round(cpuUsage.system / 1000)
       },
       uptime: process.uptime(),
       pid: process.pid,
       version: process.version,
       platform: process.platform,
-      arch: process.arch,
+      arch: process.arch
     };
   }
 
@@ -299,12 +299,12 @@ const apmManager = new APMManager();
 module.exports = {
   APMManager,
   apmManager,
-  initialize: (config) => apmManager.initialize(config),
+  initialize: config => apmManager.initialize(config),
   middleware: () => apmManager.middleware(),
   createSpan: (name, options) => apmManager.createSpan(name, options),
   recordMetric: (metricName, value, attributes) => apmManager.recordMetric(metricName, value, attributes),
   getPerformanceMetrics: () => apmManager.getPerformanceMetrics(),
-  getCorrelationId: (req) => apmManager.getCorrelationId(req),
+  getCorrelationId: req => apmManager.getCorrelationId(req),
   setCorrelationId: (req, correlationId) => apmManager.setCorrelationId(req, correlationId),
-  shutdown: () => apmManager.shutdown(),
+  shutdown: () => apmManager.shutdown()
 };

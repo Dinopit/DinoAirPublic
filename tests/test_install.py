@@ -4,10 +4,8 @@ Tests for the refactored install.py functions
 """
 
 import sys
-import os
 import unittest
-import argparse
-from unittest.mock import patch, Mock, MagicMock, call
+from unittest.mock import patch, Mock
 from pathlib import Path
 
 # Add parent directory to path for imports

@@ -6,15 +6,14 @@ Tests for the refactored prerequisite checker functions
 import sys
 import os
 import unittest
-import platform
-from unittest.mock import patch, Mock, MagicMock
+from unittest.mock import patch, Mock
 from pathlib import Path
 
 # Add parent directory to path for imports
 sys.path.insert(0, str(Path(__file__).parent.parent))
 
 from lib.installation.prerequisite_checker import (
-    PrerequisiteChecker, CheckResult, CheckStatus
+    PrerequisiteChecker, CheckStatus
 )
 
 class TestPrerequisiteCheckerRefactored(unittest.TestCase):

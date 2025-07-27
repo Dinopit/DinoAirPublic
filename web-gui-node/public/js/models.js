@@ -13,7 +13,7 @@ class ModelsManager {
     this.selectModelBtn = document.getElementById('select-model-btn');
     this.cancelModelBtn = document.getElementById('cancel-model-btn');
     this.modalCloseBtn = document.getElementById('modal-close-btn');
-    
+
     this.init();
   }
 
@@ -27,14 +27,14 @@ class ModelsManager {
     this.selectModelBtn?.addEventListener('click', () => this.selectModel());
     this.cancelModelBtn?.addEventListener('click', () => this.closeModelModal());
     this.modalCloseBtn?.addEventListener('click', () => this.closeModelModal());
-    
-    this.modelModal?.addEventListener('click', (e) => {
+
+    this.modelModal?.addEventListener('click', e => {
       if (e.target === this.modelModal) {
         this.closeModelModal();
       }
     });
 
-    this.modelList?.addEventListener('click', (e) => {
+    this.modelList?.addEventListener('click', e => {
       const modelItem = e.target.closest('.model-item');
       if (modelItem) {
         this.selectModelItem(modelItem);
@@ -43,23 +43,23 @@ class ModelsManager {
   }
 
   async openModelModal() {
-    if (!this.modelModal) return;
-    
+    if (!this.modelModal) { return; }
+
     this.modelModal.classList.add('active');
     document.body.style.overflow = 'hidden';
-    
+
     await this.loadAvailableModels();
   }
 
   closeModelModal() {
-    if (!this.modelModal) return;
-    
+    if (!this.modelModal) { return; }
+
     this.modelModal.classList.remove('active');
     document.body.style.overflow = '';
   }
 
   async loadAvailableModels() {
-    if (!this.modelList) return;
+    if (!this.modelList) { return; }
 
     try {
       window.loadingManager.show('model-list', {
@@ -73,7 +73,6 @@ class ModelsManager {
       const response = await API.get('/models');
       this.availableModels = response.models || [];
       this.renderModelList();
-      
     } catch (error) {
       console.error('Failed to load models:', error);
       this.showModelError('Failed to load available models. Please try again.');
@@ -89,7 +88,7 @@ class ModelsManager {
     }
 
     this.modelList.innerHTML = '';
-    
+
     this.availableModels.forEach(model => {
       const modelItem = this.createModelItem(model);
       this.modelList.appendChild(modelItem);
@@ -107,7 +106,7 @@ class ModelsManager {
     const item = document.createElement('div');
     item.className = 'model-item';
     item.setAttribute('data-model-id', model.id);
-    
+
     item.innerHTML = `
       <div class="model-radio"></div>
       <div class="model-details">
@@ -119,7 +118,7 @@ class ModelsManager {
         </div>
       </div>
     `;
-    
+
     return item;
   }
 
@@ -127,9 +126,9 @@ class ModelsManager {
     this.modelList.querySelectorAll('.model-item').forEach(el => {
       el.classList.remove('selected');
     });
-    
+
     item.classList.add('selected');
-    
+
     if (this.selectModelBtn) {
       this.selectModelBtn.disabled = false;
     }
@@ -137,12 +136,12 @@ class ModelsManager {
 
   async selectModel() {
     const selectedItem = this.modelList.querySelector('.model-item.selected');
-    if (!selectedItem) return;
+    if (!selectedItem) { return; }
 
     const modelId = selectedItem.getAttribute('data-model-id');
     const model = this.availableModels.find(m => m.id === modelId);
-    
-    if (!model) return;
+
+    if (!model) { return; }
 
     try {
       window.loadingManager.show('select-model-btn', {
@@ -153,12 +152,12 @@ class ModelsManager {
       });
 
       const response = await API.post('/models/select', { modelId: model.id });
-      
+
       if (response.success) {
         this.currentModel = model;
         this.updateCurrentModelDisplay();
         this.closeModelModal();
-        
+
         if (window.NotificationManager) {
           window.NotificationManager.show({
             type: 'success',
@@ -170,10 +169,9 @@ class ModelsManager {
       } else {
         throw new Error(response.error || 'Failed to select model');
       }
-      
     } catch (error) {
       console.error('Failed to select model:', error);
-      
+
       if (window.NotificationManager) {
         window.NotificationManager.show({
           type: 'error',
@@ -207,8 +205,8 @@ class ModelsManager {
   }
 
   showModelError(message) {
-    if (!this.modelList) return;
-    
+    if (!this.modelList) { return; }
+
     this.modelList.innerHTML = `
       <div class="error-state">
         <div class="error-icon">⚠️</div>

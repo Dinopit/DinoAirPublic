@@ -8,8 +8,6 @@ import platform
 import signal
 import atexit
 import socket
-import json
-from pathlib import Path
 
 # Initialize Sentry error tracking
 try:

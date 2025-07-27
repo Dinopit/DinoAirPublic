@@ -45,9 +45,9 @@ router.put('/profile', rateLimits.api, sanitizeInput, requireAuth, async (req, r
 
     // Only update provided fields
     const updates = {};
-    if (name !== undefined) updates.name = name;
-    if (bio !== undefined) updates.bio = bio;
-    if (preferences !== undefined) updates.preferences = preferences;
+    if (name !== undefined) { updates.name = name; }
+    if (bio !== undefined) { updates.bio = bio; }
+    if (preferences !== undefined) { updates.preferences = preferences; }
 
     const updatedUser = await db.updateUser(req.user.id, updates);
 

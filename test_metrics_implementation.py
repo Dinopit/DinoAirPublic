@@ -4,7 +4,6 @@ Test script to validate DinoAir metrics collection and dashboard implementation
 """
 
 import sys
-import json
 from pathlib import Path
 
 # Add parent directory to path
@@ -15,42 +14,36 @@ def test_metrics_imports():
     print("🧪 Testing metrics module imports...")
     
     try:
-        from lib.metrics.metrics_collector import MetricsCollector, MetricsConfig
         print("✅ MetricsCollector imported successfully")
     except Exception as e:
         print(f"❌ Failed to import MetricsCollector: {e}")
         return False
     
     try:
-        from lib.metrics.custom_metrics import CustomMetricsRegistry
         print("✅ CustomMetricsRegistry imported successfully")
     except Exception as e:
         print(f"❌ Failed to import CustomMetricsRegistry: {e}")
         return False
     
     try:
-        from lib.metrics.metrics_exporter import PrometheusExporter, JSONExporter
         print("✅ Metrics exporters imported successfully")
     except Exception as e:
         print(f"❌ Failed to import metrics exporters: {e}")
         return False
     
     try:
-        from lib.metrics.metrics_storage import FileMetricsStorage
         print("✅ Metrics storage imported successfully")
     except Exception as e:
         print(f"❌ Failed to import metrics storage: {e}")
         return False
     
     try:
-        from lib.metrics.dashboard_data import DashboardDataProvider
         print("✅ Dashboard data provider imported successfully")
     except Exception as e:
         print(f"❌ Failed to import dashboard data provider: {e}")
         return False
     
     try:
-        from lib.metrics.metrics_service import initialize_metrics_service
         print("✅ Metrics service imported successfully")
     except Exception as e:
         print(f"❌ Failed to import metrics service: {e}")

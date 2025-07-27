@@ -8,7 +8,7 @@ const fetch = require('node-fetch');
 const router = express.Router();
 
 // In-memory model configurations (in production, use database)
-let modelConfigs = [
+const modelConfigs = [
   {
     id: '1',
     name: 'qwen:7b-chat-v1.5-q4_K_M',
@@ -106,13 +106,13 @@ let nextId = 4;
 // GET /api/v1/models - Get all models
 router.get('/', async (req, res) => {
   try {
-    const { 
-      installed, 
-      type, 
-      search, 
-      sortBy = 'displayName', 
+    const {
+      installed,
+      type,
+      search,
+      sortBy = 'displayName',
       sortOrder = 'asc',
-      includeOllama = false 
+      includeOllama = false
     } = req.query;
 
     let filteredModels = [...modelConfigs];
@@ -125,7 +125,7 @@ router.get('/', async (req, res) => {
 
     // Filter by type
     if (type) {
-      filteredModels = filteredModels.filter(model => 
+      filteredModels = filteredModels.filter(model =>
         model.type.toLowerCase() === type.toLowerCase()
       );
     }
@@ -134,10 +134,10 @@ router.get('/', async (req, res) => {
     if (search) {
       const searchLower = search.toLowerCase();
       filteredModels = filteredModels.filter(model =>
-        model.name.toLowerCase().includes(searchLower) ||
-        model.displayName.toLowerCase().includes(searchLower) ||
-        model.description.toLowerCase().includes(searchLower) ||
-        model.tags.some(tag => tag.toLowerCase().includes(searchLower))
+        model.name.toLowerCase().includes(searchLower)
+        || model.displayName.toLowerCase().includes(searchLower)
+        || model.description.toLowerCase().includes(searchLower)
+        || model.tags.some(tag => tag.toLowerCase().includes(searchLower))
       );
     }
 
@@ -145,17 +145,16 @@ router.get('/', async (req, res) => {
     filteredModels.sort((a, b) => {
       let aValue = a[sortBy];
       let bValue = b[sortBy];
-      
+
       if (sortBy === 'addedAt' || sortBy === 'lastUsed') {
         aValue = new Date(aValue || 0);
         bValue = new Date(bValue || 0);
       }
-      
+
       if (sortOrder === 'desc') {
         return bValue > aValue ? 1 : -1;
-      } else {
-        return aValue > bValue ? 1 : -1;
       }
+      return aValue > bValue ? 1 : -1;
     });
 
     // Include Ollama models if requested
@@ -165,7 +164,7 @@ router.get('/', async (req, res) => {
         const response = await fetch('http://localhost:11434/api/tags', {
           timeout: 5000
         });
-        
+
         if (response.ok) {
           const data = await response.json();
           ollamaModels = data.models || [];
@@ -311,13 +310,13 @@ router.put('/:id', (req, res) => {
     }
 
     const model = modelConfigs[modelIndex];
-    
+
     // Update allowed fields
     const allowedFields = [
-      'displayName', 'description', 'type', 'size', 'parameters', 
+      'displayName', 'description', 'type', 'size', 'parameters',
       'quantization', 'capabilities', 'tags', 'isDefault', 'isInstalled'
     ];
-    
+
     allowedFields.forEach(field => {
       if (updates[field] !== undefined) {
         model[field] = updates[field];
@@ -412,7 +411,7 @@ router.post('/:id/install', async (req, res) => {
     const response = await fetch('http://localhost:11434/api/pull', {
       method: 'POST',
       headers: {
-        'Content-Type': 'application/json',
+        'Content-Type': 'application/json'
       },
       body: JSON.stringify({
         name: model.name,
@@ -425,15 +424,15 @@ router.post('/:id/install', async (req, res) => {
     }
 
     // Stream the installation progress
-    response.body.on('data', (chunk) => {
+    response.body.on('data', chunk => {
       const text = chunk.toString();
       const lines = text.split('\n').filter(line => line.trim());
-      
+
       for (const line of lines) {
         try {
           const json = JSON.parse(line);
-          res.write(JSON.stringify(json) + '\n');
-          
+          res.write(`${JSON.stringify(json)}\n`);
+
           if (json.status === 'success') {
             // Mark model as installed
             model.isInstalled = true;
@@ -445,7 +444,7 @@ router.post('/:id/install', async (req, res) => {
       }
     });
 
-    response.body.on('error', (error) => {
+    response.body.on('error', error => {
       console.error('Installation streaming error:', error);
       res.end();
     });
@@ -455,10 +454,9 @@ router.post('/:id/install', async (req, res) => {
         res.end();
       }
     });
-
   } catch (error) {
     console.error('Error installing model:', error);
-    
+
     if (!res.headersSent) {
       if (error.message.includes('ECONNREFUSED')) {
         res.status(503).json({
@@ -500,7 +498,7 @@ router.delete('/:id/uninstall', async (req, res) => {
     const response = await fetch('http://localhost:11434/api/delete', {
       method: 'DELETE',
       headers: {
-        'Content-Type': 'application/json',
+        'Content-Type': 'application/json'
       },
       body: JSON.stringify({
         name: model.name
@@ -518,10 +516,9 @@ router.delete('/:id/uninstall', async (req, res) => {
       success: true,
       message: `Model ${model.displayName} uninstalled successfully`
     });
-
   } catch (error) {
     console.error('Error uninstalling model:', error);
-    
+
     if (error.message.includes('ECONNREFUSED')) {
       res.status(503).json({
         success: false,
@@ -577,16 +574,16 @@ router.get('/stats', (req, res) => {
   modelConfigs.forEach(model => {
     // Count by type
     stats.byType[model.type] = (stats.byType[model.type] || 0) + 1;
-    
+
     // Count by quantization
     if (model.quantization) {
       stats.byQuantization[model.quantization] = (stats.byQuantization[model.quantization] || 0) + 1;
     }
-    
+
     // Total usage
     const usage = model.metadata.usageCount || 0;
     stats.totalUsage += usage;
-    
+
     // Most used model
     if (usage > mostUsedCount) {
       mostUsedCount = usage;

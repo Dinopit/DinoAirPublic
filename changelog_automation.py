@@ -4,20 +4,17 @@ Changelog Automation System
 Automatically generates changelogs for DinoAir releases based on git commits and version tags.
 """
 
-import os
 import sys
 import re
 import json
 import subprocess
 import argparse
-import tempfile
-import shutil
-from datetime import datetime, timedelta
-from typing import Dict, List, Optional, Tuple, Any, Union
+from datetime import datetime
+from typing import Dict, List, Optional, Tuple, Any
 from pathlib import Path
-from dataclasses import dataclass, asdict
+from dataclasses import dataclass
 from enum import Enum
-from collections import defaultdict, Counter
+from collections import Counter
 
 class ChangeType(Enum):
     """Types of changes for changelog categorization."""

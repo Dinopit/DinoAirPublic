@@ -30,7 +30,7 @@ const handleValidationErrors = (req, res, next) => {
       message: getFieldErrorMessage(error.path, error.msg),
       value: error.value
     }));
-    
+
     return res.status(400).json({
       error: 'Please check the information you entered and try again.',
       details: fieldErrors,
@@ -55,7 +55,7 @@ const getFieldErrorMessage = (field, technicalMessage) => {
     sessionId: 'Please provide a valid session ID.',
     userId: 'Please provide a valid user ID.'
   };
-  
+
   return fieldMessages[field] || technicalMessage || 'Please enter a valid value for this field.';
 };
 
@@ -69,7 +69,7 @@ const rateLimits = {
   api: rateLimiters.api,
   upload: rateLimiters.upload,
   export: rateLimiters.export,
-  
+
   // Rate limit info middleware for adding headers
   addInfo: {
     auth: addRateLimitInfo('auth'),
@@ -91,13 +91,13 @@ const authValidation = {
       .withMessage('Valid email is required')
       .isLength({ max: 254 })
       .withMessage('Email must be less than 254 characters'),
-    
+
     body('password')
       .isLength({ min: 8, max: 128 })
       .withMessage('Password must be between 8 and 128 characters')
       .matches(/^(?=.*[a-z])(?=.*[A-Z])(?=.*\d)(?=.*[@$!%*?&])[A-Za-z\d@$!%*?&]/)
       .withMessage('Password must contain at least one lowercase letter, one uppercase letter, one number, and one special character'),
-    
+
     body('name')
       .optional()
       .trim()
@@ -105,7 +105,7 @@ const authValidation = {
       .withMessage('Name must be between 1 and 100 characters')
       .matches(/^[a-zA-Z\s\-'\.]+$/)
       .withMessage('Name can only contain letters, spaces, hyphens, apostrophes, and periods'),
-    
+
     handleValidationErrors
   ],
 
@@ -114,13 +114,13 @@ const authValidation = {
       .isEmail()
       .normalizeEmail()
       .withMessage('Valid email is required'),
-    
+
     body('password')
       .notEmpty()
       .withMessage('Password is required')
       .isLength({ max: 128 })
       .withMessage('Password is too long'),
-    
+
     handleValidationErrors
   ],
 
@@ -129,7 +129,7 @@ const authValidation = {
       .isEmail()
       .normalizeEmail()
       .withMessage('Valid email is required'),
-    
+
     handleValidationErrors
   ],
 
@@ -139,7 +139,7 @@ const authValidation = {
       .withMessage('Password must be between 8 and 128 characters')
       .matches(/^(?=.*[a-z])(?=.*[A-Z])(?=.*\d)(?=.*[@$!%*?&])[A-Za-z\d@$!%*?&]/)
       .withMessage('Password must contain at least one lowercase letter, one uppercase letter, one number, and one special character'),
-    
+
     handleValidationErrors
   ],
 
@@ -150,7 +150,7 @@ const authValidation = {
       .withMessage('API key name must be between 1 and 50 characters')
       .matches(/^[a-zA-Z0-9\s\-_]+$/)
       .withMessage('API key name can only contain letters, numbers, spaces, hyphens, and underscores'),
-    
+
     handleValidationErrors
   ]
 };
@@ -163,17 +163,17 @@ const chatValidation = {
     body('messages')
       .isArray({ min: 1, max: 50 })
       .withMessage('Messages must be an array with 1-50 items'),
-    
+
     body('messages.*.role')
       .isIn(['user', 'assistant', 'system'])
       .withMessage('Message role must be user, assistant, or system'),
-    
+
     body('messages.*.content')
       .trim()
       .isLength({ min: 1, max: 10000 })
       .withMessage('Message content must be between 1 and 10,000 characters')
       .escape(), // Sanitize HTML entities
-    
+
     body('model')
       .optional()
       .trim()
@@ -181,24 +181,24 @@ const chatValidation = {
       .withMessage('Model name must be between 1 and 100 characters')
       .matches(/^[a-zA-Z0-9\-_:\/\.]+$/)
       .withMessage('Model name contains invalid characters'),
-    
+
     body('systemPrompt')
       .optional()
       .trim()
       .isLength({ max: 5000 })
       .withMessage('System prompt must be less than 5,000 characters')
       .escape(),
-    
+
     body('sessionId')
       .optional()
       .isUUID()
       .withMessage('Session ID must be a valid UUID'),
-    
+
     body('userId')
       .optional()
       .isUUID()
       .withMessage('User ID must be a valid UUID'),
-    
+
     handleValidationErrors
   ]
 };
@@ -215,19 +215,19 @@ const userValidation = {
       .withMessage('Name must be between 1 and 100 characters')
       .matches(/^[a-zA-Z\s\-'\.]+$/)
       .withMessage('Name can only contain letters, spaces, hyphens, apostrophes, and periods'),
-    
+
     body('bio')
       .optional()
       .trim()
       .isLength({ max: 500 })
       .withMessage('Bio must be less than 500 characters')
       .escape(),
-    
+
     body('preferences')
       .optional()
       .isObject()
       .withMessage('Preferences must be an object'),
-    
+
     handleValidationErrors
   ],
 
@@ -235,7 +235,7 @@ const userValidation = {
     param('id')
       .isUUID()
       .withMessage('User ID must be a valid UUID'),
-    
+
     handleValidationErrors
   ]
 };
@@ -249,12 +249,12 @@ const apiValidation = {
       .optional()
       .isInt({ min: 1, max: 1000 })
       .withMessage('Page must be a number between 1 and 1000'),
-    
+
     query('limit')
       .optional()
       .isInt({ min: 1, max: 100 })
       .withMessage('Limit must be a number between 1 and 100'),
-    
+
     handleValidationErrors
   ],
 
@@ -264,7 +264,7 @@ const apiValidation = {
       .isLength({ min: 1, max: 200 })
       .withMessage('Search query must be between 1 and 200 characters')
       .escape(),
-    
+
     handleValidationErrors
   ]
 };
@@ -281,14 +281,14 @@ const fileValidation = {
       .withMessage('Filename must be between 1 and 255 characters')
       .matches(/^[a-zA-Z0-9\-_\.\s]+$/)
       .withMessage('Filename contains invalid characters'),
-    
+
     body('description')
       .optional()
       .trim()
       .isLength({ max: 1000 })
       .withMessage('Description must be less than 1000 characters')
       .escape(),
-    
+
     handleValidationErrors
   ]
 };
@@ -315,7 +315,7 @@ const securityMiddleware = helmetAvailable ? helmet({
  */
 const sanitizeInput = (req, res, next) => {
   // Recursively sanitize all string inputs
-  const sanitizeObject = (obj) => {
+  const sanitizeObject = obj => {
     for (const key in obj) {
       if (typeof obj[key] === 'string') {
         // Remove null bytes and control characters

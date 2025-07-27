@@ -15,7 +15,7 @@ const { withRetry, isRetryableError } = require('../../lib/retry');
 const router = express.Router();
 
 // In-memory fallback metrics (if Supabase is not available)
-let fallbackMetrics = {
+const fallbackMetrics = {
   totalRequests: 0,
   totalResponseTime: 0,
   totalTokens: 0
@@ -95,7 +95,7 @@ router.post('/', rateLimits.chat, sanitizeInput, chatValidation.chat, async (req
   let totalTokens = 0;
   let chatSession = null;
   let assistantResponse = '';
-  
+
   try {
     const { messages, model, systemPrompt, sessionId, userId } = req.body;
 
@@ -120,13 +120,13 @@ router.post('/', rateLimits.chat, sanitizeInput, chatValidation.chat, async (req
 
     // Use provided model or default
     const selectedModel = model || 'qwen:7b-chat-v1.5-q4_K_M';
-    
+
     // Set up streaming response headers
     res.writeHead(200, {
       'Content-Type': 'text/plain; charset=utf-8',
       'Transfer-Encoding': 'chunked',
       'Cache-Control': 'no-cache',
-      'Connection': 'keep-alive'
+      Connection: 'keep-alive'
     });
 
     resourceManager.registerStream(res);
@@ -134,26 +134,26 @@ router.post('/', rateLimits.chat, sanitizeInput, chatValidation.chat, async (req
     try {
       // Track API response time
       const apiStartTime = Date.now();
-      
+
       // Call Ollama API with circuit breaker and retry protection
       const response = await ollamaBreaker.call(async () => {
         return await withRetry(async () => {
           const response = await fetch('http://localhost:11434/api/generate', {
             method: 'POST',
             headers: {
-              'Content-Type': 'application/json',
+              'Content-Type': 'application/json'
             },
             body: JSON.stringify({
               model: selectedModel,
-              prompt: prompt,
-              stream: true,
-            }),
+              prompt,
+              stream: true
+            })
           });
-          
+
           if (!response.ok) {
             throw new Error(`Ollama API error: ${response.status} ${response.statusText}`);
           }
-          
+
           return response;
         }, {
           maxRetries: 2,
@@ -170,10 +170,10 @@ router.post('/', rateLimits.chat, sanitizeInput, chatValidation.chat, async (req
       }
 
       // Stream the response
-      response.body.on('data', (chunk) => {
+      response.body.on('data', chunk => {
         const text = chunk.toString();
         const lines = text.split('\n').filter(line => line.trim());
-        
+
         for (const line of lines) {
           try {
             const json = JSON.parse(line);
@@ -185,11 +185,11 @@ router.post('/', rateLimits.chat, sanitizeInput, chatValidation.chat, async (req
               // Estimate tokens (rough approximation)
               totalTokens += Math.ceil(json.response.length / 4);
             }
-            
+
             // If this is the final response, record metrics and store message
             if (json.done) {
               const duration = Date.now() - startTime;
-              
+
               // Store the assistant message in Supabase (async, don't wait)
               if (chatSession && assistantResponse) {
                 storeMessage(chatSession.id, 'assistant', assistantResponse, {
@@ -200,19 +200,19 @@ router.post('/', rateLimits.chat, sanitizeInput, chatValidation.chat, async (req
                   console.warn('Failed to store assistant message:', error.message);
                 });
               }
-              
+
               // Record metrics in Supabase (async, don't wait)
               const userMessageTokens = Math.ceil(prompt.length / 4);
               const totalTokensUsed = totalTokens + userMessageTokens;
               recordChatResponseTime(
-                chatSession?.id, 
-                selectedModel, 
-                duration, 
+                chatSession?.id,
+                selectedModel,
+                duration,
                 totalTokensUsed
               ).catch(error => {
                 console.warn('Failed to record metrics:', error.message);
               });
-              
+
               // End the response
               res.end();
             }
@@ -222,7 +222,7 @@ router.post('/', rateLimits.chat, sanitizeInput, chatValidation.chat, async (req
         }
       });
 
-      response.body.on('error', (error) => {
+      response.body.on('error', error => {
         console.error('Streaming error:', error);
         resourceManager.closeStream(res);
         if (!res.headersSent) {
@@ -238,10 +238,9 @@ router.post('/', rateLimits.chat, sanitizeInput, chatValidation.chat, async (req
           res.end();
         }
       });
-
     } catch (error) {
       console.error('Ollama API error:', error);
-      
+
       if (!res.headersSent) {
         // Check if Ollama is not running
         if (error.message.includes('ECONNREFUSED')) {
@@ -260,10 +259,9 @@ router.post('/', rateLimits.chat, sanitizeInput, chatValidation.chat, async (req
         res.end();
       }
     }
-
   } catch (error) {
     console.error('Chat API error:', error);
-    
+
     if (!res.headersSent) {
       res.status(500).json({
         error: 'We encountered an issue processing your message. Please try again.',
@@ -277,15 +275,15 @@ router.post('/', rateLimits.chat, sanitizeInput, chatValidation.chat, async (req
 router.get('/metrics', async (req, res) => {
   try {
     const { timeframe = 'day' } = req.query;
-    
+
     // Try to get metrics from Supabase
     const supabaseMetrics = await chatMetrics.getAggregated(timeframe);
-    
+
     // Combine with fallback metrics if needed
     const combinedMetrics = {
       totalRequests: supabaseMetrics.totalRequests + fallbackMetrics.totalRequests,
-      averageResponseTime: supabaseMetrics.avgResponseTime || 
-        (fallbackMetrics.totalRequests > 0 
+      averageResponseTime: supabaseMetrics.avgResponseTime
+        || (fallbackMetrics.totalRequests > 0
           ? Math.round(fallbackMetrics.totalResponseTime / fallbackMetrics.totalRequests)
           : 0),
       totalTokens: supabaseMetrics.totalTokens + fallbackMetrics.totalTokens,
@@ -296,9 +294,9 @@ router.get('/metrics', async (req, res) => {
     res.json(combinedMetrics);
   } catch (error) {
     console.error('Error fetching metrics:', error);
-    
+
     // Fallback to in-memory metrics
-    const avgResponseTime = fallbackMetrics.totalRequests > 0 
+    const avgResponseTime = fallbackMetrics.totalRequests > 0
       ? Math.round(fallbackMetrics.totalResponseTime / fallbackMetrics.totalRequests)
       : 0;
 
@@ -318,23 +316,23 @@ router.get('/models', async (req, res) => {
     const response = await ollamaBreaker.call(async () => {
       return await withRetry(async () => {
         const response = await fetch('http://localhost:11434/api/tags');
-        
+
         if (!response.ok) {
           throw new Error(`Ollama API error: ${response.statusText}`);
         }
-        
+
         return response;
       }, {
         maxRetries: 1,
         retryCondition: isRetryableError
       });
     });
-    
+
     const data = await response.json();
     res.json(data);
   } catch (error) {
     console.error('Error fetching models:', error);
-    
+
     if (error.message.includes('ECONNREFUSED')) {
       res.status(503).json({
         error: 'The AI model service is temporarily unavailable. Please try again in a few moments.',
@@ -353,11 +351,11 @@ router.get('/models', async (req, res) => {
 router.get('/sessions', async (req, res) => {
   try {
     const { userId = 'anonymous', limit = 50 } = req.query;
-    
+
     const sessions = await chatSessions.getByUserId(userId, parseInt(limit));
-    
+
     res.json({
-      sessions: sessions,
+      sessions,
       count: sessions.length
     });
   } catch (error) {
@@ -372,15 +370,15 @@ router.get('/sessions', async (req, res) => {
 router.get('/sessions/:id', async (req, res) => {
   try {
     const { id } = req.params;
-    
+
     const session = await chatSessions.getById(id);
-    
+
     if (!session) {
       return res.status(404).json({
         error: 'Session not found'
       });
     }
-    
+
     res.json(session);
   } catch (error) {
     console.error('Error fetching session:', error);
@@ -395,7 +393,7 @@ router.get('/sessions/:id/messages', async (req, res) => {
   try {
     const { id } = req.params;
     const { limit = 100 } = req.query;
-    
+
     // First check if session exists
     const session = await chatSessions.getById(id);
     if (!session) {
@@ -403,12 +401,12 @@ router.get('/sessions/:id/messages', async (req, res) => {
         error: 'Session not found'
       });
     }
-    
+
     const messages = await chatMessages.getBySessionId(id, parseInt(limit));
-    
+
     res.json({
       sessionId: id,
-      messages: messages,
+      messages,
       count: messages.length
     });
   } catch (error) {
@@ -423,7 +421,7 @@ router.get('/sessions/:id/messages', async (req, res) => {
 router.delete('/sessions/:id', async (req, res) => {
   try {
     const { id } = req.params;
-    
+
     // First check if session exists
     const session = await chatSessions.getById(id);
     if (!session) {
@@ -431,13 +429,13 @@ router.delete('/sessions/:id', async (req, res) => {
         error: 'Session not found'
       });
     }
-    
+
     // Delete messages first (due to foreign key constraints)
     await chatMessages.deleteBySessionId(id);
-    
+
     // Note: In a real implementation, you'd also delete the session itself
     // For now, we'll just delete the messages
-    
+
     res.json({
       message: 'Session messages deleted successfully',
       sessionId: id
@@ -454,14 +452,14 @@ router.delete('/sessions/:id', async (req, res) => {
 router.post('/sessions', async (req, res) => {
   try {
     const { userId = 'anonymous', metadata = {} } = req.body;
-    
+
     const sessionId = uuidv4();
     const session = await chatSessions.create(userId, sessionId, {
       ...metadata,
       created_via: 'api',
       created_at: new Date().toISOString()
     });
-    
+
     res.status(201).json(session);
   } catch (error) {
     console.error('Error creating session:', error);

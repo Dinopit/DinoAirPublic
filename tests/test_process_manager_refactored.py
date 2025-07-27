@@ -4,11 +4,8 @@ Tests for the refactored process manager functions
 """
 
 import sys
-import os
 import unittest
-import time
-import threading
-from unittest.mock import patch, Mock, MagicMock, call
+from unittest.mock import patch, Mock
 from pathlib import Path
 
 # Add parent directory to path for imports

@@ -11,11 +11,11 @@ class ChatInterface {
     this.sendBtn = document.getElementById('send-btn');
     this.charCount = document.getElementById('char-count');
     this.currentModel = document.getElementById('current-model');
-    
+
     this.streamer = new ChatStreamer();
     this.isStreaming = false;
     this.currentSessionId = null;
-    
+
     this.init();
   }
 
@@ -27,10 +27,10 @@ class ChatInterface {
   }
 
   setupEventListeners() {
-    this.chatForm.addEventListener('submit', (e) => this.handleSubmit(e));
+    this.chatForm.addEventListener('submit', e => this.handleSubmit(e));
     this.chatInput.addEventListener('input', () => this.handleInputChange());
-    this.chatInput.addEventListener('keydown', (e) => this.handleKeyDown(e));
-    
+    this.chatInput.addEventListener('keydown', e => this.handleKeyDown(e));
+
     document.getElementById('clear-chat-btn')?.addEventListener('click', () => this.clearChat());
     document.getElementById('export-chat-btn')?.addEventListener('click', () => this.exportChat());
   }
@@ -47,11 +47,11 @@ class ChatInterface {
       });
     });
 
-    this.streamer.on('streamChunk', (chunk) => {
+    this.streamer.on('streamChunk', chunk => {
       this.updateStreamingMessage(chunk);
     });
 
-    this.streamer.on('streamComplete', (response) => {
+    this.streamer.on('streamComplete', response => {
       this.isStreaming = false;
       this.hideTypingIndicator();
       this.finalizeMessage(response);
@@ -59,7 +59,7 @@ class ChatInterface {
       this.enableInput();
     });
 
-    this.streamer.on('streamError', (error) => {
+    this.streamer.on('streamError', error => {
       this.isStreaming = false;
       this.hideTypingIndicator();
       this.showErrorMessage(error);
@@ -70,14 +70,14 @@ class ChatInterface {
 
   async handleSubmit(e) {
     e.preventDefault();
-    
+
     if (this.isStreaming || !this.chatInput.value.trim()) {
       return;
     }
 
     const message = this.chatInput.value.trim();
     const streamResponse = document.getElementById('stream-response')?.checked ?? true;
-    
+
     this.addUserMessage(message);
     this.chatInput.value = '';
     this.updateCharCount();
@@ -120,7 +120,7 @@ class ChatInterface {
       </div>
       <div class="typing-text">AI is thinking...</div>
     `;
-    
+
     this.chatMessages.appendChild(indicator);
     this.scrollToBottom();
   }
@@ -134,7 +134,7 @@ class ChatInterface {
 
   updateStreamingMessage(chunk) {
     let streamingMessage = this.chatMessages.querySelector('.message.streaming');
-    
+
     if (!streamingMessage) {
       this.hideTypingIndicator();
       streamingMessage = this.createMessageElement('assistant', '', true);
@@ -163,33 +163,33 @@ class ChatInterface {
   createMessageElement(role, content, isStreaming = false) {
     const messageDiv = document.createElement('div');
     messageDiv.className = `message ${role}${isStreaming ? ' streaming' : ''}`;
-    
+
     const avatar = document.createElement('div');
     avatar.className = 'message-avatar';
     avatar.textContent = role === 'user' ? 'U' : 'AI';
-    
+
     const contentDiv = document.createElement('div');
     contentDiv.className = 'message-content';
-    
+
     const bubble = document.createElement('div');
     bubble.className = 'message-bubble';
     bubble.innerHTML = this.formatMessageContent(content);
-    
+
     const time = document.createElement('div');
     time.className = 'message-time';
     time.textContent = new Date().toLocaleTimeString();
-    
+
     contentDiv.appendChild(bubble);
     contentDiv.appendChild(time);
     messageDiv.appendChild(avatar);
     messageDiv.appendChild(contentDiv);
-    
+
     return messageDiv;
   }
 
   formatMessageContent(content) {
-    if (!content) return '';
-    
+    if (!content) { return ''; }
+
     return content
       .replace(/&/g, '&amp;')
       .replace(/</g, '&lt;')
@@ -234,7 +234,7 @@ class ChatInterface {
   updateCharCount() {
     const count = this.chatInput.value.length;
     this.charCount.textContent = count;
-    
+
     if (count > 3500) {
       this.charCount.style.color = 'var(--error-color)';
     } else if (count > 3000) {
@@ -260,7 +260,7 @@ class ChatInterface {
 
   autoResizeTextarea() {
     this.chatInput.style.height = 'auto';
-    this.chatInput.style.height = Math.min(this.chatInput.scrollHeight, 120) + 'px';
+    this.chatInput.style.height = `${Math.min(this.chatInput.scrollHeight, 120)}px`;
   }
 
   disableInput() {
@@ -291,7 +291,7 @@ class ChatInterface {
         if (this.currentSessionId) {
           await API.delete(`/chat/sessions/${this.currentSessionId}`);
         }
-        
+
         this.chatMessages.innerHTML = `
           <div class="welcome-message">
             <div class="welcome-content">
@@ -305,7 +305,7 @@ class ChatInterface {
             </div>
           </div>
         `;
-        
+
         this.currentSessionId = null;
       } catch (error) {
         console.error('Failed to clear chat:', error);
@@ -336,7 +336,7 @@ class ChatInterface {
       const chatText = messages.join('\n\n');
       const blob = new Blob([chatText], { type: 'text/plain' });
       const url = URL.createObjectURL(blob);
-      
+
       const a = document.createElement('a');
       a.href = url;
       a.download = `dinoair-chat-${new Date().toISOString().split('T')[0]}.txt`;

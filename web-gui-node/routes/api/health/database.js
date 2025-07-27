@@ -13,9 +13,9 @@ const router = express.Router();
 router.get('/', async (req, res) => {
   try {
     const healthCheck = await dbPool.performHealthCheck();
-    
+
     const status = healthCheck.overall ? 200 : 503;
-    
+
     res.status(status).json({
       success: healthCheck.overall,
       timestamp: new Date().toISOString(),
@@ -43,7 +43,7 @@ router.get('/', async (req, res) => {
 router.get('/pools', async (req, res) => {
   try {
     const poolStats = dbPool.getPoolStats();
-    
+
     res.json({
       success: true,
       timestamp: new Date().toISOString(),
@@ -77,7 +77,7 @@ router.get('/pools/:poolName', async (req, res) => {
   try {
     const { poolName } = req.params;
     const poolStats = dbPool.getPoolStats();
-    
+
     if (!poolStats.pools[poolName]) {
       return res.status(404).json({
         success: false,
@@ -86,10 +86,10 @@ router.get('/pools/:poolName', async (req, res) => {
         timestamp: new Date().toISOString()
       });
     }
-    
+
     // Perform specific health check for this pool
     const healthCheck = await dbPool.performHealthCheck();
-    
+
     res.json({
       success: true,
       timestamp: new Date().toISOString(),
@@ -117,23 +117,23 @@ router.get('/metrics', async (req, res) => {
   try {
     const poolStats = dbPool.getPoolStats();
     const healthCheck = await dbPool.performHealthCheck();
-    
+
     // Calculate additional metrics
     const metrics = {
       ...poolStats.metrics,
       pools: {},
       performance: {
-        successRate: poolStats.metrics.totalQueries > 0 
+        successRate: poolStats.metrics.totalQueries > 0
           ? ((poolStats.metrics.totalQueries - poolStats.metrics.failedQueries) / poolStats.metrics.totalQueries * 100).toFixed(2)
           : 100,
-        errorRate: poolStats.metrics.totalQueries > 0 
+        errorRate: poolStats.metrics.totalQueries > 0
           ? (poolStats.metrics.failedQueries / poolStats.metrics.totalQueries * 100).toFixed(2)
           : 0,
         avgResponseTimeMs: Math.round(poolStats.metrics.avgResponseTime),
         totalErrors: Object.values(poolStats.health).reduce((sum, h) => sum + h.errors, 0)
       }
     };
-    
+
     // Add per-pool metrics
     Object.entries(healthCheck.pools).forEach(([poolName, poolHealth]) => {
       metrics.pools[poolName] = {
@@ -146,7 +146,7 @@ router.get('/metrics', async (req, res) => {
         lastCheck: poolHealth.lastCheck
       };
     });
-    
+
     res.json({
       success: true,
       timestamp: new Date().toISOString(),
@@ -171,11 +171,11 @@ router.get('/metrics', async (req, res) => {
 router.post('/test', async (req, res) => {
   try {
     const { poolType = 'transaction', query = 'SELECT NOW() as current_time, version() as pg_version' } = req.body;
-    
+
     const startTime = Date.now();
     const result = await dbPool.executeQuery(poolType, query);
     const responseTime = Date.now() - startTime;
-    
+
     res.json({
       success: true,
       timestamp: new Date().toISOString(),
@@ -238,7 +238,7 @@ router.get('/config', (req, res) => {
       environment: process.env.NODE_ENV || 'development',
       ssl: process.env.NODE_ENV === 'production'
     };
-    
+
     res.json({
       success: true,
       timestamp: new Date().toISOString(),
@@ -261,13 +261,13 @@ router.get('/config', (req, res) => {
 router.post('/pools/:poolName/reset', async (req, res) => {
   try {
     const { poolName } = req.params;
-    
+
     // Reset health status for the specific pool
     if (dbPool.healthStatus[poolName]) {
       dbPool.healthStatus[poolName].errors = 0;
       dbPool.healthStatus[poolName].lastCheck = null;
     }
-    
+
     res.json({
       success: true,
       timestamp: new Date().toISOString(),

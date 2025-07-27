@@ -3,14 +3,11 @@ DinoAir SDXL Model Downloader
 Automated download solution for SDXL models with progress tracking, resume capability, and mirror support.
 """
 
-import os
 import sys
 import time
 import hashlib
-import json
 from pathlib import Path
-from typing import Dict, List, Optional, Tuple
-from urllib.parse import urlparse
+from typing import Dict, List, Tuple
 
 try:
     import requests
@@ -135,10 +132,10 @@ class ModelDownloader:
             print(f"  Tolerance: ±{self.size_tolerance:,} bytes")
             
             if not self.force_download:
-                print(f"  Use --force to override size checks")
+                print("  Use --force to override size checks")
                 return False
             else:
-                print(f"  WARNING: Force download enabled, proceeding despite size mismatch")
+                print("  WARNING: Force download enabled, proceeding despite size mismatch")
         elif size_diff > 0:
             print(f"ℹ Size variation within tolerance for {filepath.name} ({size_diff:,} bytes)")
             
@@ -186,13 +183,13 @@ class ModelDownloader:
             if expected_size:
                 size_diff = abs(total_size - expected_size)
                 if size_diff > self.size_tolerance:
-                    print(f"⚠ Warning: Server reports different file size:")
+                    print("⚠ Warning: Server reports different file size:")
                     print(f"  Expected: {expected_size:,} bytes ({self.format_bytes(expected_size)})")
                     print(f"  Server:   {total_size:,} bytes ({self.format_bytes(total_size)})")
                     print(f"  Difference: {size_diff:,} bytes")
                     
                     if not self.force_download:
-                        print(f"  Download may fail verification. Use --force to override.")
+                        print("  Download may fail verification. Use --force to override.")
                 
             # Setup progress bar
             mode = 'ab' if resume_pos > 0 else 'wb'

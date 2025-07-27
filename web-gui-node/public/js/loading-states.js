@@ -21,7 +21,7 @@ class LoadingStateManager {
   show(elementId, options = {}) {
     const config = { ...this.defaultOptions, ...options };
     const element = typeof elementId === 'string' ? document.getElementById(elementId) : elementId;
-    
+
     if (!element) {
       console.warn(`Loading state: Element ${elementId} not found`);
       return;
@@ -32,7 +32,7 @@ class LoadingStateManager {
       disabled: element.disabled,
       classList: [...element.classList]
     };
-    
+
     this.activeLoaders.set(elementId, { element, originalState, config });
 
     this.applyLoadingState(element, config);
@@ -52,10 +52,10 @@ class LoadingStateManager {
    */
   hide(elementId) {
     const loaderData = this.activeLoaders.get(elementId);
-    if (!loaderData) return;
+    if (!loaderData) { return; }
 
     const { element, originalState } = loaderData;
-    
+
     element.innerHTML = originalState.innerHTML;
     element.disabled = originalState.disabled;
     element.className = originalState.classList.join(' ');
@@ -68,15 +68,15 @@ class LoadingStateManager {
    */
   updateProgress(elementId, progress, message = '') {
     const loaderData = this.activeLoaders.get(elementId);
-    if (!loaderData) return;
+    if (!loaderData) { return; }
 
     const progressBar = loaderData.element.querySelector('.loading-progress-bar');
     const progressText = loaderData.element.querySelector('.loading-progress-text');
-    
+
     if (progressBar) {
       progressBar.style.width = `${Math.min(100, Math.max(0, progress))}%`;
     }
-    
+
     if (progressText && message) {
       progressText.textContent = message;
     }
@@ -92,7 +92,7 @@ class LoadingStateManager {
     }
 
     let loadingHTML = '<div class="loading-container">';
-    
+
     if (config.showSpinner) {
       loadingHTML += `
         <div class="loading-spinner">
@@ -140,7 +140,7 @@ class LoadingStateManager {
     this.show(containerId, {
       showSpinner: true,
       showMessage: true,
-      message: message,
+      message,
       disableInteraction: false,
       timeout: 60000 // Longer timeout for chat
     });
@@ -155,7 +155,7 @@ class LoadingStateManager {
       showSpinner: false,
       showProgress: true,
       showMessage: true,
-      message: message,
+      message,
       disableInteraction: true
     });
   }
@@ -196,12 +196,12 @@ window.showButtonLoading = (buttonId, message = 'Loading...') => {
   window.loadingManager.show(buttonId, {
     showSpinner: true,
     showMessage: true,
-    message: message,
+    message,
     disableInteraction: true
   });
 };
 
-window.hideButtonLoading = (buttonId) => {
+window.hideButtonLoading = buttonId => {
   window.loadingManager.hide(buttonId);
 };
 
@@ -209,12 +209,12 @@ window.showFormLoading = (formId, message = 'Processing...') => {
   window.loadingManager.show(formId, {
     showSpinner: true,
     showMessage: true,
-    message: message,
+    message,
     disableInteraction: true
   });
 };
 
-window.hideFormLoading = (formId) => {
+window.hideFormLoading = formId => {
   window.loadingManager.hide(formId);
 };
 

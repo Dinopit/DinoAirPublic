@@ -13,7 +13,7 @@ router.get('/metrics', async (req, res) => {
 
   try {
     const metrics = getPerformanceMetrics();
-    
+
     if (span) {
       span.setAttributes({
         'performance.memory.heap_used_mb': metrics.memory.heapUsedMB,
@@ -34,7 +34,7 @@ router.get('/metrics', async (req, res) => {
       span.recordException(error);
       span.end();
     }
-    
+
     console.error('Error getting performance metrics:', error);
     res.status(500).json({
       success: false,
@@ -58,7 +58,7 @@ router.get('/dashboard', async (req, res) => {
     const metrics = getPerformanceMetrics();
     const memoryUsage = process.memoryUsage();
     const cpuUsage = process.cpuUsage();
-    
+
     const dashboard = {
       overview: {
         status: 'healthy',
@@ -122,7 +122,7 @@ router.get('/dashboard', async (req, res) => {
       span.recordException(error);
       span.end();
     }
-    
+
     console.error('Error generating performance dashboard:', error);
     res.status(500).json({
       success: false,
@@ -138,7 +138,7 @@ router.get('/traces/:correlationId?', async (req, res) => {
   const span = createSpan('performance_traces', {
     attributes: {
       'correlation.id': correlationId,
-      'performance.traces.lookup': !!req.params.correlationId
+      'performance.traces.lookup': Boolean(req.params.correlationId)
     }
   });
 
@@ -177,7 +177,7 @@ router.get('/traces/:correlationId?', async (req, res) => {
       span.recordException(error);
       span.end();
     }
-    
+
     console.error('Error getting trace information:', error);
     res.status(500).json({
       success: false,
@@ -193,23 +193,22 @@ function formatUptime(seconds) {
   const hours = Math.floor((seconds % 86400) / 3600);
   const minutes = Math.floor((seconds % 3600) / 60);
   const secs = Math.floor(seconds % 60);
-  
+
   if (days > 0) {
     return `${days}d ${hours}h ${minutes}m ${secs}s`;
   } else if (hours > 0) {
     return `${hours}h ${minutes}m ${secs}s`;
   } else if (minutes > 0) {
     return `${minutes}m ${secs}s`;
-  } else {
-    return `${secs}s`;
   }
+  return `${secs}s`;
 }
 
 function generateAlerts(memoryUsage, cpuUsage, uptime) {
   const alerts = [];
-  
+
   const heapUsedPercent = (memoryUsage.heapUsed / memoryUsage.heapTotal) * 100;
-  
+
   if (heapUsedPercent > 90) {
     alerts.push({
       level: 'critical',
@@ -225,7 +224,7 @@ function generateAlerts(memoryUsage, cpuUsage, uptime) {
       recommendation: 'Monitor memory usage and consider optimization'
     });
   }
-  
+
   const rssMB = memoryUsage.rss / 1024 / 1024;
   if (rssMB > 1024) {
     alerts.push({
@@ -235,7 +234,7 @@ function generateAlerts(memoryUsage, cpuUsage, uptime) {
       recommendation: 'Monitor overall memory consumption'
     });
   }
-  
+
   if (uptime < 300) {
     alerts.push({
       level: 'info',
@@ -244,15 +243,15 @@ function generateAlerts(memoryUsage, cpuUsage, uptime) {
       recommendation: 'Monitor for stability after restart'
     });
   }
-  
+
   return alerts;
 }
 
 function generateRecommendations(memoryUsage, cpuUsage) {
   const recommendations = [];
-  
+
   const heapUsedPercent = (memoryUsage.heapUsed / memoryUsage.heapTotal) * 100;
-  
+
   if (heapUsedPercent > 60) {
     recommendations.push({
       type: 'memory',
@@ -266,7 +265,7 @@ function generateRecommendations(memoryUsage, cpuUsage) {
       ]
     });
   }
-  
+
   const totalCpuMs = (cpuUsage.user + cpuUsage.system) / 1000;
   if (totalCpuMs > 10000) {
     recommendations.push({
@@ -281,7 +280,7 @@ function generateRecommendations(memoryUsage, cpuUsage) {
       ]
     });
   }
-  
+
   recommendations.push({
     type: 'monitoring',
     priority: 'low',
@@ -293,7 +292,7 @@ function generateRecommendations(memoryUsage, cpuUsage) {
       'Add performance benchmarking'
     ]
   });
-  
+
   return recommendations;
 }
 

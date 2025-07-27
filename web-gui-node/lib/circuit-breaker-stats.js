@@ -8,7 +8,7 @@ class CircuitBreakerStats {
       timestamp: new Date().toISOString()
     };
   }
-  
+
   static resetAll() {
     ollamaBreaker.reset();
     comfyuiBreaker.reset();
@@ -17,11 +17,11 @@ class CircuitBreakerStats {
       timestamp: new Date().toISOString()
     };
   }
-  
+
   static getHealthStatus() {
     const stats = this.getAllStats();
     const isHealthy = stats.ollama.state === 'closed' && stats.comfyui.state === 'closed';
-    
+
     return {
       healthy: isHealthy,
       status: isHealthy ? 'All services operational' : 'Some services degraded',

@@ -136,11 +136,11 @@ class MemoryStore {
 }
 
 // Create store instance (use Redis if available, otherwise memory store)
-const store =
-  redisAvailable && process.env.REDIS_URL
+const store
+  = redisAvailable && process.env.REDIS_URL
     ? new RedisStore({
-        sendCommand: (...args) => Redis.createClient({ url: process.env.REDIS_URL }).sendCommand(args)
-      })
+      sendCommand: (...args) => Redis.createClient({ url: process.env.REDIS_URL }).sendCommand(args)
+    })
     : new MemoryStore();
 
 // Rate limit configurations for different user tiers and endpoint categories

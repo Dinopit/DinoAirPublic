@@ -4,7 +4,6 @@ Structured Logging System with Correlation IDs
 Implements comprehensive logging with correlation tracking for DinoAir.
 """
 
-import os
 import sys
 import json
 import uuid
@@ -12,7 +11,7 @@ import time
 import threading
 import traceback
 from datetime import datetime, timezone
-from typing import Dict, List, Optional, Any, Union
+from typing import Dict, List, Optional, Any
 from pathlib import Path
 from dataclasses import dataclass, asdict
 from enum import Enum

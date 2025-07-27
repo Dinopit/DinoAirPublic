@@ -36,41 +36,41 @@ setInterval(() => {
  */
 function validatePasswordComplexity(password) {
   const errors = [];
-  
+
   if (!password || password.length < PASSWORD_REQUIREMENTS.minLength) {
     errors.push(`Password must be at least ${PASSWORD_REQUIREMENTS.minLength} characters long`);
   }
-  
+
   if (PASSWORD_REQUIREMENTS.requireUppercase && !/[A-Z]/.test(password)) {
     errors.push('Password must contain at least one uppercase letter');
   }
-  
+
   if (PASSWORD_REQUIREMENTS.requireLowercase && !/[a-z]/.test(password)) {
     errors.push('Password must contain at least one lowercase letter');
   }
-  
+
   if (PASSWORD_REQUIREMENTS.requireNumbers && !/\d/.test(password)) {
     errors.push('Password must contain at least one number');
   }
-  
+
   if (PASSWORD_REQUIREMENTS.requireSpecialChars && !/[!@#$%^&*()_+\-=\[\]{};':"\\|,.<>\/?]/.test(password)) {
     errors.push('Password must contain at least one special character');
   }
-  
+
   const commonPatterns = [
     /(.)\1{2,}/, // Repeated characters (aaa, 111, etc.)
     /123456|654321|qwerty|password|admin/i, // Common weak passwords
     /^[a-zA-Z]+$/, // Only letters
     /^\d+$/ // Only numbers
   ];
-  
+
   for (const pattern of commonPatterns) {
     if (pattern.test(password)) {
       errors.push('Password contains common weak patterns');
       break;
     }
   }
-  
+
   return {
     isValid: errors.length === 0,
     errors
@@ -87,20 +87,20 @@ function checkAccountLock(identifier) {
   if (!attempts) {
     return { isLocked: false, remainingTime: 0 };
   }
-  
+
   const now = Date.now();
   const timeSinceLastAttempt = now - attempts.lastAttempt;
-  
+
   if (attempts.count >= MAX_LOGIN_ATTEMPTS && timeSinceLastAttempt < LOCKOUT_DURATION) {
     const remainingTime = LOCKOUT_DURATION - timeSinceLastAttempt;
     return { isLocked: true, remainingTime };
   }
-  
+
   if (timeSinceLastAttempt >= LOCKOUT_DURATION) {
     failedAttempts.delete(identifier);
     return { isLocked: false, remainingTime: 0 };
   }
-  
+
   return { isLocked: false, remainingTime: 0 };
 }
 
@@ -111,15 +111,15 @@ function checkAccountLock(identifier) {
 function recordFailedAttempt(identifier) {
   const now = Date.now();
   const attempts = failedAttempts.get(identifier) || { count: 0, lastAttempt: 0 };
-  
+
   if (now - attempts.lastAttempt > LOCKOUT_DURATION) {
     attempts.count = 0;
   }
-  
+
   attempts.count++;
   attempts.lastAttempt = now;
   failedAttempts.set(identifier, attempts);
-  
+
   console.log(`⚠️  Failed login attempt for ${identifier}: ${attempts.count}/${MAX_LOGIN_ATTEMPTS}`);
 }
 
@@ -141,7 +141,7 @@ function clearFailedAttempts(identifier) {
 async function signUpUser(email, password, ip = 'unknown') {
   console.log(`🔐 [${new Date().toISOString()}] Auth: signUpUser called for ${email} from ${ip}`);
   console.time('signUpUser');
-  
+
   try {
     console.log(`🔐 [${new Date().toISOString()}] Auth: Validating email format for ${email}`);
     const emailRegex = /^[^\s@]+@[^\s@]+\.[^\s@]+$/;
@@ -150,29 +150,29 @@ async function signUpUser(email, password, ip = 'unknown') {
       console.timeEnd('signUpUser');
       return { data: null, error: { message: 'Invalid email format' } };
     }
-    
+
     console.log(`🔐 [${new Date().toISOString()}] Auth: Validating password complexity for ${email}`);
     console.time('passwordValidation');
     const passwordValidation = validatePasswordComplexity(password);
     console.timeEnd('passwordValidation');
-    
+
     if (!passwordValidation.isValid) {
       console.log(`🔐 [${new Date().toISOString()}] Auth: Password validation failed for ${email}:`, passwordValidation.errors);
       console.timeEnd('signUpUser');
-      return { 
-        data: null, 
-        error: { 
+      return {
+        data: null,
+        error: {
           message: 'Password does not meet security requirements',
           details: passwordValidation.errors
         }
       };
     }
-    
+
     console.log(`🔐 [${new Date().toISOString()}] Auth: Checking account lockout for ${ip}`);
     console.time('lockoutCheck');
     const lockStatus = checkAccountLock(ip);
     console.timeEnd('lockoutCheck');
-    
+
     if (lockStatus.isLocked) {
       console.log(`🔐 [${new Date().toISOString()}] Auth: Account locked for ${ip}, remaining time: ${lockStatus.remainingTime}ms`);
       console.timeEnd('signUpUser');
@@ -184,15 +184,15 @@ async function signUpUser(email, password, ip = 'unknown') {
         }
       };
     }
-    
+
     console.log(`🔐 [${new Date().toISOString()}] Auth: Creating user account via Supabase for ${email}`);
     console.time('supabaseSignUp');
     const { data, error } = await supabase.auth.signUp({
       email,
-      password,
+      password
     });
     console.timeEnd('supabaseSignUp');
-    
+
     if (error) {
       console.error(`🔐 [${new Date().toISOString()}] Auth: Supabase signup failed for ${email}:`, error);
       recordFailedAttempt(ip);
@@ -200,13 +200,12 @@ async function signUpUser(email, password, ip = 'unknown') {
       console.timeEnd('signUpUser');
       return { data, error };
     }
-    
+
     clearFailedAttempts(ip);
     console.log(`✅ [${new Date().toISOString()}] Auth: User signup successful: ${email} from ${ip}`);
     console.timeEnd('signUpUser');
     console.log(`🔐 [${new Date().toISOString()}] Auth: signUpUser completed successfully for ${email}`);
     return { data, error };
-    
   } catch (error) {
     console.error(`🔐 [${new Date().toISOString()}] Auth: signUpUser error for ${email}:`, error);
     console.timeEnd('signUpUser');
@@ -226,7 +225,7 @@ async function signInUser(email, password, ip = 'unknown', userAgent = 'unknown'
   console.log(`🔐 [${new Date().toISOString()}] Auth: signInUser called for ${email} from ${ip}`);
   console.log(`🔐 [${new Date().toISOString()}] Auth: User agent: ${userAgent?.substring(0, 100)}`);
   console.time('signInUser');
-  
+
   try {
     console.log(`🔐 [${new Date().toISOString()}] Auth: Validating email format for signin: ${email}`);
     const emailRegex = /^[^\s@]+@[^\s@]+\.[^\s@]+$/;
@@ -237,13 +236,13 @@ async function signInUser(email, password, ip = 'unknown', userAgent = 'unknown'
       console.timeEnd('signInUser');
       return { data: null, error: { message: 'Invalid email format' } };
     }
-    
+
     console.log(`🔐 [${new Date().toISOString()}] Auth: Checking account lockout for signin: ${email} and ${ip}`);
     console.time('signinLockoutCheck');
     const emailLockStatus = checkAccountLock(email);
     const ipLockStatus = checkAccountLock(ip);
     console.timeEnd('signinLockoutCheck');
-    
+
     if (emailLockStatus.isLocked || ipLockStatus.isLocked) {
       const maxRemainingTime = Math.max(emailLockStatus.remainingTime, ipLockStatus.remainingTime);
       console.log(`🔒 [${new Date().toISOString()}] Auth: Login blocked for ${email} from ${ip}: account locked, remaining time: ${maxRemainingTime}ms`);
@@ -256,39 +255,38 @@ async function signInUser(email, password, ip = 'unknown', userAgent = 'unknown'
         }
       };
     }
-    
+
     console.log(`🔐 [${new Date().toISOString()}] Auth: Attempting Supabase signin for ${email}`);
     console.time('supabaseSignIn');
     const { data, error } = await supabase.auth.signInWithPassword({
       email,
-      password,
+      password
     });
     console.timeEnd('supabaseSignIn');
-    
+
     if (error) {
       console.error(`🔐 [${new Date().toISOString()}] Auth: Supabase signin failed for ${email}:`, error);
       recordFailedAttempt(email);
       recordFailedAttempt(ip);
       console.log(`🚫 [${new Date().toISOString()}] Auth: Login failed for ${email} from ${ip}: ${error.message}`);
       console.timeEnd('signInUser');
-      
-      return { 
-        data: null, 
+
+      return {
+        data: null,
         error: { message: 'Invalid email or password' }
       };
     }
-    
+
     console.log(`🔐 [${new Date().toISOString()}] Auth: Clearing failed attempts for successful signin: ${email}`);
     clearFailedAttempts(email);
     clearFailedAttempts(ip);
-    
+
     console.log(`✅ [${new Date().toISOString()}] Auth: Login successful: ${email} from ${ip}`);
     console.log(`🔐 [${new Date().toISOString()}] Auth: Session created for user ${data.user?.id} with expiry ${data.session?.expires_at}`);
-    
+
     console.timeEnd('signInUser');
     console.log(`🔐 [${new Date().toISOString()}] Auth: signInUser completed successfully for ${email}`);
     return { data, error };
-    
   } catch (error) {
     console.error(`🔐 [${new Date().toISOString()}] Auth: signInUser error for ${email}:`, error);
     recordFailedAttempt(email);
@@ -344,7 +342,7 @@ async function getCurrentUser() {
  */
 async function resetPassword(email) {
   const { error } = await supabase.auth.resetPasswordForEmail(email, {
-    redirectTo: `${process.env.PUBLIC_URL}/reset-password`,
+    redirectTo: `${process.env.PUBLIC_URL}/reset-password`
   });
 
   return { error };
@@ -357,7 +355,7 @@ async function resetPassword(email) {
  */
 async function updatePassword(newPassword) {
   const { error } = await supabase.auth.updateUser({
-    password: newPassword,
+    password: newPassword
   });
 
   return { error };
@@ -369,7 +367,7 @@ async function updatePassword(newPassword) {
  */
 function generateSecureApiKey() {
   const randomBytes = crypto.randomBytes(API_KEY_LENGTH);
-  const key = 'dinoair_' + randomBytes.toString('base64url');
+  const key = `dinoair_${randomBytes.toString('base64url')}`;
   return key;
 }
 
@@ -382,10 +380,10 @@ async function hashApiKey(apiKey) {
   console.log(`🔐 [${new Date().toISOString()}] Auth: hashApiKey called`);
   console.time('hashApiKey');
   console.time('bcryptHash');
-  
+
   const saltRounds = 10;
   console.log(`🔐 [${new Date().toISOString()}] Auth: Before bcrypt.hash with ${saltRounds} salt rounds`);
-  
+
   try {
     const hashedKey = await bcrypt.hash(apiKey, saltRounds);
     console.timeEnd('bcryptHash');
@@ -410,9 +408,9 @@ async function verifyApiKeyHash(apiKey, hashedKey) {
   console.log(`🔐 [${new Date().toISOString()}] Auth: verifyApiKeyHash called`);
   console.time('verifyApiKeyHash');
   console.time('bcryptCompare');
-  
+
   console.log(`🔐 [${new Date().toISOString()}] Auth: Before bcrypt.compare`);
-  
+
   try {
     const isMatch = await bcrypt.compare(apiKey, hashedKey);
     console.timeEnd('bcryptCompare');
@@ -439,49 +437,49 @@ async function createApiKey(userId, name, options = {}) {
     if (!userId || !name) {
       return { apiKey: null, error: { message: 'User ID and name are required' } };
     }
-    
+
     if (name.length > 100) {
       return { apiKey: null, error: { message: 'API key name must be 100 characters or less' } };
     }
-    
+
     const { data: userData, error: userError } = await supabaseAdmin
       .from('users')
       .select('id')
       .eq('id', userId)
       .single();
-      
+
     if (userError || !userData) {
       return { apiKey: null, error: { message: 'User not found' } };
     }
-    
+
     const { data: existingKeys, error: countError } = await supabaseAdmin
       .from('api_keys')
       .select('id')
       .eq('user_id', userId)
       .eq('active', true);
-      
+
     if (countError) {
       console.error('Error checking existing API keys:', countError);
       return { apiKey: null, error: { message: 'Error checking existing API keys' } };
     }
-    
+
     if (existingKeys && existingKeys.length >= 10) {
       return { apiKey: null, error: { message: 'Maximum number of API keys reached (10 per user)' } };
     }
-    
+
     // Generate secure API key
     const plainKey = generateSecureApiKey();
     const hashedKey = await hashApiKey(plainKey);
-    
+
     const expiryMonths = Math.min(options.expiryMonths || 12, 24);
     const expiresAt = new Date();
     expiresAt.setMonth(expiresAt.getMonth() + expiryMonths);
-    
+
     const keyData = {
       user_id: userId,
       name: name.trim(),
       key_hash: hashedKey,
-      key_prefix: plainKey.substring(0, 12) + '...', // Store prefix for identification
+      key_prefix: `${plainKey.substring(0, 12)}...`, // Store prefix for identification
       permissions: options.permissions || ['read', 'write'],
       expires_at: expiresAt.toISOString(),
       created_at: new Date().toISOString(),
@@ -501,15 +499,14 @@ async function createApiKey(userId, name, options = {}) {
     }
 
     console.log(`🔑 API key created for user ${userId}: ${keyData.key_prefix}`);
-    
-    return { 
+
+    return {
       apiKey: {
         ...data[0],
         key: plainKey // Only returned once
-      }, 
-      error: null 
+      },
+      error: null
     };
-    
   } catch (error) {
     console.error('Create API key error:', error);
     return { apiKey: null, error: { message: 'Internal server error creating API key' } };
@@ -525,7 +522,7 @@ async function createApiKey(userId, name, options = {}) {
 async function verifyApiKey(apiKey, ip = 'unknown') {
   console.log(`🔐 [${new Date().toISOString()}] Auth: verifyApiKey called from ${ip}`);
   console.time('verifyApiKey');
-  
+
   try {
     console.log(`🔐 [${new Date().toISOString()}] Auth: Validating API key format`);
     if (!apiKey || typeof apiKey !== 'string') {
@@ -533,13 +530,13 @@ async function verifyApiKey(apiKey, ip = 'unknown') {
       console.timeEnd('verifyApiKey');
       return { userId: null, keyData: null, error: { message: 'Invalid API key format' } };
     }
-    
+
     if (!apiKey.startsWith('dinoair_')) {
       console.log(`🚫 [${new Date().toISOString()}] Auth: Invalid API key prefix from ${ip}`);
       console.timeEnd('verifyApiKey');
       return { userId: null, keyData: null, error: { message: 'Invalid API key' } };
     }
-    
+
     console.log(`🔐 [${new Date().toISOString()}] Auth: Fetching active API keys from database`);
     console.time('fetchApiKeys');
     const { data: apiKeys, error } = await supabaseAdmin
@@ -563,16 +560,16 @@ async function verifyApiKey(apiKey, ip = 'unknown') {
 
     console.log(`🔐 [${new Date().toISOString()}] Auth: Checking ${apiKeys.length} API keys for match`);
     console.time('apiKeyMatching');
-    
+
     for (const keyRecord of apiKeys) {
       try {
         console.log(`🔐 [${new Date().toISOString()}] Auth: Verifying API key hash for key ${keyRecord.id}`);
         const isMatch = await verifyApiKeyHash(apiKey, keyRecord.key_hash);
-        
+
         if (isMatch) {
           console.log(`🔐 [${new Date().toISOString()}] Auth: API key match found for key ${keyRecord.id}`);
           console.timeEnd('apiKeyMatching');
-          
+
           console.log(`🔐 [${new Date().toISOString()}] Auth: Updating API key usage statistics`);
           console.time('updateKeyUsage');
           await supabaseAdmin
@@ -601,10 +598,10 @@ async function verifyApiKey(apiKey, ip = 'unknown') {
 
           console.log(`✅ [${new Date().toISOString()}] Auth: API key verified for user ${userData.id} from ${ip}`);
           console.timeEnd('verifyApiKey');
-          
+
           return {
             userId: userData.id,
-            userData: userData,
+            userData,
             keyData: {
               id: keyRecord.id,
               name: keyRecord.name,
@@ -617,7 +614,7 @@ async function verifyApiKey(apiKey, ip = 'unknown') {
         }
       } catch (hashError) {
         console.error(`🔐 [${new Date().toISOString()}] Auth: Error verifying API key hash:`, hashError);
-        continue; // Try next key
+         // Try next key
       }
     }
 
@@ -625,7 +622,6 @@ async function verifyApiKey(apiKey, ip = 'unknown') {
     console.log(`🚫 [${new Date().toISOString()}] Auth: Invalid API key from ${ip}: ${apiKey.substring(0, 12)}...`);
     console.timeEnd('verifyApiKey');
     return { userId: null, keyData: null, error: { message: 'Invalid API key' } };
-    
   } catch (error) {
     console.error(`🔐 [${new Date().toISOString()}] Auth: API key verification error:`, error);
     console.timeEnd('verifyApiKey');
@@ -643,45 +639,44 @@ async function validateJwtToken(token) {
     if (!token) {
       return { isValid: false, error: 'No token provided' };
     }
-    
+
     const parts = token.split('.');
     if (parts.length !== 3) {
       return { isValid: false, error: 'Invalid token format' };
     }
-    
+
     const { data, error } = await supabase.auth.getUser(token);
-    
+
     if (error || !data.user) {
       return { isValid: false, error: error?.message || 'Invalid token' };
     }
-    
-    const user = data.user;
-    
+
+    const { user } = data;
+
     const { data: userData, error: userError } = await supabaseAdmin
       .from('users')
       .select('active, banned_at')
       .eq('id', user.id)
       .single();
-    
+
     if (userError || !userData) {
       return { isValid: false, error: 'User not found' };
     }
-    
+
     if (userData.active === false) {
       return { isValid: false, error: 'Account deactivated' };
     }
-    
+
     if (userData.banned_at) {
       return { isValid: false, error: 'Account suspended' };
     }
-    
-    return { 
-      isValid: true, 
-      user: user,
-      userData: userData,
-      error: null 
+
+    return {
+      isValid: true,
+      user,
+      userData,
+      error: null
     };
-    
   } catch (error) {
     console.error('JWT validation error:', error);
     return { isValid: false, error: 'Token validation failed' };
@@ -697,11 +692,11 @@ function getSecurityMetrics() {
   const recentAttempts = Array.from(failedAttempts.entries())
     .filter(([_, data]) => now - data.lastAttempt < 60000) // Last minute
     .length;
-    
+
   const lockedAccounts = Array.from(failedAttempts.entries())
     .filter(([_, data]) => data.count >= MAX_LOGIN_ATTEMPTS && now - data.lastAttempt < LOCKOUT_DURATION)
     .length;
-  
+
   return {
     failedAttemptsLastMinute: recentAttempts,
     currentlyLockedAccounts: lockedAccounts,

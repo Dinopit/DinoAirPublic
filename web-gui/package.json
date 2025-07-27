@@ -12,6 +12,9 @@
     "start:production": "NODE_ENV=production next start",
     "lint": "next lint",
     "lint:fix": "next lint --fix",
+    "lint:errors": "next lint --quiet",
+    "lint:errors:fix": "next lint --quiet --fix",
+    "lint:staged": "next lint $(git diff --cached --name-only --relative | grep -E '\\.(js|jsx|ts|tsx)$' | xargs)",
     "type-check": "tsc --noEmit",
     "test": "jest",
     "test:watch": "jest --watch",
@@ -37,7 +40,14 @@
     "storybook": "storybook dev -p 6006",
     "build-storybook": "storybook build",
     "lint:fix-safe": "eslint --fix --ext .js,.jsx,.ts,.tsx . || true",
-    "format:fix": "prettier --write ."
+    "format": "prettier --write .",
+    "format:check": "prettier --check .",
+    "format:staged": "prettier --write $(git diff --cached --name-only --relative | grep -E '\\.(js|jsx|ts|tsx|json|md|yml|yaml|css|scss)$' | xargs)",
+    "quality": "npm run lint && npm run format:check && npm run type-check && npm run test",
+    "quality:fix": "npm run lint:fix && npm run format && npm run type-check && npm run test",
+    "quality:quick": "npm run lint:errors && npm run format:check && npm run type-check",
+    "quality:minimal": "npm run format:check && npm run type-check",
+    "pre-commit": "lint-staged && npm run quality"
   },
   "dependencies": {
     "@opentelemetry/auto-instrumentations-node": "^0.62.0",

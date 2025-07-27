@@ -10,7 +10,7 @@ class ErrorHandler {
         retryAfter: 60
       };
     }
-    
+
     if (error.code === 'ECONNREFUSED') {
       return {
         status: 503,
@@ -18,7 +18,7 @@ class ErrorHandler {
         code: 'SERVICE_UNAVAILABLE'
       };
     }
-    
+
     if (error.code === 'ETIMEDOUT' || error.name === 'TimeoutError') {
       return {
         status: 504,
@@ -26,7 +26,7 @@ class ErrorHandler {
         code: 'TIMEOUT'
       };
     }
-    
+
     return {
       status: 500,
       error: `${serviceName} service error`,
@@ -34,17 +34,17 @@ class ErrorHandler {
       message: error.message
     };
   }
-  
+
   static createErrorResponse(res, errorInfo) {
     const response = {
       success: false,
       ...errorInfo
     };
-    
+
     if (errorInfo.retryAfter) {
       res.set('Retry-After', errorInfo.retryAfter);
     }
-    
+
     return res.status(errorInfo.status).json(response);
   }
 }

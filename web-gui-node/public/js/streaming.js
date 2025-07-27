@@ -300,13 +300,13 @@ class WebSocketManager extends window.EventEmitter {
         this.connect();
       }
     }, delay);
-    
+
     // Track timer for cleanup if needed
     if (!this.reconnectTimers) {
       this.reconnectTimers = new Set();
     }
     this.reconnectTimers.add(reconnectTimer);
-    
+
     // Clean up timer reference after execution
     setTimeout(() => {
       this.reconnectTimers.delete(reconnectTimer);
@@ -318,13 +318,13 @@ class WebSocketManager extends window.EventEmitter {
    */
   disconnect() {
     this.stopHeartbeat();
-    
+
     // Clear any pending reconnect timers to prevent memory leaks
     if (this.reconnectTimers) {
       this.reconnectTimers.forEach(timer => clearTimeout(timer));
       this.reconnectTimers.clear();
     }
-    
+
     if (this.socket) {
       this.socket.disconnect();
       this.socket = null;
@@ -437,13 +437,13 @@ class SSEManager extends window.EventEmitter {
         this.connect(this.eventSource.url);
       }
     }, delay);
-    
+
     // Track timer for cleanup if needed
     if (!this.reconnectTimers) {
       this.reconnectTimers = new Set();
     }
     this.reconnectTimers.add(reconnectTimer);
-    
+
     // Clean up timer reference after execution
     setTimeout(() => {
       this.reconnectTimers.delete(reconnectTimer);
@@ -459,7 +459,7 @@ class SSEManager extends window.EventEmitter {
       this.reconnectTimers.forEach(timer => clearTimeout(timer));
       this.reconnectTimers.clear();
     }
-    
+
     if (this.eventSource) {
       this.eventSource.close();
       this.eventSource = null;
@@ -514,7 +514,7 @@ class NotificationManager extends window.EventEmitter {
       const timeoutId = setTimeout(() => {
         this.remove(notif.id);
       }, notif.timeout);
-      
+
       // Track timeout for cleanup
       if (!this.notificationTimeouts) {
         this.notificationTimeouts = new Map();
@@ -534,7 +534,7 @@ class NotificationManager extends window.EventEmitter {
     if (index !== -1) {
       const [notification] = this.notifications.splice(index, 1);
       this.emit('notificationRemoved', notification);
-      
+
       // Clear associated timeout to prevent memory leak
       if (this.notificationTimeouts && this.notificationTimeouts.has(id)) {
         clearTimeout(this.notificationTimeouts.get(id));
@@ -552,7 +552,7 @@ class NotificationManager extends window.EventEmitter {
       this.notificationTimeouts.forEach(timeoutId => clearTimeout(timeoutId));
       this.notificationTimeouts.clear();
     }
-    
+
     this.notifications = [];
     this.emit('notificationsCleared');
   }
@@ -643,7 +643,7 @@ class ProgressTracker extends window.EventEmitter {
     const cleanupTimeout = setTimeout(() => {
       this.operations.delete(id);
     }, 5000);
-    
+
     // Track cleanup timeout for manual cleanup if needed
     if (!this.cleanupTimeouts) {
       this.cleanupTimeouts = new Map();
@@ -697,7 +697,7 @@ class ProgressTracker extends window.EventEmitter {
     if (operation) {
       this.operations.delete(id);
       this.emit('progressRemoved', operation);
-      
+
       // Clear associated cleanup timeout to prevent memory leak
       if (this.cleanupTimeouts && this.cleanupTimeouts.has(id)) {
         clearTimeout(this.cleanupTimeouts.get(id));
@@ -715,7 +715,7 @@ class ProgressTracker extends window.EventEmitter {
       this.cleanupTimeouts.forEach(timeoutId => clearTimeout(timeoutId));
       this.cleanupTimeouts.clear();
     }
-    
+
     this.operations.clear();
     this.emit('progressCleared');
   }

@@ -128,7 +128,6 @@ async function testArtifactsMigration() {
     console.log('- ✅ Search and filtering operational');
     console.log('- ✅ Statistics calculation working');
     console.log('- ✅ Data integrity maintained');
-
   } catch (error) {
     console.error('\n❌ Migration test failed:', error.message);
     console.error('Stack trace:', error.stack);
@@ -143,7 +142,7 @@ if (require.main === module) {
       console.log('\n✨ Migration test completed successfully!');
       process.exit(0);
     })
-    .catch((error) => {
+    .catch(error => {
       console.error('\n💥 Migration test failed:', error);
       process.exit(1);
     });

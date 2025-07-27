@@ -75,7 +75,7 @@ class DatabaseBackupManager {
     const startTime = Date.now();
     const filename = this.generateBackupFilename(type);
     const backupPath = path.join(this.backupDir, filename);
-    
+
     console.log(`Starting ${type} backup: ${filename}`);
 
     try {
@@ -91,7 +91,7 @@ class DatabaseBackupManager {
 
       // Execute pg_dump
       const backupResult = await this.executePgDump(pgDumpArgs);
-      
+
       // Get backup file stats
       const stats = await fs.stat(backupPath);
       const duration = Date.now() - startTime;
@@ -139,17 +139,16 @@ class DatabaseBackupManager {
 
       console.log(`Backup completed successfully: ${filename} (${this.formatBytes(stats.size)}, ${duration}ms)`);
       return backupInfo;
-
     } catch (error) {
       console.error('Backup failed:', error);
-      
+
       // Clean up failed backup file
       try {
         await fs.unlink(backupPath);
       } catch (cleanupError) {
         console.error('Failed to clean up backup file:', cleanupError);
       }
-      
+
       throw error;
     }
   }
@@ -232,14 +231,14 @@ class DatabaseBackupManager {
       let stderr = '';
       let version = null;
 
-      pgDump.stdout.on('data', (data) => {
+      pgDump.stdout.on('data', data => {
         stdout += data.toString();
       });
 
-      pgDump.stderr.on('data', (data) => {
+      pgDump.stderr.on('data', data => {
         const output = data.toString();
         stderr += output;
-        
+
         // Extract pg_dump version
         const versionMatch = output.match(/pg_dump \(PostgreSQL\) ([\d.]+)/);
         if (versionMatch) {
@@ -247,7 +246,7 @@ class DatabaseBackupManager {
         }
       });
 
-      pgDump.on('close', (code) => {
+      pgDump.on('close', code => {
         if (code === 0) {
           resolve({ stdout, stderr, version, exitCode: code });
         } else {
@@ -255,7 +254,7 @@ class DatabaseBackupManager {
         }
       });
 
-      pgDump.on('error', (error) => {
+      pgDump.on('error', error => {
         reject(new Error(`Failed to start pg_dump: ${error.message}`));
       });
     });
@@ -268,7 +267,7 @@ class DatabaseBackupManager {
    */
   async verifyBackup(backupPath) {
     const startTime = Date.now();
-    
+
     try {
       // Use pg_restore to verify the backup
       const verifyResult = await this.executePgRestore([
@@ -278,14 +277,14 @@ class DatabaseBackupManager {
       ]);
 
       const duration = Date.now() - startTime;
-      
+
       // Parse the output to count objects
       const lines = verifyResult.stderr.split('\n');
-      const objectCount = lines.filter(line => 
-        line.includes('TABLE') || 
-        line.includes('INDEX') || 
-        line.includes('CONSTRAINT') ||
-        line.includes('SEQUENCE')
+      const objectCount = lines.filter(line =>
+        line.includes('TABLE')
+        || line.includes('INDEX')
+        || line.includes('CONSTRAINT')
+        || line.includes('SEQUENCE')
       ).length;
 
       return {
@@ -294,7 +293,6 @@ class DatabaseBackupManager {
         objectCount,
         verifiedAt: new Date().toISOString()
       };
-
     } catch (error) {
       console.error('Backup verification failed:', error);
       return {
@@ -317,15 +315,15 @@ class DatabaseBackupManager {
       let stdout = '';
       let stderr = '';
 
-      pgRestore.stdout.on('data', (data) => {
+      pgRestore.stdout.on('data', data => {
         stdout += data.toString();
       });
 
-      pgRestore.stderr.on('data', (data) => {
+      pgRestore.stderr.on('data', data => {
         stderr += data.toString();
       });
 
-      pgRestore.on('close', (code) => {
+      pgRestore.on('close', code => {
         if (code === 0) {
           resolve({ stdout, stderr, exitCode: code });
         } else {
@@ -333,7 +331,7 @@ class DatabaseBackupManager {
         }
       });
 
-      pgRestore.on('error', (error) => {
+      pgRestore.on('error', error => {
         reject(new Error(`Failed to start pg_restore: ${error.message}`));
       });
     });
@@ -363,12 +361,12 @@ class DatabaseBackupManager {
 
     const encryptedPath = `${backupPath}.enc`;
     const cipher = crypto.createCipher('aes-256-cbc', BACKUP_CONFIG.encryptionKey);
-    
+
     const input = await fs.readFile(backupPath);
     const encrypted = Buffer.concat([cipher.update(input), cipher.final()]);
-    
+
     await fs.writeFile(encryptedPath, encrypted);
-    
+
     console.log(`Backup encrypted: ${encryptedPath}`);
     return encryptedPath;
   }
@@ -407,30 +405,30 @@ class DatabaseBackupManager {
     } = options;
 
     const startTime = Date.now();
-    
+
     console.log(`Starting database restore from: ${backupPath}`);
 
     try {
       // Verify backup exists and is valid
       await fs.access(backupPath);
-      
+
       // Build pg_restore arguments
       const args = ['--verbose', '--no-password'];
-      
+
       if (dropExisting) {
         args.push('--clean');
       }
-      
+
       if (createDatabase) {
         args.push('--create');
       }
-      
+
       if (dataOnly) {
         args.push('--data-only');
       } else if (schemaOnly) {
         args.push('--schema-only');
       }
-      
+
       if (tables && Array.isArray(tables)) {
         tables.forEach(table => {
           args.push('--table', table);
@@ -457,7 +455,7 @@ class DatabaseBackupManager {
       const duration = Date.now() - startTime;
 
       console.log(`Database restore completed successfully (${duration}ms)`);
-      
+
       return {
         success: true,
         duration,
@@ -465,7 +463,6 @@ class DatabaseBackupManager {
         restoredAt: new Date().toISOString(),
         output: restoreResult.stderr
       };
-
     } catch (error) {
       console.error('Database restore failed:', error);
       throw error;
@@ -485,7 +482,7 @@ class DatabaseBackupManager {
         if (file.endsWith('.sql') || file.endsWith('.sql.enc')) {
           const filePath = path.join(this.backupDir, file);
           const metadataPath = path.join(this.backupDir, `${file}.meta.json`);
-          
+
           let metadata = null;
           try {
             const metadataContent = await fs.readFile(metadataPath, 'utf8');
@@ -509,7 +506,7 @@ class DatabaseBackupManager {
 
       // Sort by creation date (newest first)
       backups.sort((a, b) => new Date(b.createdAt) - new Date(a.createdAt));
-      
+
       return backups;
     } catch (error) {
       console.error('Failed to list backups:', error);
@@ -524,12 +521,12 @@ class DatabaseBackupManager {
   async cleanupOldBackups() {
     const retentionMs = BACKUP_CONFIG.retentionDays * 24 * 60 * 60 * 1000;
     const cutoffDate = new Date(Date.now() - retentionMs);
-    
+
     console.log(`Cleaning up backups older than ${BACKUP_CONFIG.retentionDays} days (before ${cutoffDate.toISOString()})`);
 
     try {
       const backups = await this.listBackups();
-      const toDelete = backups.filter(backup => 
+      const toDelete = backups.filter(backup =>
         new Date(backup.createdAt) < cutoffDate
       );
 
@@ -539,7 +536,7 @@ class DatabaseBackupManager {
       for (const backup of toDelete) {
         try {
           await fs.unlink(backup.path);
-          
+
           // Delete metadata file
           const metadataPath = `${backup.path}.meta.json`;
           try {
@@ -566,14 +563,13 @@ class DatabaseBackupManager {
       }
 
       console.log(`Cleanup completed: ${deletedCount} backups deleted, ${this.formatBytes(deletedSize)} freed`);
-      
+
       return {
         deletedCount,
         deletedSize,
         deletedSizeHuman: this.formatBytes(deletedSize),
         remainingBackups: backups.length - deletedCount
       };
-
     } catch (error) {
       console.error('Backup cleanup failed:', error);
       throw error;
@@ -586,13 +582,13 @@ class DatabaseBackupManager {
    * @returns {string} Formatted string
    */
   formatBytes(bytes) {
-    if (bytes === 0) return '0 Bytes';
-    
+    if (bytes === 0) { return '0 Bytes'; }
+
     const k = 1024;
     const sizes = ['Bytes', 'KB', 'MB', 'GB', 'TB'];
     const i = Math.floor(Math.log(bytes) / Math.log(k));
-    
-    return parseFloat((bytes / Math.pow(k, i)).toFixed(2)) + ' ' + sizes[i];
+
+    return `${parseFloat((bytes / Math.pow(k, i)).toFixed(2))} ${sizes[i]}`;
   }
 
   /**
@@ -601,7 +597,7 @@ class DatabaseBackupManager {
    */
   scheduleBackups(schedule = 'daily') {
     let interval;
-    
+
     switch (schedule) {
       case 'hourly':
         interval = 60 * 60 * 1000; // 1 hour
@@ -617,7 +613,7 @@ class DatabaseBackupManager {
     }
 
     console.log(`Scheduling automatic backups every ${schedule} (${interval}ms)`);
-    
+
     setInterval(async () => {
       try {
         console.log('Starting scheduled backup...');
@@ -657,7 +653,7 @@ if (require.main === module) {
         console.error('Usage: node database-backup.js restore <backup-path>');
         process.exit(1);
       }
-      
+
       backupManager.restoreFromBackup(backupPath)
         .then(result => {
           console.log('Restore completed successfully');

@@ -12,7 +12,7 @@ router.get('/stats', rateLimits.api, anyAuth, (req, res) => {
     const memUsage = process.memoryUsage();
     const resourceStats = resourceManager.getStats();
     const monitorStats = memoryMonitor.getStats();
-    
+
     const stats = {
       memory: {
         rss: Math.round(memUsage.rss / 1024 / 1024 * 100) / 100,
@@ -27,7 +27,7 @@ router.get('/stats', rateLimits.api, anyAuth, (req, res) => {
       uptime: process.uptime(),
       timestamp: new Date().toISOString()
     };
-    
+
     res.json(stats);
   } catch (error) {
     console.error('Error getting system stats:', error);
@@ -41,7 +41,7 @@ router.post('/gc', rateLimits.api, sanitizeInput, anyAuth, (req, res) => {
       const beforeMem = process.memoryUsage();
       global.gc();
       const afterMem = process.memoryUsage();
-      
+
       res.json({
         success: true,
         before: {
@@ -55,8 +55,8 @@ router.post('/gc', rateLimits.api, sanitizeInput, anyAuth, (req, res) => {
         freed: Math.round((beforeMem.heapUsed - afterMem.heapUsed) / 1024 / 1024 * 100) / 100
       });
     } else {
-      res.status(400).json({ 
-        error: 'Garbage collection not available. Start Node.js with --expose-gc flag.' 
+      res.status(400).json({
+        error: 'Garbage collection not available. Start Node.js with --expose-gc flag.'
       });
     }
   } catch (error) {
@@ -80,11 +80,11 @@ router.get('/circuit-breakers', rateLimits.api, anyAuth, async (req, res) => {
   try {
     const stats = CircuitBreakerStats.getAllStats();
     const health = CircuitBreakerStats.getHealthStatus();
-    
+
     res.json({
       success: true,
-      stats: stats,
-      health: health,
+      stats,
+      health,
       timestamp: new Date().toISOString()
     });
   } catch (error) {
@@ -99,7 +99,7 @@ router.get('/circuit-breakers', rateLimits.api, anyAuth, async (req, res) => {
 router.post('/circuit-breakers/reset', rateLimits.api, anyAuth, async (req, res) => {
   try {
     const result = CircuitBreakerStats.resetAll();
-    
+
     res.json({
       success: true,
       ...result

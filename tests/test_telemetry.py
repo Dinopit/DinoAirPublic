@@ -6,9 +6,8 @@ import unittest
 import tempfile
 import shutil
 import os
-import json
 import sys
-from unittest.mock import patch, MagicMock
+from unittest.mock import patch
 
 # Add current directory to path
 sys.path.insert(0, os.path.join(os.path.dirname(__file__), '..'))

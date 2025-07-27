@@ -6,7 +6,6 @@ Enhanced version with comprehensive safety checks and error recovery
 import os
 import sys
 import subprocess
-import json
 import platform
 import argparse
 import shutil

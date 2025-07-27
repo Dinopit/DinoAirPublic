@@ -9,7 +9,6 @@ import sys
 import os
 import json
 import argparse
-from pathlib import Path
 
 # Add current directory to path to import telemetry module
 sys.path.insert(0, os.path.dirname(__file__))

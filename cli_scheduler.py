@@ -4,13 +4,12 @@ CLI Installer Scheduling System
 Implements scheduling for automated updates in the DinoAir CLI installer.
 """
 
-import os
 import sys
 import json
 import time
 import threading
 from datetime import datetime, timedelta
-from typing import Dict, List, Optional, Callable, Any
+from typing import Dict, List, Optional, Any
 from pathlib import Path
 from dataclasses import dataclass, asdict
 from enum import Enum

@@ -9,12 +9,12 @@ const { artifacts } = require('../../../lib/supabase');
 const { resourceManager } = require('../../../lib/resource-manager');
 const { requireAuth } = require('../../../middleware/auth-middleware');
 const { rateLimits } = require('../../../middleware/validation');
-const { 
-  createSecureUpload, 
-  postUploadValidation, 
+const {
+  createSecureUpload,
+  postUploadValidation,
   secureDownloadHeaders,
   getUserQuota,
-  getUserStorageUsage 
+  getUserStorageUsage
 } = require('../../../middleware/file-security');
 const router = express.Router();
 
@@ -35,7 +35,7 @@ const MAX_TOTAL_SIZE = 100 * 1024 * 1024; // 100MB
 async function getStorageStats(userId = null, user = null) {
   try {
     const stats = await artifacts.getStats(userId);
-    
+
     // Get user-specific quota limits
     let quota;
     if (user) {
@@ -47,7 +47,7 @@ async function getStorageStats(userId = null, user = null) {
         maxTotalSize: MAX_TOTAL_SIZE
       };
     }
-    
+
     return {
       count: stats.count,
       maxCount: quota.maxFiles,
@@ -86,11 +86,11 @@ async function getStorageStats(userId = null, user = null) {
 // GET /api/v1/artifacts - Get all artifacts
 router.get('/', async (req, res) => {
   try {
-    const { 
-      page = 1, 
-      limit = 10, 
-      type, 
-      search, 
+    const {
+      page = 1,
+      limit = 10,
+      type,
+      search,
       tags,
       user_id
     } = req.query;
@@ -98,7 +98,7 @@ router.get('/', async (req, res) => {
     const offset = (page - 1) * limit;
     const options = {
       limit: parseInt(limit),
-      offset: offset,
+      offset,
       type,
       search,
       user_id
@@ -111,7 +111,7 @@ router.get('/', async (req, res) => {
 
     // Get artifacts from database
     const artifactsList = await artifacts.getAll(options);
-    
+
     // Get total count for pagination (simplified - in production, use a separate count query)
     const allArtifacts = await artifacts.getAll({ user_id });
     const total = allArtifacts.length;
@@ -125,7 +125,7 @@ router.get('/', async (req, res) => {
       pagination: {
         page: parseInt(page),
         limit: parseInt(limit),
-        total: total,
+        total,
         pages: Math.ceil(total / limit)
       },
       filters: {
@@ -187,7 +187,7 @@ router.post('/', async (req, res) => {
 
     const artifactSize = Buffer.byteLength(content, 'utf8');
     const currentStats = await getStorageStats(user_id);
-    
+
     if (currentStats.count >= MAX_ARTIFACTS) {
       return res.status(413).json({
         success: false,
@@ -261,11 +261,11 @@ router.put('/:id', async (req, res) => {
 
     // Prepare update data
     const updates = {};
-    if (name !== undefined) updates.name = name;
-    if (type !== undefined) updates.type = type;
-    if (content !== undefined) updates.content = content;
-    if (tags !== undefined) updates.tags = Array.isArray(tags) ? tags : [];
-    if (metadata !== undefined) updates.metadata = { ...existingArtifact.metadata, ...metadata };
+    if (name !== undefined) { updates.name = name; }
+    if (type !== undefined) { updates.type = type; }
+    if (content !== undefined) { updates.content = content; }
+    if (tags !== undefined) { updates.tags = Array.isArray(tags) ? tags : []; }
+    if (metadata !== undefined) { updates.metadata = { ...existingArtifact.metadata, ...metadata }; }
 
     // Update artifact in database
     const updatedArtifact = await artifacts.update(id, updates);
@@ -375,7 +375,7 @@ router.get('/:id/versions', async (req, res) => {
 
     res.json({
       success: true,
-      versions: versions,
+      versions,
       total: versions.length
     });
   } catch (error) {
@@ -404,16 +404,16 @@ router.post('/bulk-import', requireAuth, rateLimits.upload, rateLimits.addInfo.u
 
     // Map file extensions to types
     const typeMap = {
-      'js': 'javascript',
-      'jsx': 'javascriptreact',
-      'ts': 'typescript',
-      'tsx': 'typescriptreact',
-      'py': 'python',
-      'html': 'html',
-      'css': 'css',
-      'json': 'json',
-      'md': 'markdown',
-      'txt': 'text'
+      js: 'javascript',
+      jsx: 'javascriptreact',
+      ts: 'typescript',
+      tsx: 'typescriptreact',
+      py: 'python',
+      html: 'html',
+      css: 'css',
+      json: 'json',
+      md: 'markdown',
+      txt: 'text'
     };
 
     // Process each file
@@ -450,7 +450,7 @@ router.post('/bulk-import', requireAuth, rateLimits.upload, rateLimits.addInfo.u
           file: file.originalname,
           error: error.message
         });
-        
+
         // Clean up temporary file on error
         try {
           await require('fs').promises.unlink(file.path);
@@ -472,10 +472,10 @@ router.post('/bulk-import', requireAuth, rateLimits.upload, rateLimits.addInfo.u
     });
   } catch (error) {
     console.error('Error importing artifacts:', error);
-    
+
     // Clean up any remaining files on error
     if (req.files) {
-      await Promise.all(req.files.map(async (file) => {
+      await Promise.all(req.files.map(async file => {
         try {
           await require('fs').promises.unlink(file.path);
         } catch (unlinkError) {
@@ -483,7 +483,7 @@ router.post('/bulk-import', requireAuth, rateLimits.upload, rateLimits.addInfo.u
         }
       }));
     }
-    
+
     res.status(500).json({
       success: false,
       error: 'Failed to import artifacts',
@@ -507,16 +507,16 @@ router.get('/export/single/:id', rateLimits.export, rateLimits.addInfo.export, s
 
     // Determine file extension
     const extensionMap = {
-      'javascript': '.js',
-      'javascriptreact': '.jsx',
-      'typescript': '.ts',
-      'typescriptreact': '.tsx',
-      'python': '.py',
-      'html': '.html',
-      'css': '.css',
-      'json': '.json',
-      'markdown': '.md',
-      'text': '.txt'
+      javascript: '.js',
+      javascriptreact: '.jsx',
+      typescript: '.ts',
+      typescriptreact: '.tsx',
+      python: '.py',
+      html: '.html',
+      css: '.css',
+      json: '.json',
+      markdown: '.md',
+      text: '.txt'
     };
 
     const extension = extensionMap[artifact.type] || '.txt';
@@ -527,7 +527,7 @@ router.get('/export/single/:id', rateLimits.export, rateLimits.addInfo.export, s
     res.setHeader('Content-Disposition', `attachment; filename="${filename}"`);
     res.setHeader('X-Content-Type-Options', 'nosniff');
     res.setHeader('Cache-Control', 'no-cache, no-store, must-revalidate');
-    
+
     res.send(artifact.content);
   } catch (error) {
     console.error('Error exporting artifact:', error);
@@ -542,11 +542,11 @@ router.get('/export/single/:id', rateLimits.export, rateLimits.addInfo.export, s
 // POST /api/v1/artifacts/export/bulk - Export multiple artifacts as ZIP with streaming support
 router.post('/export/bulk', async (req, res) => {
   try {
-    const { 
-      artifactIds, 
-      includeManifest = true, 
+    const {
+      artifactIds,
+      includeManifest = true,
       useStreaming = null, // null = auto-detect, true = force streaming, false = force sync
-      compressionLevel = 6 
+      compressionLevel = 6
     } = req.body;
 
     if (!artifactIds || !Array.isArray(artifactIds) || artifactIds.length === 0) {
@@ -559,7 +559,7 @@ router.post('/export/bulk', async (req, res) => {
     // Fetch artifacts from database
     const selectedArtifacts = [];
     let totalSize = 0;
-    
+
     for (const id of artifactIds) {
       try {
         const artifact = await artifacts.getById(id);
@@ -582,15 +582,15 @@ router.post('/export/bulk', async (req, res) => {
     // Determine if we should use streaming based on size and count
     const STREAMING_THRESHOLD_SIZE = 10 * 1024 * 1024; // 10MB
     const STREAMING_THRESHOLD_COUNT = 50; // 50 artifacts
-    
-    const shouldUseStreaming = useStreaming !== null 
-      ? useStreaming 
+
+    const shouldUseStreaming = useStreaming !== null
+      ? useStreaming
       : (totalSize > STREAMING_THRESHOLD_SIZE || selectedArtifacts.length > STREAMING_THRESHOLD_COUNT);
 
     if (shouldUseStreaming) {
       // Use streaming export service for large exports
       const { streamingExportService } = require('../../../lib/streaming-export');
-      
+
       const exportJob = await streamingExportService.startExport(selectedArtifacts, {
         includeManifest,
         compressionLevel,
@@ -613,62 +613,61 @@ router.post('/export/bulk', async (req, res) => {
         message: 'Export job started. Use the progress URL to track completion.',
         timestamp: new Date().toISOString()
       });
-    } else {
-      // Use synchronous export for small exports (backwards compatibility)
-      const zip = new JSZip();
-
-      // Add artifacts to ZIP
-      selectedArtifacts.forEach(artifact => {
-        const extensionMap = {
-          'javascript': '.js',
-          'javascriptreact': '.jsx',
-          'typescript': '.ts',
-          'typescriptreact': '.tsx',
-          'python': '.py',
-          'html': '.html',
-          'css': '.css',
-          'json': '.json',
-          'markdown': '.md',
-          'text': '.txt'
-        };
-
-        const extension = extensionMap[artifact.type] || '.txt';
-        const filename = artifact.name.endsWith(extension) ? artifact.name : artifact.name + extension;
-        
-        zip.file(filename, artifact.content);
-      });
-
-      // Add manifest if requested
-      if (includeManifest) {
-        const manifest = {
-          exportDate: new Date().toISOString(),
-          totalArtifacts: selectedArtifacts.length,
-          exportType: 'synchronous',
-          artifacts: selectedArtifacts.map(artifact => ({
-            id: artifact.id,
-            name: artifact.name,
-            type: artifact.type,
-            createdAt: artifact.createdAt,
-            size: artifact.size,
-            tags: artifact.tags
-          }))
-        };
-        
-        zip.file('manifest.json', JSON.stringify(manifest, null, 2));
-      }
-
-      const zipBuffer = await zip.generateAsync({ 
-        type: 'nodebuffer',
-        compression: 'DEFLATE',
-        compressionOptions: { level: compressionLevel }
-      });
-
-      res.setHeader('Content-Type', 'application/zip');
-      res.setHeader('Content-Disposition', 'attachment; filename="dinoair-artifacts.zip"');
-      res.setHeader('Content-Length', zipBuffer.length);
-      res.setHeader('X-Export-Type', 'synchronous');
-      res.send(zipBuffer);
     }
+    // Use synchronous export for small exports (backwards compatibility)
+    const zip = new JSZip();
+
+    // Add artifacts to ZIP
+    selectedArtifacts.forEach(artifact => {
+      const extensionMap = {
+        javascript: '.js',
+        javascriptreact: '.jsx',
+        typescript: '.ts',
+        typescriptreact: '.tsx',
+        python: '.py',
+        html: '.html',
+        css: '.css',
+        json: '.json',
+        markdown: '.md',
+        text: '.txt'
+      };
+
+      const extension = extensionMap[artifact.type] || '.txt';
+      const filename = artifact.name.endsWith(extension) ? artifact.name : artifact.name + extension;
+
+      zip.file(filename, artifact.content);
+    });
+
+    // Add manifest if requested
+    if (includeManifest) {
+      const manifest = {
+        exportDate: new Date().toISOString(),
+        totalArtifacts: selectedArtifacts.length,
+        exportType: 'synchronous',
+        artifacts: selectedArtifacts.map(artifact => ({
+          id: artifact.id,
+          name: artifact.name,
+          type: artifact.type,
+          createdAt: artifact.createdAt,
+          size: artifact.size,
+          tags: artifact.tags
+        }))
+      };
+
+      zip.file('manifest.json', JSON.stringify(manifest, null, 2));
+    }
+
+    const zipBuffer = await zip.generateAsync({
+      type: 'nodebuffer',
+      compression: 'DEFLATE',
+      compressionOptions: { level: compressionLevel }
+    });
+
+    res.setHeader('Content-Type', 'application/zip');
+    res.setHeader('Content-Disposition', 'attachment; filename="dinoair-artifacts.zip"');
+    res.setHeader('Content-Length', zipBuffer.length);
+    res.setHeader('X-Export-Type', 'synchronous');
+    res.send(zipBuffer);
   } catch (error) {
     console.error('Bulk export error:', error);
     res.status(500).json({
@@ -683,13 +682,13 @@ router.post('/export/bulk', async (req, res) => {
 router.get('/stats', async (req, res) => {
   try {
     const { user_id } = req.query;
-    
+
     // Get storage stats from database
     const storageStats = await getStorageStats(user_id);
-    
+
     // Get all artifacts to calculate detailed stats
     const allArtifacts = await artifacts.getAll({ user_id });
-    
+
     const stats = {
       total: allArtifacts.length,
       byType: {},
@@ -708,11 +707,11 @@ router.get('/stats', async (req, res) => {
           totalSizeMB: Math.round(storageStats.totalSize / 1024 / 1024)
         },
         utilization: storageStats.utilizationPercent,
-        status: storageStats.utilizationPercent.count > 90 || storageStats.utilizationPercent.size > 90 
-          ? 'critical' 
-          : storageStats.utilizationPercent.count > 70 || storageStats.utilizationPercent.size > 70 
-          ? 'warning' 
-          : 'healthy'
+        status: storageStats.utilizationPercent.count > 90 || storageStats.utilizationPercent.size > 90
+          ? 'critical'
+          : storageStats.utilizationPercent.count > 70 || storageStats.utilizationPercent.size > 70
+            ? 'warning'
+            : 'healthy'
       }
     };
 
@@ -722,7 +721,7 @@ router.get('/stats', async (req, res) => {
     allArtifacts.forEach(artifact => {
       // Count by type
       stats.byType[artifact.type] = (stats.byType[artifact.type] || 0) + 1;
-      
+
       // Recent artifacts (last week)
       if (new Date(artifact.created_at) > oneWeekAgo) {
         stats.recentCount++;

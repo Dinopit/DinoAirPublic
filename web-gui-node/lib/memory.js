@@ -1,7 +1,7 @@
 /**
  * Memory Management Module for DinoAir
  * Provides per-user memory/history storage and retrieval using Supabase
- * 
+ *
  * Table structure:
  * - id: UUID (primary key)
  * - user_id: string (required)
@@ -40,14 +40,14 @@ const supabase = createClient(
  * @param {Object|string} data - The memory data to store (will be JSON stringified if object)
  * @returns {Promise<Object>} The saved memory record
  * @throws {Error} If the operation fails
- * 
+ *
  * @example
  * // Save object data
- * const result = await saveMemory('user123', { 
- *   preferences: { theme: 'dark' }, 
- *   lastAction: 'chat_sent' 
+ * const result = await saveMemory('user123', {
+ *   preferences: { theme: 'dark' },
+ *   lastAction: 'chat_sent'
  * });
- * 
+ *
  * // Save string data
  * const result = await saveMemory('user123', 'Simple text memory');
  */
@@ -98,13 +98,12 @@ async function saveMemory(userId, data) {
     }
 
     return result;
-
   } catch (error) {
     // Re-throw with additional context if it's not already our custom error
-    if (error.message.startsWith('Failed to save memory') || 
-        error.message.startsWith('userId must be') ||
-        error.message.startsWith('data cannot be') ||
-        error.message.startsWith('Failed to serialize')) {
+    if (error.message.startsWith('Failed to save memory')
+        || error.message.startsWith('userId must be')
+        || error.message.startsWith('data cannot be')
+        || error.message.startsWith('Failed to serialize')) {
       throw error;
     }
     throw new Error(`Unexpected error saving memory: ${error.message}`);
@@ -116,7 +115,7 @@ async function saveMemory(userId, data) {
  * @param {string} userId - The user ID to retrieve memory for
  * @returns {Promise<Object|null>} The memory data object or null if not found
  * @throws {Error} If the operation fails
- * 
+ *
  * @example
  * // Retrieve memory data
  * const memory = await getMemory('user123');
@@ -165,11 +164,10 @@ async function getMemory(userId) {
     }
 
     return data;
-
   } catch (error) {
     // Re-throw with additional context if it's not already our custom error
-    if (error.message.startsWith('Failed to retrieve memory') || 
-        error.message.startsWith('userId must be')) {
+    if (error.message.startsWith('Failed to retrieve memory')
+        || error.message.startsWith('userId must be')) {
       throw error;
     }
     throw new Error(`Unexpected error retrieving memory: ${error.message}`);
@@ -181,7 +179,7 @@ async function getMemory(userId) {
  * @param {string} userId - The user ID to delete memory for
  * @returns {Promise<boolean>} True if memory was deleted, false if no memory existed
  * @throws {Error} If the operation fails
- * 
+ *
  * @example
  * const deleted = await deleteMemory('user123');
  * if (deleted) {
@@ -210,11 +208,10 @@ async function deleteMemory(userId) {
 
     // Return true if a record was deleted, false if no record existed
     return data && data.length > 0;
-
   } catch (error) {
     // Re-throw with additional context if it's not already our custom error
-    if (error.message.startsWith('Failed to delete memory') || 
-        error.message.startsWith('userId must be')) {
+    if (error.message.startsWith('Failed to delete memory')
+        || error.message.startsWith('userId must be')) {
       throw error;
     }
     throw new Error(`Unexpected error deleting memory: ${error.message}`);
@@ -226,7 +223,7 @@ async function deleteMemory(userId) {
  * @param {string} userId - The user ID to check
  * @returns {Promise<boolean>} True if memory exists, false otherwise
  * @throws {Error} If the operation fails
- * 
+ *
  * @example
  * const exists = await hasMemory('user123');
  * if (exists) {
@@ -253,11 +250,10 @@ async function hasMemory(userId) {
     }
 
     return count > 0;
-
   } catch (error) {
     // Re-throw with additional context if it's not already our custom error
-    if (error.message.startsWith('Failed to check memory') || 
-        error.message.startsWith('userId must be')) {
+    if (error.message.startsWith('Failed to check memory')
+        || error.message.startsWith('userId must be')) {
       throw error;
     }
     throw new Error(`Unexpected error checking memory existence: ${error.message}`);
@@ -269,7 +265,7 @@ async function hasMemory(userId) {
  * @param {string[]} userIds - Array of user IDs to retrieve memory for
  * @returns {Promise<Object[]>} Array of memory records
  * @throws {Error} If the operation fails
- * 
+ *
  * @example
  * const memories = await getMultipleMemories(['user1', 'user2', 'user3']);
  * memories.forEach(memory => {
@@ -320,12 +316,11 @@ async function getMultipleMemories(userIds) {
     });
 
     return results;
-
   } catch (error) {
     // Re-throw with additional context if it's not already our custom error
-    if (error.message.startsWith('Failed to retrieve memories') || 
-        error.message.startsWith('userIds must be') ||
-        error.message.startsWith('All userIds must be')) {
+    if (error.message.startsWith('Failed to retrieve memories')
+        || error.message.startsWith('userIds must be')
+        || error.message.startsWith('All userIds must be')) {
       throw error;
     }
     throw new Error(`Unexpected error retrieving multiple memories: ${error.message}`);

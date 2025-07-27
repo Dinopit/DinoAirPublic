@@ -4,7 +4,6 @@ CLI Installer Localization System
 Implements multi-language support for the DinoAir CLI installer.
 """
 
-import os
 import json
 import locale
 from typing import Dict, Optional

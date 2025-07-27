@@ -9,7 +9,7 @@ const { rateLimits, authValidation, sanitizeInput } = require('../middleware/val
 const authTimeout = (timeoutMs = 30000) => {
   return (req, res, next) => {
     console.log(`⏱️  [${new Date().toISOString()}] AuthTimeout: Setting ${timeoutMs}ms timeout for ${req.method} ${req.originalUrl}`);
-    
+
     const timeout = setTimeout(() => {
       if (!res.headersSent) {
         console.error(`⏱️  [${new Date().toISOString()}] AuthTimeout: Request timeout after ${timeoutMs}ms for ${req.method} ${req.originalUrl} from ${req.ip}`);
@@ -46,13 +46,13 @@ router.post('/signup', authTimeout(30000), rateLimits.auth, sanitizeInput, authV
 
     if (error) {
       if (error.details && Array.isArray(error.details)) {
-        return res.status(400).json({ 
+        return res.status(400).json({
           error: error.message,
           details: error.details,
           category: 'password_validation_error'
         });
       }
-      
+
       if (error.remainingTime) {
         return res.status(429).json({
           error: error.message,
@@ -60,8 +60,8 @@ router.post('/signup', authTimeout(30000), rateLimits.auth, sanitizeInput, authV
           category: 'rate_limit_error'
         });
       }
-      
-      return res.status(400).json({ 
+
+      return res.status(400).json({
         error: error.message,
         category: 'signup_error'
       });
@@ -75,13 +75,13 @@ router.post('/signup', authTimeout(30000), rateLimits.auth, sanitizeInput, authV
         name: name || email.split('@')[0],
         created_at: new Date().toISOString(),
         signup_ip: ip,
-        email_verified: data.user.email_confirmed_at ? true : false
+        email_verified: Boolean(data.user.email_confirmed_at)
       });
-      
+
       console.log(`👤 New user profile created: ${data.user.id} (${email}) from ${ip}`);
     }
 
-    return res.status(201).json({ 
+    return res.status(201).json({
       message: 'User created successfully. Please check your email to verify your account.',
       user: {
         id: data?.user?.id,
@@ -91,7 +91,7 @@ router.post('/signup', authTimeout(30000), rateLimits.auth, sanitizeInput, authV
     });
   } catch (error) {
     console.error('Sign up error:', error);
-    return res.status(500).json({ 
+    return res.status(500).json({
       error: 'We encountered an issue creating your account. Please try again.',
       category: 'signup_error'
     });
@@ -115,8 +115,8 @@ router.post('/signin', authTimeout(30000), rateLimits.auth, sanitizeInput, authV
           category: 'account_locked_error'
         });
       }
-      
-      return res.status(401).json({ 
+
+      return res.status(401).json({
         error: error.message,
         category: 'signin_error'
       });
@@ -127,14 +127,14 @@ router.post('/signin', authTimeout(30000), rateLimits.auth, sanitizeInput, authV
       req.session.userId = data.user.id;
       req.session.loginTime = new Date().toISOString();
       req.session.loginIp = ip;
-      
+
       req.session.cookie.secure = process.env.NODE_ENV === 'production';
       req.session.cookie.httpOnly = true;
       req.session.cookie.sameSite = 'strict';
       req.session.cookie.maxAge = 8 * 60 * 60 * 1000; // 8 hours
     }
 
-    return res.status(200).json({ 
+    return res.status(200).json({
       message: 'Sign in successful',
       user: {
         id: data?.user?.id,
@@ -148,7 +148,7 @@ router.post('/signin', authTimeout(30000), rateLimits.auth, sanitizeInput, authV
     });
   } catch (error) {
     console.error('Sign in error:', error);
-    return res.status(500).json({ 
+    return res.status(500).json({
       error: 'We encountered an issue signing you in. Please try again.',
       category: 'signin_error'
     });
@@ -170,7 +170,7 @@ router.post('/signout', authTimeout(15000), async (req, res) => {
     return res.status(200).json({ message: 'Sign out successful' });
   } catch (error) {
     console.error('Sign out error:', error);
-    return res.status(500).json({ 
+    return res.status(500).json({
       error: 'We encountered an issue signing you out. Please try again.',
       category: 'signout_error'
     });
@@ -189,7 +189,7 @@ router.get('/me', authTimeout(20000), async (req, res) => {
     // Get additional user data from database
     const userData = await db.getUserById(user.id);
 
-    return res.status(200).json({ 
+    return res.status(200).json({
       user: {
         ...user,
         profile: userData
@@ -197,7 +197,7 @@ router.get('/me', authTimeout(20000), async (req, res) => {
     });
   } catch (error) {
     console.error('Get current user error:', error);
-    return res.status(500).json({ 
+    return res.status(500).json({
       error: 'We encountered an issue loading your profile. Please try again.',
       category: 'profile_error'
     });
@@ -218,7 +218,7 @@ router.post('/reset-password', authTimeout(25000), rateLimits.auth, sanitizeInpu
     return res.status(200).json({ message: 'Password reset email sent' });
   } catch (error) {
     console.error('Reset password error:', error);
-    return res.status(500).json({ 
+    return res.status(500).json({
       error: 'We encountered an issue sending the password reset email. Please try again.',
       category: 'password_reset_error'
     });
@@ -239,7 +239,7 @@ router.post('/update-password', authTimeout(25000), rateLimits.auth, sanitizeInp
     return res.status(200).json({ message: 'Password updated successfully' });
   } catch (error) {
     console.error('Update password error:', error);
-    return res.status(500).json({ 
+    return res.status(500).json({
       error: 'We encountered an issue updating your password. Please try again.',
       category: 'password_update_error'
     });
@@ -266,7 +266,7 @@ router.post('/api-keys', authTimeout(20000), rateLimits.auth, sanitizeInput, aut
     const { apiKey, error } = await auth.createApiKey(user.id, name, options);
 
     if (error) {
-      return res.status(400).json({ 
+      return res.status(400).json({
         error: error.message,
         category: 'api_key_creation_error'
       });
@@ -274,7 +274,7 @@ router.post('/api-keys', authTimeout(20000), rateLimits.auth, sanitizeInput, aut
 
     console.log(`🔑 API key created by user ${user.id} from ${ip}: ${apiKey.name}`);
 
-    return res.status(201).json({ 
+    return res.status(201).json({
       apiKey: {
         id: apiKey.id,
         name: apiKey.name,
@@ -288,7 +288,7 @@ router.post('/api-keys', authTimeout(20000), rateLimits.auth, sanitizeInput, aut
     });
   } catch (error) {
     console.error('Create API key error:', error);
-    return res.status(500).json({ 
+    return res.status(500).json({
       error: 'We encountered an issue creating your API key. Please try again.',
       category: 'api_key_error'
     });
@@ -313,19 +313,19 @@ router.get('/api-keys', authTimeout(15000), rateLimits.auth, async (req, res) =>
 
     if (error) {
       console.error('Error fetching API keys:', error);
-      return res.status(500).json({ 
+      return res.status(500).json({
         error: 'Failed to fetch API keys',
         category: 'api_key_fetch_error'
       });
     }
 
-    return res.status(200).json({ 
+    return res.status(200).json({
       apiKeys: apiKeys || [],
       count: apiKeys?.length || 0
     });
   } catch (error) {
     console.error('List API keys error:', error);
-    return res.status(500).json({ 
+    return res.status(500).json({
       error: 'We encountered an issue fetching your API keys. Please try again.',
       category: 'api_key_error'
     });
@@ -353,7 +353,7 @@ router.delete('/api-keys/:keyId', authTimeout(15000), rateLimits.auth, async (re
       .single();
 
     if (fetchError || !keyData) {
-      return res.status(404).json({ 
+      return res.status(404).json({
         error: 'API key not found',
         category: 'api_key_not_found'
       });
@@ -361,8 +361,8 @@ router.delete('/api-keys/:keyId', authTimeout(15000), rateLimits.auth, async (re
 
     const { error: updateError } = await supabaseAdmin
       .from('api_keys')
-      .update({ 
-        active: false, 
+      .update({
+        active: false,
         revoked_at: new Date().toISOString(),
         revoked_by_ip: ip
       })
@@ -370,7 +370,7 @@ router.delete('/api-keys/:keyId', authTimeout(15000), rateLimits.auth, async (re
 
     if (updateError) {
       console.error('Error revoking API key:', updateError);
-      return res.status(500).json({ 
+      return res.status(500).json({
         error: 'Failed to revoke API key',
         category: 'api_key_revoke_error'
       });
@@ -378,7 +378,7 @@ router.delete('/api-keys/:keyId', authTimeout(15000), rateLimits.auth, async (re
 
     console.log(`🗑️  API key revoked by user ${user.id} from ${ip}: ${keyData.name}`);
 
-    return res.status(200).json({ 
+    return res.status(200).json({
       message: 'API key revoked successfully',
       revokedKey: {
         id: keyData.id,
@@ -387,7 +387,7 @@ router.delete('/api-keys/:keyId', authTimeout(15000), rateLimits.auth, async (re
     });
   } catch (error) {
     console.error('Revoke API key error:', error);
-    return res.status(500).json({ 
+    return res.status(500).json({
       error: 'We encountered an issue revoking your API key. Please try again.',
       category: 'api_key_error'
     });

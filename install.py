@@ -1,8 +1,6 @@
 import os
 import sys
 import subprocess
-import json
-from importlib import import_module
 import platform
 import argparse
 import shutil
@@ -205,7 +203,7 @@ def clone_comfyui_repository():
         except subprocess.CalledProcessError as clone_error:
             if attempt < max_retries - 1:
                 print(f"Clone attempt {attempt + 1} failed: {clone_error}")
-                print(f"Retrying in 5 seconds...")
+                print("Retrying in 5 seconds...")
                 import time
                 time.sleep(5)
             else:

@@ -8,16 +8,11 @@ code duplication.
 
 import unittest
 import time
-import threading
-import subprocess
 import tempfile
 import shutil
-from unittest.mock import Mock, MagicMock, patch
-from datetime import datetime, timedelta
+from unittest.mock import Mock
 from pathlib import Path
-from typing import Dict, Any, List, Optional, Callable
 import json
-import logging
 
 
 class MockLogger:

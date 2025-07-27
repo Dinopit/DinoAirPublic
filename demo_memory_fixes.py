@@ -3,10 +3,7 @@
 Example demonstrating the memory leak fixes in DinoAir ProcessManager
 """
 
-import time
 import sys
-import os
-from pathlib import Path
 
 def main():
     """Demonstrate the memory leak fixes concepts"""

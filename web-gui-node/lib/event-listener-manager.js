@@ -6,7 +6,7 @@ class EventListenerManager {
   constructor() {
     this.listeners = new Map();
   }
-  
+
   /**
    * Add an event listener with automatic tracking
    */
@@ -14,15 +14,15 @@ class EventListenerManager {
     if (!target || typeof target.addEventListener !== 'function') {
       throw new Error('Invalid event target');
     }
-    
+
     target.addEventListener(event, listener, options);
-    
+
     // Track the listener for cleanup
     const key = `${target.constructor.name}_${event}`;
     if (!this.listeners.has(key)) {
       this.listeners.set(key, []);
     }
-    
+
     this.listeners.get(key).push({
       target,
       event,
@@ -30,7 +30,7 @@ class EventListenerManager {
       options
     });
   }
-  
+
   /**
    * Remove a specific event listener
    */
@@ -38,17 +38,17 @@ class EventListenerManager {
     if (!target || typeof target.removeEventListener !== 'function') {
       return;
     }
-    
+
     target.removeEventListener(event, listener, options);
-    
+
     // Remove from tracking
     const key = `${target.constructor.name}_${event}`;
     if (this.listeners.has(key)) {
       const listeners = this.listeners.get(key);
-      const index = listeners.findIndex(l => 
-        l.target === target && 
-        l.event === event && 
-        l.listener === listener
+      const index = listeners.findIndex(l =>
+        l.target === target
+        && l.event === event
+        && l.listener === listener
       );
       if (index !== -1) {
         listeners.splice(index, 1);
@@ -58,7 +58,7 @@ class EventListenerManager {
       }
     }
   }
-  
+
   /**
    * Remove all tracked event listeners
    */
@@ -76,19 +76,19 @@ class EventListenerManager {
     }
     this.listeners.clear();
   }
-  
+
   /**
    * Get statistics about tracked listeners
    */
   getStats() {
     const stats = {};
     let totalListeners = 0;
-    
+
     for (const [key, listeners] of this.listeners.entries()) {
       stats[key] = listeners.length;
       totalListeners += listeners.length;
     }
-    
+
     return {
       totalListeners,
       byType: stats

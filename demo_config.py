@@ -6,7 +6,6 @@ Demonstrates the enhanced configuration features
 
 import os
 import sys
-import time
 from pathlib import Path
 
 # Add the lib directory to Python path
@@ -18,7 +17,6 @@ from lib.config import (
     get_secret,
     secrets_manager,
     DriftRule,
-    ConfigDriftMonitor,
     DEFAULT_DRIFT_RULES
 )
 
@@ -36,7 +34,7 @@ def main():
     
     try:
         config = load_config()
-        print(f"✓ Configuration loaded successfully")
+        print("✓ Configuration loaded successfully")
         print(f"  Environment: {config.environment}")
         print(f"  Debug mode: {config.debug}")
         print(f"  Server port: {config.server.port}")
