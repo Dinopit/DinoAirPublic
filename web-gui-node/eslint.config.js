@@ -31,6 +31,19 @@ export default [
       'no-iterator': 'error',
       'no-with': 'error',
 
+      // Additional security rules
+      'no-caller': 'error',
+      'no-extend-native': 'error',
+      'no-extra-bind': 'error',
+      'no-invalid-this': 'error',
+      'no-multi-str': 'error',
+      'no-new-require': 'error',
+      'no-path-concat': 'error',
+      'no-process-env': 'warn',
+      'no-process-exit': 'warn',
+      'no-restricted-modules': ['error', 'child_process', 'cluster'],
+      'no-sync': 'warn',
+
       'no-unsafe-finally': 'error',
       'no-unsafe-negation': 'error',
       'no-unsafe-optional-chaining': 'error',
