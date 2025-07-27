@@ -6,14 +6,18 @@ let supabase: any = null;
 
 if (typeof window !== 'undefined') {
   try {
-    const supabaseUrl = process?.env?.NEXT_PUBLIC_SUPABASE_URL || '';
-    const supabaseKey = process?.env?.NEXT_PUBLIC_SUPABASE_ANON_KEY || '';
-    
-    import('@supabase/supabase-js').then(({ createClient }) => {
-      supabase = createClient(supabaseUrl, supabaseKey);
-    }).catch(() => {
-      console.warn('Supabase client not available, using mock data only');
-    });
+    const supabaseUrl = process?.env?.NEXT_PUBLIC_SUPABASE_URL;
+    const supabaseKey = process?.env?.NEXT_PUBLIC_SUPABASE_ANON_KEY;
+
+    if (!supabaseUrl || !supabaseKey) {
+      console.error('Supabase environment variables are not properly set. Supabase client will not be initialized.');
+    } else {
+      import('@supabase/supabase-js').then(({ createClient }) => {
+        supabase = createClient(supabaseUrl, supabaseKey);
+      }).catch(() => {
+        console.warn('Supabase client not available, using mock data only');
+      });
+    }
   } catch (error) {
     console.warn('Supabase client not available, using mock data only');
   }
