@@ -272,7 +272,7 @@ class EnhancedCodeExecutionTester {
     totalTests++;
     console.log('🔍 Testing code size limit...');
     try {
-      const largeCode = 'print("a")\\n'.repeat(50000); // Large code
+      const largeCode = 'print("a")\n'.repeat(50000); // Large code
       await this.codeService.executeCode({
         language: 'python',
         code: largeCode
