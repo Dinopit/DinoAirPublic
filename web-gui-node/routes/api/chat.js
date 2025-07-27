@@ -12,6 +12,8 @@ const { rateLimits, chatValidation, sanitizeInput } = require('../../middleware/
 const { resourceManager } = require('../../lib/resource-manager');
 const { ollamaBreaker } = require('../../lib/circuit-breaker');
 const { withRetry, isRetryableError } = require('../../lib/retry');
+const { requireAuth } = require('../../middleware/auth-middleware');
+const { streamManager } = require('../../lib/stream-manager');
 const router = express.Router();
 
 // In-memory fallback metrics (if Supabase is not available)
@@ -90,14 +92,20 @@ async function storeMessage(sessionId, role, content, metadata = {}) {
 }
 
 // POST /api/chat - Main chat endpoint with streaming
-router.post('/', rateLimits.chat, sanitizeInput, chatValidation.chat, async (req, res) => {
+router.post('/', requireAuth, rateLimits.chat, sanitizeInput, chatValidation.chat, async (req, res) => {
   const startTime = Date.now();
   let totalTokens = 0;
   let chatSession = null;
   let assistantResponse = '';
 
   try {
-    const { messages, model, systemPrompt, sessionId, userId } = req.body;
+    const { messages, model, systemPrompt, sessionId } = req.body;
+    // Use authenticated user's ID
+    const userId = req.user?.id || req.user?.sub;
+
+    if (!userId) {
+      return res.status(401).json({ error: 'User ID not found in token' });
+    }
 
     // Get the last user message (validation ensures this exists and is from user)
     const lastMessage = messages[messages.length - 1];
@@ -129,7 +137,18 @@ router.post('/', rateLimits.chat, sanitizeInput, chatValidation.chat, async (req
       Connection: 'keep-alive'
     });
 
+    // Register with both resource manager and stream manager
     resourceManager.registerStream(res);
+    
+    const streamId = streamManager.constructor.generateStreamId();
+    const streamInfo = streamManager.registerStream(streamId, res, {
+      userId,
+      endpoint: '/api/chat',
+      userAgent: req.get('User-Agent'),
+      ip: req.ip,
+      model: selectedModel,
+      sessionId: chatSession?.id
+    });
 
     try {
       // Track API response time
@@ -180,6 +199,8 @@ router.post('/', rateLimits.chat, sanitizeInput, chatValidation.chat, async (req
             if (json.response) {
               // Send the response chunk to the client
               res.write(json.response);
+              // Update stream activity
+              streamManager.updateActivity(streamId, json.response.length);
               // Collect the assistant response
               assistantResponse += json.response;
               // Estimate tokens (rough approximation)
@@ -213,7 +234,8 @@ router.post('/', rateLimits.chat, sanitizeInput, chatValidation.chat, async (req
                 console.warn('Failed to record metrics:', error.message);
               });
 
-              // End the response
+              // End the response and close stream
+              streamManager.closeStream(streamId, 'completed');
               res.end();
             }
           } catch (e) {
@@ -225,6 +247,7 @@ router.post('/', rateLimits.chat, sanitizeInput, chatValidation.chat, async (req
       response.body.on('error', error => {
         console.error('Streaming error:', error);
         resourceManager.closeStream(res);
+        streamManager.closeStream(streamId, 'stream_error');
         if (!res.headersSent) {
           res.status(500).json({ error: 'Streaming error occurred' });
         } else {
@@ -234,12 +257,14 @@ router.post('/', rateLimits.chat, sanitizeInput, chatValidation.chat, async (req
 
       response.body.on('end', () => {
         resourceManager.closeStream(res);
+        streamManager.closeStream(streamId, 'stream_end');
         if (!res.finished) {
           res.end();
         }
       });
     } catch (error) {
       console.error('Ollama API error:', error);
+      streamManager.closeStream(streamId, 'ollama_error');
 
       if (!res.headersSent) {
         // Check if Ollama is not running
@@ -261,6 +286,7 @@ router.post('/', rateLimits.chat, sanitizeInput, chatValidation.chat, async (req
     }
   } catch (error) {
     console.error('Chat API error:', error);
+    streamManager.closeStream(streamId, 'api_error');
 
     if (!res.headersSent) {
       res.status(500).json({
@@ -272,7 +298,7 @@ router.post('/', rateLimits.chat, sanitizeInput, chatValidation.chat, async (req
 });
 
 // GET /api/chat/metrics - Get chat metrics
-router.get('/metrics', async (req, res) => {
+router.get('/metrics', requireAuth, async (req, res) => {
   try {
     const { timeframe = 'day' } = req.query;
 
@@ -311,7 +337,7 @@ router.get('/metrics', async (req, res) => {
 });
 
 // GET /api/chat/models - Get available models (proxy to Ollama)
-router.get('/models', async (req, res) => {
+router.get('/models', requireAuth, async (req, res) => {
   try {
     const response = await ollamaBreaker.call(async () => {
       return await withRetry(async () => {
@@ -348,9 +374,15 @@ router.get('/models', async (req, res) => {
 });
 
 // GET /api/chat/sessions - Get user chat sessions
-router.get('/sessions', async (req, res) => {
+router.get('/sessions', requireAuth, async (req, res) => {
   try {
-    const { userId = 'anonymous', limit = 50 } = req.query;
+    // Use authenticated user's ID instead of query parameter
+    const userId = req.user?.id || req.user?.sub;
+    const { limit = 50 } = req.query;
+
+    if (!userId) {
+      return res.status(401).json({ error: 'User ID not found in token' });
+    }
 
     const sessions = await chatSessions.getByUserId(userId, parseInt(limit));
 
@@ -367,15 +399,23 @@ router.get('/sessions', async (req, res) => {
 });
 
 // GET /api/chat/sessions/:id - Get specific session details
-router.get('/sessions/:id', async (req, res) => {
+router.get('/sessions/:id', requireAuth, async (req, res) => {
   try {
     const { id } = req.params;
+    const userId = req.user?.id || req.user?.sub;
 
     const session = await chatSessions.getById(id);
 
     if (!session) {
       return res.status(404).json({
         error: 'Session not found'
+      });
+    }
+
+    // Ensure user owns this session
+    if (session.user_id !== userId) {
+      return res.status(403).json({
+        error: 'Access denied'
       });
     }
 
@@ -389,16 +429,23 @@ router.get('/sessions/:id', async (req, res) => {
 });
 
 // GET /api/chat/sessions/:id/messages - Get messages for a session
-router.get('/sessions/:id/messages', async (req, res) => {
+router.get('/sessions/:id/messages', requireAuth, async (req, res) => {
   try {
     const { id } = req.params;
+    const userId = req.user?.id || req.user?.sub;
     const { limit = 100 } = req.query;
 
-    // First check if session exists
+    // First check if session exists and user owns it
     const session = await chatSessions.getById(id);
     if (!session) {
       return res.status(404).json({
         error: 'Session not found'
+      });
+    }
+
+    if (session.user_id !== userId) {
+      return res.status(403).json({
+        error: 'Access denied'
       });
     }
 
@@ -418,15 +465,22 @@ router.get('/sessions/:id/messages', async (req, res) => {
 });
 
 // DELETE /api/chat/sessions/:id - Delete a chat session
-router.delete('/sessions/:id', async (req, res) => {
+router.delete('/sessions/:id', requireAuth, async (req, res) => {
   try {
     const { id } = req.params;
+    const userId = req.user?.id || req.user?.sub;
 
-    // First check if session exists
+    // First check if session exists and user owns it
     const session = await chatSessions.getById(id);
     if (!session) {
       return res.status(404).json({
         error: 'Session not found'
+      });
+    }
+
+    if (session.user_id !== userId) {
+      return res.status(403).json({
+        error: 'Access denied'
       });
     }
 
@@ -449,9 +503,15 @@ router.delete('/sessions/:id', async (req, res) => {
 });
 
 // POST /api/chat/sessions - Create a new chat session
-router.post('/sessions', async (req, res) => {
+router.post('/sessions', requireAuth, async (req, res) => {
   try {
-    const { userId = 'anonymous', metadata = {} } = req.body;
+    // Use authenticated user's ID, ignore any userId in body
+    const userId = req.user?.id || req.user?.sub;
+    const { metadata = {} } = req.body;
+
+    if (!userId) {
+      return res.status(401).json({ error: 'User ID not found in token' });
+    }
 
     const sessionId = uuidv4();
     const session = await chatSessions.create(userId, sessionId, {

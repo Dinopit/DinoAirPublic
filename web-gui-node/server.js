@@ -22,6 +22,30 @@ const cors = require('cors');
 const compression = require('compression');
 require('dotenv').config();
 
+// Validate environment variables before starting server
+console.log(`[${new Date().toISOString()}] 🔍 Validating environment configuration...`);
+const EnvironmentValidator = require('./lib/environment-validator');
+const envValidator = new EnvironmentValidator();
+const validationResults = envValidator.validate(process.env.NODE_ENV === 'production');
+
+if (!validationResults.isValid) {
+  console.error(`[${new Date().toISOString()}] ❌ Environment validation failed!`);
+  envValidator.printResults(validationResults);
+  
+  if (process.env.NODE_ENV === 'production') {
+    console.error('🚨 Refusing to start in production with invalid environment!');
+    process.exit(1);
+  } else {
+    console.warn('⚠️  Starting in development mode with warnings...');
+  }
+} else {
+  console.log(`[${new Date().toISOString()}] ✅ Environment validation passed`);
+  if (validationResults.warnings.length > 0) {
+    console.warn(`[${new Date().toISOString()}] ⚠️  Found ${validationResults.warnings.length} warnings:`);
+    validationResults.warnings.forEach(warning => console.warn(`   - ${warning}`));
+  }
+}
+
 const { resourceManager } = require('./lib/resource-manager');
 const { memoryMonitor } = require('./lib/memory-monitor');
 const { middleware: apmMiddleware, shutdown: apmShutdown } = require('./lib/apm');
