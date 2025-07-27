@@ -57,7 +57,7 @@ export const useMarketplace = (options: UseMarketplaceOptions = {}) => {
     } finally {
       setIsLoading(false);
     }
-  }, [filters]);
+  }, [filters.category, filters.tags, filters.installed, filters.search]);
 
   // Search external repositories
   const searchExternal = useCallback(async (query: string, source: 'huggingface' = 'huggingface', limit: number = 20) => {
