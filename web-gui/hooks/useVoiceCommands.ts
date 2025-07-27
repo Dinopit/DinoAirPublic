@@ -1,13 +1,9 @@
 'use client';
 
-import React, { useCallback, useEffect } from 'react';
+import * as React from 'react';
+import { useCallback, useEffect } from 'react';
 import { useSpeechToText } from './useSpeechToText';
-
-interface VoiceCommand {
-  phrase: string | RegExp;
-  action: () => void;
-  description: string;
-}
+import { processVoiceCommand, VoiceCommand } from '../lib/utils/voiceCommandUtils';
 
 interface UseVoiceCommandsOptions {
   enabled?: boolean;
@@ -56,48 +52,19 @@ export const useVoiceCommands = (
   useEffect(() => {
     if (!transcript || !enabled) return;
 
-    const processCommand = (text: string) => {
-      const cleanText = text.toLowerCase().trim();
+    const result = processVoiceCommand(transcript, commandsRef.current, {
+      sensitivity,
+      prefix,
+    });
 
-      // Check for prefix if required
-      if (prefix && !cleanText.startsWith(prefix.toLowerCase())) {
-        return;
-      }
+    if (result.executed && result.matchedText) {
+      setLastCommand(result.matchedText);
+    }
 
-      // Remove prefix from text for command matching
-      const commandText = prefix ? cleanText.slice(prefix.length).trim() : cleanText;
+    if (result.error) {
+      console.error(result.error);
+    }
 
-      // Find matching command
-      for (const command of commandsRef.current) {
-        let isMatch = false;
-
-        if (command.phrase instanceof RegExp) {
-          isMatch = command.phrase.test(commandText);
-        } else {
-          const phrase = command.phrase.toLowerCase();
-          // Simple fuzzy matching based on sensitivity
-          if (sensitivity === 1) {
-            isMatch = commandText === phrase;
-          } else {
-            // Calculate similarity using Levenshtein distance approximation
-            const similarity = calculateSimilarity(commandText, phrase);
-            isMatch = similarity >= sensitivity;
-          }
-        }
-
-        if (isMatch) {
-          setLastCommand(commandText);
-          try {
-            command.action();
-          } catch (err) {
-            console.error('Error executing voice command:', err);
-          }
-          break;
-        }
-      }
-    };
-
-    processCommand(transcript);
     resetTranscript();
   }, [transcript, enabled, prefix, sensitivity, resetTranscript]);
 
@@ -132,44 +99,6 @@ export const useVoiceCommands = (
     getCommands,
   };
 };
-
-// Simple similarity calculation for fuzzy matching
-function calculateSimilarity(str1: string, str2: string): number {
-  const longer = str1.length > str2.length ? str1 : str2;
-  const shorter = str1.length > str2.length ? str2 : str1;
-
-  if (longer.length === 0) return 1.0;
-
-  return (longer.length - levenshteinDistance(longer, shorter)) / longer.length;
-}
-
-function levenshteinDistance(str1: string, str2: string): number {
-  const matrix = [];
-
-  for (let i = 0; i <= str2.length; i++) {
-    matrix[i] = [i];
-  }
-
-  for (let j = 0; j <= str1.length; j++) {
-    matrix[0][j] = j;
-  }
-
-  for (let i = 1; i <= str2.length; i++) {
-    for (let j = 1; j <= str1.length; j++) {
-      if (str2.charAt(i - 1) === str1.charAt(j - 1)) {
-        matrix[i][j] = matrix[i - 1][j - 1];
-      } else {
-        matrix[i][j] = Math.min(
-          matrix[i - 1][j - 1] + 1, // substitution
-          matrix[i][j - 1] + 1, // insertion
-          matrix[i - 1][j] + 1 // deletion
-        );
-      }
-    }
-  }
-
-  return matrix[str2.length][str1.length];
-}
 
 // Default voice commands for DinoAir
 export const createDefaultVoiceCommands = (
