@@ -2,8 +2,6 @@
 
 import React, { useEffect, useRef } from 'react';
 
-declare const process: any;
-
 interface IChartInstance {
   destroy: () => void;
 }
