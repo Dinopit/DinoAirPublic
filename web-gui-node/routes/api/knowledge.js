@@ -149,8 +149,7 @@ router.get('/search',
           similarity: result.similarity,
           entities: result.entities,
           facts: result.facts,
-          created_at: result.created_at,
-          session_id: result.session_id
+          created_at: result.created_at
         })),
         count: results.length,
         search_params: {
