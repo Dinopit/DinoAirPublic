@@ -116,7 +116,7 @@ DinoAir **automatically detects your hardware** and installs the optimal configu
 |------|-----|-----|---------|-----|----------|
 | **Lightweight** | 4 cores | 8GB | 10GB | None | Basic chat, simple tasks |
 | **Standard** | 8 cores | 16GB | 30GB | 4GB VRAM | Full chat + basic image generation |
-| **Performance** | 12+ cores | 32GB+ | 100GB | 8GB+ VRAM | Professional use, complex workflows |
+| **Performance** | 12+ cores | 32GB+ | 100GB | 16GB+ VRAM | Professional use, complex workflows |
 
 **🎯 Don't worry about the details** - the installer will automatically choose the best configuration for your system and tell you what's possible.
 
