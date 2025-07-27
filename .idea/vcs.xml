@@ -4,6 +4,5 @@
     <mapping directory="$PROJECT_DIR$" vcs="Git" />
     <mapping directory="$PROJECT_DIR$/ComfyUI" vcs="Git" />
     <mapping directory="$PROJECT_DIR$/DinoAirPublic" vcs="Git" />
-    <mapping directory="$PROJECT_DIR$/nextjs-boilerplate" vcs="Git" />
   </component>
 </project>

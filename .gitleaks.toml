@@ -1,0 +1,58 @@
+title = "DinoAir Gitleaks Configuration"
+
+[extend]
+useDefault = true
+
+[[rules]]
+id = "supabase-url"
+description = "Supabase URL"
+regex = '''https://[a-z0-9]+\.supabase\.co'''
+tags = ["supabase", "url"]
+
+[[rules]]
+id = "supabase-anon-key"
+description = "Supabase Anonymous Key"
+regex = '''eyJhbGciOiJIUzI1NiIsInR5cCI6IkpXVCJ9\.[a-zA-Z0-9_-]+\.[a-zA-Z0-9_-]+'''
+tags = ["supabase", "jwt", "key"]
+
+[[rules]]
+id = "postgres-connection"
+description = "PostgreSQL Connection String"
+regex = '''postgresql://[^:]+:[^@]+@[^/]+/\w+'''
+tags = ["database", "postgresql"]
+
+[[rules]]
+id = "generic-api-key"
+description = "Generic API Key"
+regex = '''(?i)(api[_-]?key|apikey)[[:space:]]*[=:][[:space:]]*['\"]?[a-zA-Z0-9_-]{20,}['\"]?'''
+tags = ["key", "api"]
+
+[[rules]]
+id = "generic-secret"
+description = "Generic Secret"
+regex = '''(?i)(secret|password|passwd|pwd)[[:space:]]*[=:][[:space:]]*['\"]?[a-zA-Z0-9_-]{8,}['\"]?'''
+tags = ["secret", "password"]
+
+[allowlist]
+paths = [
+    ".env.example",
+    "**/*.env.example",
+    "**/examples/**",
+    "**/test/**",
+    "**/tests/**",
+    "**/*_test.go",
+    "**/*_test.js",
+    "**/*_test.py",
+    "CREDENTIAL_SECURITY.md"
+]
+
+# Allow example/placeholder values
+regexes = [
+    '''your-[a-z-]+-here''',
+    '''your-[a-z-]+-id''',
+    '''example\.com''',
+    '''localhost''',
+    '''127\.0\.0\.1''',
+    '''placeholder''',
+    '''change-this-in-production'''
+]
