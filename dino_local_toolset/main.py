@@ -251,11 +251,14 @@ class ClipboardMonitor:
                 result = subprocess.run(['xclip', '-selection', 'clipboard', '-o'], capture_output=True, text=True)
                 return result.stdout
             elif platform.system() == "Windows":
-                import win32clipboard
-                win32clipboard.OpenClipboard()
-                data = win32clipboard.GetClipboardData()
-                win32clipboard.CloseClipboard()
-                return data
+                try:
+                    import win32clipboard
+                    win32clipboard.OpenClipboard()
+                    data = win32clipboard.GetClipboardData()
+                    win32clipboard.CloseClipboard()
+                    return data
+                except ImportError:
+                    return ""
         except Exception:
             return ""
     
