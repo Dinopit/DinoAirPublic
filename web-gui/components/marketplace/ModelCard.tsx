@@ -139,6 +139,11 @@ const ModelCard: React.FC<ModelCardProps> = ({
             <div
               className="bg-primary h-2 rounded-full transition-all duration-300"
               style={{ width: `${installProgress.progress}%` }}
+              role="progressbar"
+              aria-label="Installation progress"
+              aria-valuenow={installProgress.progress}
+              aria-valuemin={0}
+              aria-valuemax={100}
             />
           </div>
           {installProgress.downloadedBytes && installProgress.totalBytes && (
