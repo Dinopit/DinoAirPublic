@@ -125,10 +125,24 @@ export const useAudioRecording = (options: AudioRecorderOptions = {}): UseAudioR
         }
       }, 100);
     } catch (err) {
-      if (err instanceof Error) {
+      if (err instanceof DOMException) {
+        switch (err.name) {
+          case 'NotAllowedError':
+            setError('Permission to access the microphone was denied.');
+            break;
+          case 'NotFoundError':
+            setError('No microphone was found. Please connect a microphone and try again.');
+            break;
+          case 'NotReadableError':
+            setError('The microphone is already in use or cannot be accessed.');
+            break;
+          default:
+            setError(`Failed to start recording: ${err.message}`);
+        }
+      } else if (err instanceof Error) {
         setError(`Failed to start recording: ${err.message}`);
       } else {
-        setError('Failed to start recording: Unknown error');
+        setError('Failed to start recording due to an unknown error. Please try again.');
       }
     }
   }, [isSupported, isRecording, mimeType, audioBitsPerSecond, maxDuration]);
