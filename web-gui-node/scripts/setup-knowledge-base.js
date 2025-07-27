@@ -148,6 +148,14 @@ async function runMigration() {
     }
     
     // Execute the migration
+    // Note: The 'exec' RPC function must exist in your Supabase setup for this to work.
+    // If it does not exist, you can create it by running the following SQL in your Supabase dashboard:
+    // CREATE OR REPLACE FUNCTION exec(sql TEXT) RETURNS VOID AS $$
+    // BEGIN
+    //   EXECUTE sql;
+    // END;
+    // $$ LANGUAGE plpgsql SECURITY DEFINER;
+    // Ensure the function is owned by the role used by your Supabase instance.
     const { error } = await supabaseAdmin.rpc('exec', {
       sql: createKnowledgeBaseTable
     });
