@@ -1,0 +1,32 @@
+{
+  "id": "sample-plugin-3",
+  "name": "Code Assistant",
+  "version": "3.0.1",
+  "description": "AI-powered code completion, refactoring, and documentation generator with support for 20+ programming languages.",
+  "author": "DinoAir Labs",
+  "category": "Development Tools",
+  "tags": ["code", "ai", "completion", "refactoring", "documentation"],
+  "features": [
+    "Intelligent code completion",
+    "Automated refactoring suggestions",
+    "Documentation generation",
+    "Code quality analysis",
+    "Multi-language support"
+  ],
+  "permissions": [
+    "file-system-read",
+    "file-system-write",
+    "network-access",
+    "process-execution"
+  ],
+  "compatibility": {
+    "minVersion": "1.2.0",
+    "platforms": ["windows", "macos", "linux"]
+  },
+  "size": "256.4 MB",
+  "lastUpdated": "2024-12-20",
+  "downloadCount": 2156,
+  "rating": 4.9,
+  "homepage": "https://github.com/dinopit/code-assistant",
+  "documentation": "https://docs.dinoair.com/plugins/code-assistant"
+}

@@ -1,0 +1,32 @@
+{
+  "id": "sample-plugin-2",
+  "name": "Audio Transcriber",
+  "version": "2.1.3",
+  "description": "Real-time audio transcription with multi-language support and speaker identification using advanced speech recognition AI.",
+  "author": "DinoAir Community",
+  "category": "Audio Processing",
+  "tags": ["audio", "transcription", "speech-to-text", "ai", "multilingual"],
+  "features": [
+    "Real-time audio transcription",
+    "50+ language support",
+    "Speaker identification",
+    "Timestamp generation",
+    "Export to multiple formats"
+  ],
+  "permissions": [
+    "microphone-access",
+    "file-system-read",
+    "file-system-write",
+    "network-access"
+  ],
+  "compatibility": {
+    "minVersion": "1.1.0",
+    "platforms": ["windows", "macos", "linux"]
+  },
+  "size": "128.7 MB",
+  "lastUpdated": "2024-12-10",
+  "downloadCount": 892,
+  "rating": 4.6,
+  "homepage": "https://github.com/dinopit/audio-transcriber",
+  "documentation": "https://docs.dinoair.com/plugins/audio-transcriber"
+}
