@@ -2,11 +2,13 @@
 
 # DinoAir 🦕✨
 
-![Version](https://img.shields.io/badge/version-1.2.0-blue.svg)
+![Version](https://img.shields.io/badge/version-1.5.0-blue.svg)
 ![Build Status](https://img.shields.io/badge/build-passing-brightgreen.svg)
 ![License](https://img.shields.io/badge/license-MIT-orange.svg)
 
 **A self-contained AI platform that runs entirely on your computer.** Chat with local language models, generate images, and manage AI-created content - all without sending data to external servers.
+
+> **🎉 DinoAir v1.5 is Now Available!** Enhanced stability, new plugin ecosystem, and enterprise features. [View Release Notes →](https://github.com/Dinopit/DinoAirPublic/releases/tag/v1.5.0)
 
 ## 🎯 What is DinoAir?
 
@@ -19,7 +21,7 @@ DinoAir brings the power of AI directly to your desktop with a focus on **privac
 - **🛡️ Enterprise-Grade** - Professional stability, security, and monitoring features
 - **🚀 Easy Installation** - One-click setup with automatic hardware detection
 
-### 📊 **Current State: v1.2.0 Stable Release**
+### 📊 **Current State: v1.5.0 Stable Release**
 
 DinoAir has evolved from an experimental project to a **production-ready platform** with enterprise-grade features:
 
@@ -215,7 +217,7 @@ docker run -p 3000:3000 dinoair
 
 ## 📄 **License**
 
-**DinoAir v1.2.0** - Built with ❤️ by the DinoAir Team  
+**DinoAir v1.5.0** - Built with ❤️ by the DinoAir Team  
 Licensed under the MIT License - see [LICENSE](LICENSE) for details
 
 **[🌐 Website](https://www.dinopitstudios-llc.com/) • [📚 Docs](https://deepwiki.com/Dinopit/DinoAirPublic) • [💬 Discord](https://discord.gg/GVd4jSh3) • [🐛 Issues](https://github.com/Dinopit/DinoAirPublic/issues)**
