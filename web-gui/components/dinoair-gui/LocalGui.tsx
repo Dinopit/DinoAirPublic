@@ -3,6 +3,7 @@
 import React, { useState, useCallback, useEffect } from 'react';
 import LocalChatView from './LocalChatView';
 import LocalArtifactsView from './LocalArtifactsView';
+import DinoLocalAssistant from './DinoLocalAssistant';
 import { ThemeToggle } from '../ui/theme-toggle';
 import { useKeyboardShortcuts, KeyboardShortcut } from '../../hooks/useKeyboardShortcuts';
 import { KeyboardShortcutsModal } from '../ui/keyboard-shortcuts-modal';
@@ -16,7 +17,7 @@ import { PluginManager } from '../plugins';
 import { useScreenReader } from '../../hooks/useScreenReader';
 import { OfflineIndicator } from '../ui/offline-indicator';
 
-type Tab = 'chat' | 'artifacts' | 'plugins';
+type Tab = 'chat' | 'artifacts' | 'local-tools' | 'plugins';
 
 const LocalGuiContent = () => {
   const [activeTab, setActiveTab] = useState<Tab>('chat');
@@ -275,6 +276,16 @@ const LocalGuiContent = () => {
               Artifacts
             </button>
             <button
+              className={`px-6 py-3 font-medium transition-colors ${
+                activeTab === 'local-tools'
+                  ? 'border-b-2 border-primary text-primary'
+                  : 'text-muted-foreground hover:text-foreground'
+              }`}
+              onClick={() => handleTabChange('local-tools')}
+            >
+              🦖 Local Tools
+            </button>
+            <button
               className={`px-6 py-3 font-medium transition-colors flex items-center gap-2 ${
                 activeTab === 'plugins'
                   ? 'border-b-2 border-primary text-primary'
@@ -383,6 +394,16 @@ const LocalGuiContent = () => {
             Artifacts
           </button>
           <button
+            className={`w-full px-6 py-3 text-left font-medium transition-colors ${
+              activeTab === 'local-tools'
+                ? 'bg-muted text-primary'
+                : 'text-muted-foreground hover:bg-muted'
+            }`}
+            onClick={() => handleTabChange('local-tools')}
+          >
+            🦖 Local Tools
+          </button>
+          <button
             className={`w-full px-6 py-3 text-left font-medium transition-colors flex items-center gap-2 ${
               activeTab === 'plugins'
                 ? 'bg-muted text-primary'
@@ -430,6 +451,15 @@ const LocalGuiContent = () => {
           hidden={activeTab !== 'artifacts'}
         >
           {activeTab === 'artifacts' && <LocalArtifactsView />}
+        </div>
+        <div
+          role="tabpanel"
+          id="local-tools-panel"
+          aria-labelledby="local-tools-tab"
+          hidden={activeTab !== 'local-tools'}
+          className="h-full overflow-auto p-6"
+        >
+          {activeTab === 'local-tools' && <DinoLocalAssistant />}
         </div>
         <div
           role="tabpanel"
