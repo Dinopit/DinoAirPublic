@@ -20,6 +20,9 @@ const cliProgress = require('cli-progress');
 const Logger = require('./lib/logger');
 const FileUtils = require('./lib/fileUtils');
 const SpawnManager = require('./lib/spawnManager');
+const UpdateManager = require('./lib/updateManager');
+const TelemetryManager = require('./lib/telemetryManager');
+const DistributionManager = require('./lib/distributionManager');
 
 const execAsync = promisify(exec);
 
@@ -28,6 +31,9 @@ class DinoAirInstaller {
     this.logger = new Logger();
     this.fileUtils = new FileUtils();
     this.spawnManager = new SpawnManager();
+    this.updateManager = new UpdateManager({ logger: this.logger });
+    this.telemetryManager = new TelemetryManager();
+    this.distributionManager = new DistributionManager();
     
     this.installationState = {
       mode: 'easy',

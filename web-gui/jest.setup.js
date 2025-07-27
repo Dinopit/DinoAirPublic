@@ -23,6 +23,33 @@ Object.defineProperty(window, 'matchMedia', {
   })),
 })
 
+// Mock Web APIs
+global.ReadableStream = class ReadableStream {};
+global.Response = class Response {
+  constructor(body, init) {
+    this.body = body;
+    this.ok = true;
+    this.status = 200;
+    this.headers = new Map();
+  }
+  
+  async json() {
+    return JSON.parse(this.body || '{}');
+  }
+};
+global.Request = class Request {
+  constructor(url, init) {
+    this.url = url;
+    this.method = init?.method || 'GET';
+    this.headers = new Map(Object.entries(init?.headers || {}));
+    this.body = init?.body;
+  }
+  
+  async json() {
+    return JSON.parse(this.body || '{}');
+  }
+};
+
 // Mock next/router
 jest.mock('next/router', () => ({
   useRouter() {
@@ -67,6 +94,17 @@ jest.mock('next/navigation', () => ({
   useParams() {
     return {}
   },
+}))
+
+// Mock Next.js server components
+jest.mock('next/server', () => ({
+  NextResponse: {
+    json: jest.fn((data, options) => ({
+      json: () => Promise.resolve(data),
+      status: options?.status || 200,
+    })),
+  },
+  NextRequest: jest.fn(),
 }))
 
 // Mock environment variables

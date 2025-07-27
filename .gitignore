@@ -78,12 +78,17 @@ celerybeat-schedule
 
 # Environments
 .env
+.env.*
+!.env.example
+!.env.*.example
 .venv
 env/
 venv/
 ENV/
 env.bak/
 venv.bak/
+*.env
+!*.env.example
 
 # Spyder project settings
 .spyderproject
@@ -116,3 +121,67 @@ yarn-error.log*
 # OS
 .DS_Store
 Thumbs.db
+
+# Docker and build artifacts
+docker-compose.test.yml
+security-reports/
+*.sarif
+*_trivy_report.json
+*_scout_report.sarif
+
+# Temporary files
+tmp/
+temp/
+.tmp/
+*.tmp
+*.temp
+
+# Application specific uploads and data
+uploads/
+models/
+output/
+input/
+custom_nodes/
+
+# Security - credentials and secrets
+*.pem
+*.key
+*.cert
+*.crt
+*.pfx
+*.p12
+credentials/
+secrets/
+private/
+*.secret
+*_secret*
+*-secret*
+.secrets/
+
+# API Keys and tokens
+*api_key*
+*apikey*
+*api-key*
+.netlify
+.vercel
+
+# Database
+*.db
+*.sqlite
+*.sqlite3
+database.yml
+database.json
+
+# Backup files that might contain sensitive data
+*.bak
+*.backup
+*.old
+*.orig
+
+# Configuration files with potential secrets
+config/local.yml
+config/local.yaml
+config/local.json
+config/production.yml
+config/production.yaml
+config/production.json

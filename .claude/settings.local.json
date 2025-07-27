@@ -1,0 +1,25 @@
+{
+  "permissions": {
+    "allow": [
+      "Bash(touch:*)",
+      "Bash(git add:*)",
+      "Bash(git rm:*)",
+      "Bash(git reset:*)",
+      "Bash(git commit:*)",
+      "Bash(git push:*)",
+      "Bash(git pull:*)",
+      "Bash(mv:*)",
+      "Bash(ls:*)",
+      "Bash(git clone:*)",
+      "Bash(npm install:*)",
+      "Bash(npm run build:*)",
+      "Bash(rm:*)",
+      "Bash(git fetch:*)",
+      "Bash(find:*)",
+      "Bash(npm audit:*)",
+      "Bash(git checkout:*)",
+      "Bash(git restore:*)"
+    ],
+    "deny": []
+  }
+}

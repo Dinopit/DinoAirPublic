@@ -19,6 +19,7 @@ export const useArtifacts = () => {
       }, 5000);
       return () => clearTimeout(timer);
     }
+    return undefined;
   }, [artifactNotifications]);
 
   const createArtifactsFromCodeBlocks = useCallback((

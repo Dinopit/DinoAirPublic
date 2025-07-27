@@ -60,7 +60,7 @@ const openApiSpec = {
           }
         },
         responses: {
-          '200': {
+          200: {
             description: 'Streaming chat response',
             content: {
               'text/plain': {
@@ -68,8 +68,8 @@ const openApiSpec = {
               }
             }
           },
-          '400': { description: 'Invalid request' },
-          '503': { description: 'Ollama service unavailable' }
+          400: { description: 'Invalid request' },
+          503: { description: 'Ollama service unavailable' }
         }
       }
     },
@@ -79,7 +79,7 @@ const openApiSpec = {
         description: 'Retrieve list of available AI models',
         tags: ['Chat'],
         responses: {
-          '200': {
+          200: {
             description: 'List of available models',
             content: {
               'application/json': {
@@ -111,7 +111,7 @@ const openApiSpec = {
         description: 'Get system health status',
         tags: ['System'],
         responses: {
-          '200': {
+          200: {
             description: 'System health information',
             content: {
               'application/json': {
@@ -137,7 +137,7 @@ const openApiSpec = {
         description: 'Retrieve available models from Ollama service',
         tags: ['Ollama'],
         responses: {
-          '200': {
+          200: {
             description: 'Available Ollama models',
             content: {
               'application/json': {
@@ -175,9 +175,9 @@ const openApiSpec = {
           }
         },
         responses: {
-          '200': { description: 'Streaming pull progress' },
-          '400': { description: 'Invalid request' },
-          '503': { description: 'Ollama service unavailable' }
+          200: { description: 'Streaming pull progress' },
+          400: { description: 'Invalid request' },
+          503: { description: 'Ollama service unavailable' }
         }
       }
     },
@@ -187,7 +187,7 @@ const openApiSpec = {
         description: 'Retrieve user artifacts',
         tags: ['Artifacts'],
         responses: {
-          '200': {
+          200: {
             description: 'List of artifacts',
             content: {
               'application/json': {
@@ -273,7 +273,7 @@ router.get('/redoc', (req, res) => {
   <script src="https://cdn.jsdelivr.net/npm/redoc@2.1.3/bundles/redoc.standalone.js"></script>
 </body>
 </html>`;
-  
+
   res.send(redocHtml);
 });
 
@@ -315,7 +315,7 @@ router.get('/swagger-ui', (req, res) => {
   </script>
 </body>
 </html>`;
-  
+
   res.send(swaggerHtml);
 });
 

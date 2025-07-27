@@ -8,16 +8,11 @@ code duplication.
 
 import unittest
 import time
-import threading
-import subprocess
 import tempfile
 import shutil
-from unittest.mock import Mock, MagicMock, patch
-from datetime import datetime, timedelta
+from unittest.mock import Mock
 from pathlib import Path
-from typing import Dict, Any, List, Optional, Callable
 import json
-import logging
 
 
 class MockLogger:
@@ -208,17 +203,17 @@ class TestDataFactory:
         defaults = {
             "name": name,
             "failure_threshold": 5,
-            "recovery_timeout": 60,
+            "reset_timeout": 60,
             "expected_exception": Exception,
             "timeout": 30,
-            "window_size": 100,
-            "half_open_max_calls": 3
+            "window_size": 60,
+            "success_threshold": 3
         }
         defaults.update(kwargs)
         return CircuitBreakerConfig(**defaults)
 
 
-class TestFileManager:
+class FileManager:
     """Helper for managing temporary files and directories in tests."""
     
     def __init__(self):
@@ -371,7 +366,7 @@ class BaseTestCase(unittest.TestCase):
     def setUp(self):
         """Set up common test fixtures."""
         self.mock_logger = MockLogger()
-        self.file_manager = TestFileManager()
+        self.file_manager = FileManager()
         self.timing_helper = TimingHelper()
         self.maxDiff = None  # Show full diff for failed assertions
     
@@ -454,18 +449,18 @@ def get_sample_circuit_breaker_configs():
         TestDataFactory.create_circuit_breaker_config(
             name="fast_service",
             failure_threshold=3,
-            recovery_timeout=30
+            reset_timeout=30
         ),
         TestDataFactory.create_circuit_breaker_config(
             name="slow_service",
             failure_threshold=5,
-            recovery_timeout=120,
+            reset_timeout=120,
             timeout=60
         ),
         TestDataFactory.create_circuit_breaker_config(
             name="critical_service",
             failure_threshold=2,
-            recovery_timeout=300,
+            reset_timeout=300,
             expected_exception=ConnectionError
         )
     ]

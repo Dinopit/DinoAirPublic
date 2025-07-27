@@ -1,7 +1,10 @@
 /**
  * DinoAir Client-Side Logging System
  * Provides structured logging with remote transmission and local storage
+ * Enhanced with correlation ID support
  */
+
+import { getCurrentCorrelationId } from '../correlation/correlation-id';
 
 export enum LogLevel {
   DEBUG = 0,
@@ -16,43 +19,44 @@ export interface LogEntry {
   level: LogLevel;
   logger: string;
   message: string;
-  context?: Record<string, any>;
+  correlationId: string;
+  context?: Record<string, any> | undefined;
   error?: {
     name: string;
     message: string;
-    stack?: string;
-  };
+    stack?: string | undefined;
+  } | undefined;
   sessionId: string;
-  userId?: string;
+  userId?: string | undefined;
   url: string;
   userAgent: string;
 }
 
 export interface LoggerConfig {
   // Remote logging
-  remoteEndpoint?: string;
-  batchSize?: number;
-  flushInterval?: number; // ms
+  remoteEndpoint?: string | undefined;
+  batchSize?: number | undefined;
+  flushInterval?: number | undefined; // ms
   
   // Local storage
-  useLocalStorage?: boolean;
-  maxLocalEntries?: number;
+  useLocalStorage?: boolean | undefined;
+  maxLocalEntries?: number | undefined;
   
   // Console output
-  consoleOutput?: boolean;
-  minConsoleLevel?: LogLevel;
+  consoleOutput?: boolean | undefined;
+  minConsoleLevel?: LogLevel | undefined;
   
   // Performance
-  enablePerformanceMetrics?: boolean;
+  enablePerformanceMetrics?: boolean | undefined;
   
   // Privacy
-  sanitizeUrls?: boolean;
-  sanitizeUserData?: boolean;
+  sanitizeUrls?: boolean | undefined;
+  sanitizeUserData?: boolean | undefined;
 }
 
 class LogBuffer {
   private entries: LogEntry[] = [];
-  private timer?: NodeJS.Timeout;
+  private timer?: NodeJS.Timeout | undefined;
   
   constructor(
     private config: Required<LoggerConfig>,
@@ -64,7 +68,7 @@ class LogBuffer {
   add(entry: LogEntry): void {
     this.entries.push(entry);
     
-    if (this.entries.length >= this.config.batchSize) {
+    if (this.entries.length >= (this.config.batchSize ?? 50)) {
       this.flush();
     }
   }
@@ -90,7 +94,7 @@ class LogBuffer {
   private resetTimer(): void {
     if (this.timer) {
       clearInterval(this.timer);
-      this.timer = undefined;
+      this.timer = null as any;
     }
     this.startTimer();
   }
@@ -104,7 +108,6 @@ class LogBuffer {
 }
 
 export class Logger {
-  private static instance: LogManager;
   
   constructor(
     private name: string,
@@ -167,6 +170,7 @@ export class Logger {
       level,
       logger: this.name,
       message,
+      correlationId: getCurrentCorrelationId(),
       context,
       error,
       sessionId: this.manager.getSessionId(),
@@ -204,17 +208,16 @@ export class LogManager {
   
   constructor(config?: LoggerConfig) {
     this.config = {
-      remoteEndpoint: '/api/logs',
-      batchSize: 50,
-      flushInterval: 5000,
-      useLocalStorage: true,
-      maxLocalEntries: 1000,
-      consoleOutput: true,
-      minConsoleLevel: LogLevel.INFO,
-      enablePerformanceMetrics: true,
-      sanitizeUrls: true,
-      sanitizeUserData: true,
-      ...config
+      remoteEndpoint: config?.remoteEndpoint ?? '/api/logs',
+      batchSize: config?.batchSize ?? 50,
+      flushInterval: config?.flushInterval ?? 5000,
+      useLocalStorage: config?.useLocalStorage ?? true,
+      maxLocalEntries: config?.maxLocalEntries ?? 1000,
+      consoleOutput: config?.consoleOutput ?? true,
+      minConsoleLevel: config?.minConsoleLevel ?? LogLevel.INFO,
+      enablePerformanceMetrics: config?.enablePerformanceMetrics ?? true,
+      sanitizeUrls: config?.sanitizeUrls ?? true,
+      sanitizeUserData: config?.sanitizeUserData ?? true
     };
     
     this.sessionId = this.generateSessionId();
@@ -236,7 +239,7 @@ export class LogManager {
   
   log(entry: LogEntry): void {
     // Console output
-    if (this.config.consoleOutput && entry.level >= this.config.minConsoleLevel) {
+    if (this.config.consoleOutput && entry.level >= (this.config.minConsoleLevel ?? LogLevel.INFO)) {
       this.consoleLog(entry);
     }
     
@@ -252,7 +255,7 @@ export class LogManager {
   }
   
   private consoleLog(entry: LogEntry): void {
-    const prefix = `[${entry.timestamp}] [${entry.logger}]`;
+    const prefix = `[${entry.timestamp}] [${entry.correlationId}] [${entry.logger}]`;
     const message = `${prefix} ${entry.message}`;
     
     switch (entry.level) {
@@ -279,8 +282,9 @@ export class LogManager {
       existingLogs.push(entry);
       
       // Limit size
-      if (existingLogs.length > this.config.maxLocalEntries) {
-        existingLogs.splice(0, existingLogs.length - this.config.maxLocalEntries);
+      const maxEntries = this.config.maxLocalEntries ?? 1000;
+      if (existingLogs.length > maxEntries) {
+        existingLogs.splice(0, existingLogs.length - maxEntries);
       }
       
       localStorage.setItem(key, JSON.stringify(existingLogs));

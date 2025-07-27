@@ -2,6 +2,7 @@
 
 import React, { useState, useEffect } from 'react';
 import { X, ChevronRight, ChevronLeft } from 'lucide-react';
+import { useFocusManagement } from '../../hooks/useFocusManagement';
 
 interface TutorialStep {
   id: string;
@@ -82,8 +83,32 @@ export const OnboardingTutorial: React.FC<OnboardingTutorialProps> = ({
   const [currentStep, setCurrentStep] = useState(0);
   const [highlightPosition, setHighlightPosition] = useState<DOMRect | null>(null);
   const [dontShowAgain, setDontShowAgain] = useState(false);
+  
+  const { containerRef } = useFocusManagement(isOpen, {
+    restoreFocus: true,
+    trapFocus: true,
+    autoFocus: true
+  });
 
   const currentStepData = TUTORIAL_STEPS[currentStep];
+  
+  if (!currentStepData) {
+    return null;
+  }
+
+  useEffect(() => {
+    const handleKeyDown = (event: KeyboardEvent) => {
+      if (event.key === 'Escape') {
+        onClose();
+      }
+    };
+
+    if (isOpen) {
+      document.addEventListener('keydown', handleKeyDown);
+      return () => document.removeEventListener('keydown', handleKeyDown);
+    }
+    return undefined;
+  }, [isOpen, onClose]);
 
   useEffect(() => {
     if (!isOpen || !currentStepData.target) {
@@ -181,7 +206,10 @@ export const OnboardingTutorial: React.FC<OnboardingTutorialProps> = ({
   return (
     <>
       {/* Backdrop */}
-      <div className="fixed inset-0 bg-black/60 z-[100] transition-opacity" />
+      <div 
+        className="fixed inset-0 bg-black/60 z-[100] transition-opacity" 
+        aria-hidden="true"
+      />
 
       {/* Highlight */}
       {highlightPosition && (
@@ -193,32 +221,50 @@ export const OnboardingTutorial: React.FC<OnboardingTutorialProps> = ({
             width: `${highlightPosition.width + 8}px`,
             height: `${highlightPosition.height + 8}px`,
           }}
+          aria-hidden="true"
         />
       )}
 
       {/* Tooltip */}
       <div
+        ref={containerRef as React.RefObject<HTMLDivElement>}
         className="fixed z-[102] bg-card rounded-lg shadow-2xl p-6 max-w-sm transition-all duration-300"
         style={getTooltipPosition()}
+        role="dialog"
+        aria-modal="true"
+        aria-labelledby="tutorial-title"
+        aria-describedby="tutorial-content"
+        tabIndex={-1}
       >
         {/* Close button */}
         <button
           onClick={onClose}
           className="absolute top-2 right-2 p-1 hover:bg-muted rounded-lg transition-colors"
-          aria-label="Close tutorial"
+          aria-label="Close tutorial and skip remaining steps"
         >
-          <X className="w-5 h-5" />
+          <X className="w-5 h-5" aria-hidden="true" />
         </button>
 
         {/* Content */}
         <div className="pr-6">
-          <h3 className="text-xl font-semibold mb-2">{currentStepData.title}</h3>
-          <p className="text-muted-foreground mb-6">{currentStepData.content}</p>
+          <h3 id="tutorial-title" className="text-xl font-semibold mb-2">
+            {currentStepData.title}
+          </h3>
+          <p id="tutorial-content" className="text-muted-foreground mb-6">
+            {currentStepData.content}
+          </p>
         </div>
 
         {/* Progress */}
         <div className="flex items-center justify-between mb-4">
-          <div className="flex gap-1">
+          <div 
+            className="flex gap-1" 
+            role="progressbar" 
+            aria-valuenow={currentStep + 1}
+            aria-valuemin={1}
+            aria-valuemax={TUTORIAL_STEPS.length}
+            aria-label={`Tutorial progress: step ${currentStep + 1} of ${TUTORIAL_STEPS.length}`}
+          >
             {TUTORIAL_STEPS.map((_, index) => (
               <div
                 key={index}
@@ -229,11 +275,12 @@ export const OnboardingTutorial: React.FC<OnboardingTutorialProps> = ({
                     ? 'bg-primary/50'
                     : 'bg-muted'
                 }`}
+                aria-hidden="true"
               />
             ))}
           </div>
-          <span className="text-sm text-muted-foreground">
-            {currentStep + 1} of {TUTORIAL_STEPS.length}
+          <span className="text-sm text-muted-foreground" aria-live="polite">
+            Step {currentStep + 1} of {TUTORIAL_STEPS.length}
           </span>
         </div>
 
@@ -243,6 +290,7 @@ export const OnboardingTutorial: React.FC<OnboardingTutorialProps> = ({
             <button
               onClick={handleSkip}
               className="text-sm text-muted-foreground hover:text-foreground transition-colors"
+              aria-label="Skip tutorial and close"
             >
               Skip Tutorial
             </button>
@@ -253,27 +301,32 @@ export const OnboardingTutorial: React.FC<OnboardingTutorialProps> = ({
                   checked={dontShowAgain}
                   onChange={(e) => setDontShowAgain(e.target.checked)}
                   className="rounded"
+                  aria-describedby="dont-show-again-description"
                 />
-                Don't show again
+                <span id="dont-show-again-description">
+                  Don't show tutorial again on startup
+                </span>
               </label>
             )}
           </div>
 
-          <div className="flex gap-2">
+          <div className="flex gap-2" role="group" aria-label="Tutorial navigation">
             <button
               onClick={handlePrevious}
               disabled={currentStep === 0}
               className="p-2 hover:bg-muted rounded-lg transition-colors disabled:opacity-50 disabled:cursor-not-allowed"
-              aria-label="Previous step"
+              aria-label="Go to previous tutorial step"
+              aria-disabled={currentStep === 0}
             >
-              <ChevronLeft className="w-5 h-5" />
+              <ChevronLeft className="w-5 h-5" aria-hidden="true" />
             </button>
             <button
               onClick={handleNext}
               className="px-4 py-2 bg-primary text-primary-foreground rounded-lg hover:bg-primary/90 transition-colors flex items-center gap-2"
+              aria-label={currentStep === TUTORIAL_STEPS.length - 1 ? 'Finish tutorial' : 'Go to next tutorial step'}
             >
               {currentStep === TUTORIAL_STEPS.length - 1 ? 'Finish' : 'Next'}
-              <ChevronRight className="w-4 h-4" />
+              <ChevronRight className="w-4 h-4" aria-hidden="true" />
             </button>
           </div>
         </div>

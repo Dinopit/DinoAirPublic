@@ -1,6 +1,7 @@
 import { useState, useRef, useCallback } from 'react';
 import { Message } from './useConversations';
 import { CodeBlockDetector } from '@/lib/utils/code-block-detector';
+import { useOfflineStatus } from './useOfflineStatus';
 
 interface ChatResponse {
   content: string;
@@ -8,7 +9,7 @@ interface ChatResponse {
     name: string;
     type: string;
     content: string;
-  }>;
+  }> | undefined;
 }
 
 export const useChat = () => {
@@ -23,6 +24,7 @@ export const useChat = () => {
   const [isLoading, setIsLoading] = useState(false);
   const [isStreaming, setIsStreaming] = useState(false);
   const abortControllerRef = useRef<AbortController | null>(null);
+  const { isOffline } = useOfflineStatus();
 
   const resetMessages = useCallback(() => {
     setMessages([
@@ -51,6 +53,10 @@ export const useChat = () => {
   ): Promise<ChatResponse> => {
     if (!content.trim() || isLoading) {
       throw new Error('Invalid message or already loading');
+    }
+
+    if (isOffline) {
+      throw new Error('Cannot send messages while offline. Your message will be queued when you go back online.');
     }
 
     const userMessage: Message = {

@@ -9,7 +9,7 @@ const API_BASE = '/api';
 /**
  * API Utilities
  */
-let API = {
+const API = {
   /**
    * Make an HTTP request
    * @param {string} url - The URL to request
@@ -116,9 +116,9 @@ let API = {
     try {
       while (true) {
         const { done, value } = await reader.read();
-        
-        if (done) break;
-        
+
+        if (done) { break; }
+
         const chunk = decoder.decode(value);
         if (chunk && onChunk) {
           onChunk(chunk);
@@ -133,7 +133,7 @@ let API = {
 /**
  * DOM Utilities
  */
-let DOM = {
+const DOM = {
   /**
    * Get element by ID
    * @param {string} id - Element ID
@@ -172,7 +172,7 @@ let DOM = {
    */
   create(tag, attributes = {}, content = '') {
     const element = document.createElement(tag);
-    
+
     Object.entries(attributes).forEach(([key, value]) => {
       if (key === 'className') {
         element.className = value;
@@ -298,7 +298,7 @@ let DOM = {
 /**
  * String Utilities
  */
-let StringUtils = {
+const StringUtils = {
   /**
    * Escape HTML
    * @param {string} text - Text to escape
@@ -318,7 +318,7 @@ let StringUtils = {
    * @returns {string}
    */
   truncate(text, length, suffix = '...') {
-    if (text.length <= length) return text;
+    if (text.length <= length) { return text; }
     return text.substring(0, length - suffix.length) + suffix;
   },
 
@@ -328,13 +328,13 @@ let StringUtils = {
    * @returns {string}
    */
   formatFileSize(bytes) {
-    if (bytes === 0) return '0 Bytes';
-    
+    if (bytes === 0) { return '0 Bytes'; }
+
     const k = 1024;
     const sizes = ['Bytes', 'KB', 'MB', 'GB', 'TB'];
     const i = Math.floor(Math.log(bytes) / Math.log(k));
-    
-    return parseFloat((bytes / Math.pow(k, i)).toFixed(2)) + ' ' + sizes[i];
+
+    return `${parseFloat((bytes / Math.pow(k, i)).toFixed(2))} ${sizes[i]}`;
   },
 
   /**
@@ -352,7 +352,7 @@ let StringUtils = {
       hour: '2-digit',
       minute: '2-digit'
     };
-    
+
     return d.toLocaleDateString('en-US', { ...defaultOptions, ...options });
   },
 
@@ -365,17 +365,17 @@ let StringUtils = {
     const now = new Date();
     const d = new Date(date);
     const diff = now - d;
-    
+
     const seconds = Math.floor(diff / 1000);
     const minutes = Math.floor(seconds / 60);
     const hours = Math.floor(minutes / 60);
     const days = Math.floor(hours / 24);
-    
-    if (seconds < 60) return 'just now';
-    if (minutes < 60) return `${minutes}m ago`;
-    if (hours < 24) return `${hours}h ago`;
-    if (days < 7) return `${days}d ago`;
-    
+
+    if (seconds < 60) { return 'just now'; }
+    if (minutes < 60) { return `${minutes}m ago`; }
+    if (hours < 24) { return `${hours}h ago`; }
+    if (days < 7) { return `${days}d ago`; }
+
     return this.formatDate(date, { year: 'numeric', month: 'short', day: 'numeric' });
   },
 
@@ -397,7 +397,7 @@ let StringUtils = {
 /**
  * Local Storage Utilities
  */
-let Storage = {
+const Storage = {
   /**
    * Get item from localStorage
    * @param {string} key - Storage key
@@ -477,8 +477,8 @@ class EventEmitter {
    * @param {Function} callback - Event callback
    */
   off(event, callback) {
-    if (!this.events[event]) return;
-    
+    if (!this.events[event]) { return; }
+
     this.events[event] = this.events[event].filter(cb => cb !== callback);
   }
 
@@ -488,8 +488,8 @@ class EventEmitter {
    * @param {...any} args - Event arguments
    */
   emit(event, ...args) {
-    if (!this.events[event]) return;
-    
+    if (!this.events[event]) { return; }
+
     this.events[event].forEach(callback => {
       try {
         callback(...args);
@@ -525,12 +525,12 @@ function debounce(func, wait, immediate = false) {
   return function executedFunction(...args) {
     const later = () => {
       timeout = null;
-      if (!immediate) func(...args);
+      if (!immediate) { func(...args); }
     };
     const callNow = immediate && !timeout;
     clearTimeout(timeout);
     timeout = setTimeout(later, wait);
-    if (callNow) func(...args);
+    if (callNow) { func(...args); }
   };
 }
 
@@ -557,9 +557,9 @@ function throttle(func, limit) {
  * @returns {any}
  */
 function deepClone(obj) {
-  if (obj === null || typeof obj !== 'object') return obj;
-  if (obj instanceof Date) return new Date(obj.getTime());
-  if (obj instanceof Array) return obj.map(item => deepClone(item));
+  if (obj === null || typeof obj !== 'object') { return obj; }
+  if (obj instanceof Date) { return new Date(obj.getTime()); }
+  if (obj instanceof Array) { return obj.map(item => deepClone(item)); }
   if (typeof obj === 'object') {
     const cloned = {};
     Object.keys(obj).forEach(key => {
@@ -584,9 +584,9 @@ function sleep(ms) {
  * @returns {string}
  */
 function formatError(error) {
-  if (typeof error === 'string') return error;
-  if (error instanceof Error) return error.message;
-  if (error && error.message) return error.message;
+  if (typeof error === 'string') { return error; }
+  if (error instanceof Error) { return error.message; }
+  if (error && error.message) { return error.message; }
   return 'An unknown error occurred';
 }
 

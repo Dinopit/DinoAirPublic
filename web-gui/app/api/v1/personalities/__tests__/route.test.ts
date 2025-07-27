@@ -6,7 +6,7 @@ import path from 'path';
 // Mock the dependencies
 jest.mock('@/lib/api-utils', () => ({
   apiMiddleware: jest.fn(),
-  createApiResponse: jest.fn((data, request, clientId) => {
+  createApiResponse: jest.fn((data, _request, clientId) => {
     return new Response(JSON.stringify(data), {
       status: 200,
       headers: {
@@ -34,7 +34,7 @@ jest.mock('@/lib/api-utils', () => ({
 }));
 
 jest.mock('@/lib/api-cache', () => ({
-  withCache: jest.fn(async (key, fn) => fn()),
+  withCache: jest.fn(async (_key, fn) => fn()),
   generateCacheKey: jest.fn((key) => `cache-${key}`),
 }));
 

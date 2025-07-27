@@ -37,7 +37,7 @@ async function testSupabaseConnection() {
 
     // Test 3: Check if our tables exist
     console.log('3. Checking if chat tables exist...');
-    
+
     const tables = ['chat_sessions', 'chat_messages', 'chat_metrics'];
     const tableStatus = {};
 
@@ -71,10 +71,10 @@ async function testSupabaseConnection() {
     console.log('   Supabase URL:', process.env.SUPABASE_URL);
     console.log('   Anonymous Key:', process.env.SUPABASE_ANON_KEY ? 'Configured' : 'Missing');
     console.log('   Service Role Key:', process.env.SUPABASE_SERVICE_ROLE_KEY ? 'Configured' : 'Missing');
-    
+
     const existingTables = Object.entries(tableStatus).filter(([_, status]) => status === 'exists').length;
     const missingTables = Object.entries(tableStatus).filter(([_, status]) => status === 'missing').length;
-    
+
     console.log(`   Tables Status: ${existingTables}/3 exist, ${missingTables}/3 missing`);
 
     if (missingTables > 0) {
@@ -125,11 +125,9 @@ CREATE INDEX IF NOT EXISTS idx_chat_metrics_created_at ON chat_metrics(created_a
     if (existingTables === 3) {
       console.log('\n🎉 All tables exist! Supabase integration is ready to use.');
       return true;
-    } else {
-      console.log('\n⚠️  Some tables are missing. Please create them manually in Supabase.');
-      return false;
     }
-
+    console.log('\n⚠️  Some tables are missing. Please create them manually in Supabase.');
+    return false;
   } catch (error) {
     console.error('\n💥 Connection test failed:', error.message);
     console.log('\nPlease check your Supabase configuration in the .env file.');
@@ -140,10 +138,10 @@ CREATE INDEX IF NOT EXISTS idx_chat_metrics_created_at ON chat_metrics(created_a
 // Run the test if this script is executed directly
 if (require.main === module) {
   testSupabaseConnection()
-    .then((success) => {
+    .then(success => {
       process.exit(success ? 0 : 1);
     })
-    .catch((error) => {
+    .catch(error => {
       console.error('Test script error:', error);
       process.exit(1);
     });

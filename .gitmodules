@@ -1,0 +1,7 @@
+[submodule "ComfyUI"]
+	path = ComfyUI
+	url = https://github.com/comfyanonymous/ComfyUI.git
+
+[submodule "DinoAirPublic"]
+	path = DinoAirPublic
+	url = https://github.com/Dinopit/DinoAirPublic.git

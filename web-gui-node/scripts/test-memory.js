@@ -8,8 +8,8 @@ const { saveMemory, getMemory, deleteMemory, hasMemory, getMultipleMemories } = 
 async function testMemoryModule() {
   console.log('🧠 Testing DinoAir Memory Management Module\n');
 
-  const testUserId = 'test-user-' + Date.now();
-  const testUserId2 = 'test-user-2-' + Date.now();
+  const testUserId = `test-user-${Date.now()}`;
+  const testUserId2 = `test-user-2-${Date.now()}`;
 
   try {
     // Test 1: Save and retrieve object data
@@ -103,7 +103,6 @@ async function testMemoryModule() {
     console.log('✅ Memory deleted successfully:', deletedMemory === null);
 
     console.log('\n🎉 All tests passed! Memory module is working correctly.');
-
   } catch (error) {
     console.error('\n❌ Test failed:', error.message);
     console.error('Stack trace:', error.stack);
@@ -134,7 +133,7 @@ if (require.main === module) {
       console.log('\n✨ Test completed successfully!');
       process.exit(0);
     })
-    .catch((error) => {
+    .catch(error => {
       console.error('\n💥 Test suite failed:', error.message);
       process.exit(1);
     });

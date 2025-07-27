@@ -1,0 +1,131 @@
+config:
+  target: 'http://localhost:3000'
+  phases:
+    - duration: 90
+      arrivalRate: 8
+      name: "Artifacts API Load Test"
+  defaults:
+    headers:
+      'Content-Type': 'application/json'
+  processor: "../processors/artifacts-processor.js"
+
+scenarios:
+  - name: "Artifact CRUD Operations"
+    weight: 50
+    flow:
+      - get:
+          url: "/api/v1/artifacts"
+          name: "List Artifacts"
+          qs:
+            page: 1
+            limit: 10
+            user_id: "load-test-user"
+          expect:
+            - statusCode: 200
+            - contentType: json
+            - hasProperty: "artifacts"
+      
+      - post:
+          url: "/api/v1/artifacts"
+          name: "Create Artifact"
+          json:
+            name: "Load Test Artifact {{ $randomInt(1, 10000) }}"
+            type: "javascript"
+            content: "{{ generateTestCode() }}"
+            tags: ["load-test", "generated"]
+            user_id: "load-test-user"
+            metadata:
+              source: "artillery-load-test"
+              timestamp: "{{ $timestamp }}"
+          capture:
+            - json: "$.artifact.id"
+              as: "artifactId"
+          expect:
+            - statusCode: 201
+            - contentType: json
+            - hasProperty: "artifact"
+
+      - get:
+          url: "/api/v1/artifacts/{{ artifactId }}"
+          name: "Get Artifact Details"
+          expect:
+            - statusCode: 200
+            - contentType: json
+
+      - put:
+          url: "/api/v1/artifacts/{{ artifactId }}"
+          name: "Update Artifact"
+          json:
+            name: "Updated Load Test Artifact {{ $randomInt(1, 10000) }}"
+            content: "{{ generateUpdatedTestCode() }}"
+            tags: ["load-test", "updated"]
+          expect:
+            - statusCode: 200
+            - contentType: json
+
+  - name: "Artifact Search and Filter"
+    weight: 30
+    flow:
+      - get:
+          url: "/api/v1/artifacts"
+          name: "Search Artifacts by Type"
+          qs:
+            type: "javascript"
+            page: 1
+            limit: 5
+          expect:
+            - statusCode: 200
+            - contentType: json
+
+      - get:
+          url: "/api/v1/artifacts"
+          name: "Search Artifacts by Tags"
+          qs:
+            tags: "load-test"
+            page: 1
+            limit: 10
+          expect:
+            - statusCode: 200
+            - contentType: json
+
+  - name: "Artifact Export"
+    weight: 15
+    flow:
+      - get:
+          url: "/api/v1/artifacts"
+          name: "Get Artifacts for Export"
+          qs:
+            user_id: "load-test-user"
+            limit: 5
+          capture:
+            - json: "$.artifacts[0].id"
+              as: "exportArtifactId"
+          expect:
+            - statusCode: 200
+
+      - get:
+          url: "/api/v1/artifacts/export/single/{{ exportArtifactId }}"
+          name: "Export Single Artifact"
+          expect:
+            - statusCode: [200, 404]
+
+  - name: "Artifact Versions"
+    weight: 5
+    flow:
+      - get:
+          url: "/api/v1/artifacts"
+          name: "Get Artifacts for Versioning"
+          qs:
+            user_id: "load-test-user"
+            limit: 1
+          capture:
+            - json: "$.artifacts[0].id"
+              as: "versionArtifactId"
+          expect:
+            - statusCode: 200
+
+      - get:
+          url: "/api/v1/artifacts/{{ versionArtifactId }}/versions"
+          name: "Get Artifact Versions"
+          expect:
+            - statusCode: [200, 404]

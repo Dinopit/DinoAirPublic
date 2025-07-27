@@ -1,7 +1,8 @@
 import { DinoAirError, ErrorType, ErrorContext, errorHandler } from '../services/error-handler';
 import { retry, RetryConfig, RetryStrategy, RetryWithCircuitBreaker, CircuitBreakerConfig } from '../utils/retry-strategies';
 import { requestDeduplication } from './request-deduplication';
-import { useCacheStore, cacheKeys, cacheTTL } from '../stores/cache-store';
+import { useCacheStore, cacheTTL } from '../stores/cache-store';
+import { getCurrentCorrelationId, createCorrelationHeaders } from '../correlation/correlation-id';
 
 // Request interceptor type
 export type RequestInterceptor = (config: RequestConfig) => RequestConfig | Promise<RequestConfig>;
@@ -260,8 +261,8 @@ export class EnhancedApiClient {
         
         // Create error response
         const errorResponse: EnhancedResponse<T> = new Response(null, {
-          status: 0,
-          statusText: 'Error',
+          status: 500,
+          statusText: 'Internal Server Error',
         }) as EnhancedResponse<T>;
         
         errorResponse.error = handledError;
@@ -286,7 +287,7 @@ export class EnhancedApiClient {
       ...config,
       url,
       method: 'POST',
-      body: data ? JSON.stringify(data) : undefined,
+      body: data ? JSON.stringify(data) : null,
     });
   }
 
@@ -295,7 +296,7 @@ export class EnhancedApiClient {
       ...config,
       url,
       method: 'PUT',
-      body: data ? JSON.stringify(data) : undefined,
+      body: data ? JSON.stringify(data) : null,
     });
   }
 
@@ -304,7 +305,7 @@ export class EnhancedApiClient {
       ...config,
       url,
       method: 'PATCH',
-      body: data ? JSON.stringify(data) : undefined,
+      body: data ? JSON.stringify(data) : null,
     });
   }
 
@@ -326,6 +327,12 @@ export class EnhancedApiClient {
 
   private mergeHeaders(headers?: HeadersInit): Headers {
     const merged = new Headers(this.config.defaultHeaders);
+    
+    // Add correlation ID headers
+    const correlationHeaders = createCorrelationHeaders(getCurrentCorrelationId());
+    Object.entries(correlationHeaders).forEach(([key, value]) => {
+      merged.set(key, value);
+    });
     
     if (headers) {
       const headersObj = headers instanceof Headers

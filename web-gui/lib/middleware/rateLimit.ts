@@ -156,7 +156,7 @@ function defaultKeyGenerator(req: NextRequest): string {
 }
 
 // Default rate limit exceeded handler
-function defaultHandler(req: NextRequest, info: RateLimitInfo): NextResponse {
+function defaultHandler(_req: NextRequest, info: RateLimitInfo): NextResponse {
   return NextResponse.json(
     {
       error: 'Too Many Requests',
@@ -309,6 +309,9 @@ export class AdvancedRateLimiter {
       // Check if limit exceeded
       if (timestamps.length >= config.maxRequests) {
         const oldestTimestamp = timestamps[0];
+        if (!oldestTimestamp) {
+          throw new Error('No timestamps available for rate limit calculation');
+        }
         const resetTime = new Date(oldestTimestamp + config.windowMs);
         
         return (config.handler || defaultHandler)(request, {

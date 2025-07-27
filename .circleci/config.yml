@@ -1,0 +1,53 @@
+version: 2.1
+
+executors:
+  codeql-executor:
+    docker:
+      - image: cimg/python:3.11  # Swap out for cimg/node:lts if JS/TS first
+    working_directory: ~/project
+
+jobs:
+  codeql-scan:
+    executor: codeql-executor
+    steps:
+      - checkout
+      - run:
+          name: Install CodeQL CLI
+          command: |
+            curl -sL https://github.com/github/codeql-cli-binaries/releases/download/v2.14.4/codeql-linux64.zip -o codeql.zip
+            unzip codeql.zip
+            sudo mv codeql /usr/local/bin/codeql
+            codeql --version
+
+      - run:
+          name: Initialize CodeQL database
+          command: |
+            mkdir codeql-db
+            codeql database create codeql-db \
+              --language=javascript \
+              --language=python \
+              --source-root=.
+
+      - run:
+          name: Run CodeQL Analysis
+          command: |
+            codeql database analyze codeql-db \
+              github/codeql-javascript-queries \
+              github/codeql-python-queries \
+              --format=sarifv2.1.0 \
+              --output=results.sarif
+
+      - store_artifacts:
+          path: results.sarif
+          destination: codeql-results
+
+      - persist_to_workspace:
+          root: .
+          paths:
+            - results.sarif
+
+workflows:
+  version: 2
+  security-check:
+    jobs:
+      - codeql-scan

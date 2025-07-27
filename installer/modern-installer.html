@@ -1,0 +1,510 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>DinoAir Installation Wizard</title>
+    <link rel="stylesheet" href="modern-styles.css">
+    <link rel="icon" type="image/x-icon" href="assets/icon.png">
+</head>
+<body>
+    <div class="installer-container">
+        <!-- Header -->
+        <header class="installer-header">
+            <div class="header-content">
+                <div class="logo-section">
+                    <div class="logo">🦕</div>
+                    <div class="title-section">
+                        <h1>DinoAir</h1>
+                        <p class="subtitle">AI Platform Installation Wizard</p>
+                    </div>
+                </div>
+                <div class="version-info">
+                    <span class="version">v1.2.0</span>
+                    <span class="status" id="installer-status">Ready to install</span>
+                </div>
+            </div>
+            
+            <!-- Progress Bar -->
+            <div class="progress-container">
+                <div class="progress-bar">
+                    <div class="progress-fill" id="progress-fill"></div>
+                </div>
+                <div class="progress-steps">
+                    <div class="step active" data-step="1">
+                        <div class="step-number">1</div>
+                        <div class="step-label">Welcome</div>
+                    </div>
+                    <div class="step" data-step="2">
+                        <div class="step-number">2</div>
+                        <div class="step-label">Requirements</div>
+                    </div>
+                    <div class="step" data-step="3">
+                        <div class="step-number">3</div>
+                        <div class="step-label">Configuration</div>
+                    </div>
+                    <div class="step" data-step="4">
+                        <div class="step-number">4</div>
+                        <div class="step-label">Installation</div>
+                    </div>
+                    <div class="step" data-step="5">
+                        <div class="step-number">5</div>
+                        <div class="step-label">Complete</div>
+                    </div>
+                </div>
+            </div>
+        </header>
+
+        <!-- Main Content -->
+        <main class="installer-main">
+            <!-- Step 1: Welcome -->
+            <div class="step-content active" id="step-1">
+                <div class="welcome-section">
+                    <div class="welcome-content">
+                        <h2>Welcome to DinoAir</h2>
+                        <p class="lead">A powerful, self-contained AI platform combining local language models with image generation capabilities.</p>
+                        
+                        <div class="features-grid">
+                            <div class="feature-card">
+                                <div class="feature-icon">🤖</div>
+                                <h3>Local AI Chat</h3>
+                                <p>Powered by Ollama with multiple language models</p>
+                            </div>
+                            <div class="feature-card">
+                                <div class="feature-icon">🎨</div>
+                                <h3>Image Generation</h3>
+                                <p>SDXL and SD 1.5 support via ComfyUI integration</p>
+                            </div>
+                            <div class="feature-card">
+                                <div class="feature-icon">💾</div>
+                                <h3>Artifact Management</h3>
+                                <p>Store, organize, and manage generated content</p>
+                            </div>
+                            <div class="feature-card">
+                                <div class="feature-icon">🎭</div>
+                                <h3>Multiple Personalities</h3>
+                                <p>Customizable AI personalities for different use cases</p>
+                            </div>
+                        </div>
+
+                        <div class="installation-info">
+                            <div class="info-item">
+                                <strong>Installation Time:</strong> 10-30 minutes
+                            </div>
+                            <div class="info-item">
+                                <strong>Required Space:</strong> ~5-10 GB
+                            </div>
+                            <div class="info-item">
+                                <strong>Prerequisites:</strong> Automatically handled
+                            </div>
+                        </div>
+                    </div>
+                </div>
+            </div>
+
+            <!-- Step 2: System Requirements -->
+            <div class="step-content" id="step-2">
+                <div class="requirements-section">
+                    <h2>System Requirements Check</h2>
+                    <p class="section-description">Verifying your system meets the requirements for DinoAir...</p>
+                    
+                    <div class="requirements-list" id="requirements-list">
+                        <!-- Requirements will be populated by JavaScript -->
+                    </div>
+
+                    <div class="system-info">
+                        <h3>Detected System Information</h3>
+                        <div class="system-details" id="system-details">
+                            <!-- System info will be populated by JavaScript -->
+                        </div>
+                    </div>
+
+                    <div class="auto-fix-section" id="auto-fix-section">
+                        <h3>Missing Dependencies</h3>
+                        <p class="section-description">DinoAir can automatically download and install missing components.</p>
+                        <div class="dependency-list" id="dependency-list">
+                            <!-- Dependencies will be populated by JavaScript -->
+                        </div>
+                    </div>
+                </div>
+            </div>
+
+            <!-- Step 3: Configuration -->
+            <div class="step-content" id="step-3">
+                <div class="configuration-section">
+                    <h2>Installation Configuration</h2>
+                    <p class="section-description">Customize your DinoAir installation settings.</p>
+                    
+                    <div class="config-groups">
+                        <div class="config-group">
+                            <h3>Installation Location</h3>
+                            <div class="input-group">
+                                <label for="install-path">Installation Directory:</label>
+                                <div class="path-input-container">
+                                    <input type="text" id="install-path" class="path-input" readonly>
+                                    <button type="button" class="btn btn-secondary" id="browse-path">Browse</button>
+                                </div>
+                                <small class="input-help">Choose where DinoAir will be installed</small>
+                                <div class="space-info" id="space-info">
+                                    <span class="space-available">Available: <span id="available-space">Calculating...</span></span>
+                                    <span class="space-required">Required: <span id="required-space">~5.2 GB</span></span>
+                                </div>
+                            </div>
+                        </div>
+
+                        <div class="config-group">
+                            <h3>Service Configuration</h3>
+                            <div class="checkbox-group">
+                                <label class="checkbox-label">
+                                    <input type="checkbox" id="auto-start" checked>
+                                    <span class="checkmark"></span>
+                                    Start DinoAir automatically with system
+                                </label>
+                                <label class="checkbox-label">
+                                    <input type="checkbox" id="desktop-shortcut" checked>
+                                    <span class="checkmark"></span>
+                                    Create desktop shortcut
+                                </label>
+                                <label class="checkbox-label">
+                                    <input type="checkbox" id="add-to-path">
+                                    <span class="checkmark"></span>
+                                    Add DinoAir to system PATH
+                                </label>
+                                <label class="checkbox-label">
+                                    <input type="checkbox" id="firewall-rules" checked>
+                                    <span class="checkmark"></span>
+                                    Configure firewall rules automatically
+                                </label>
+                            </div>
+                        </div>
+
+                        <div class="config-group">
+                            <h3>Components to Install</h3>
+                            <div class="component-list">
+                                <div class="component-item required">
+                                    <label class="checkbox-label">
+                                        <input type="checkbox" id="dinoair-core" checked disabled>
+                                        <span class="checkmark"></span>
+                                        <div class="component-info">
+                                            <strong>DinoAir Core (Required)</strong>
+                                            <p>Main application and web interface (~500MB)</p>
+                                            <span class="component-badge required">Required</span>
+                                        </div>
+                                    </label>
+                                </div>
+                                <div class="component-item recommended">
+                                    <label class="checkbox-label">
+                                        <input type="checkbox" id="ollama-component" checked>
+                                        <span class="checkmark"></span>
+                                        <div class="component-info">
+                                            <strong>Ollama (Recommended)</strong>
+                                            <p>Local language model runtime (~1.2GB)</p>
+                                            <span class="component-badge recommended">Recommended</span>
+                                        </div>
+                                    </label>
+                                </div>
+                                <div class="component-item recommended">
+                                    <label class="checkbox-label">
+                                        <input type="checkbox" id="comfyui-component" checked>
+                                        <span class="checkmark"></span>
+                                        <div class="component-info">
+                                            <strong>ComfyUI (Recommended)</strong>
+                                            <p>Advanced image generation interface (~800MB)</p>
+                                            <span class="component-badge recommended">Recommended</span>
+                                        </div>
+                                    </label>
+                                </div>
+                                <div class="component-item optional">
+                                    <label class="checkbox-label">
+                                        <input type="checkbox" id="models-component" checked>
+                                        <span class="checkmark"></span>
+                                        <div class="component-info">
+                                            <strong>Default Models</strong>
+                                            <p>Essential AI models for immediate use (~3GB)</p>
+                                            <span class="component-badge optional">Optional</span>
+                                        </div>
+                                    </label>
+                                </div>
+                                <div class="component-item optional">
+                                    <label class="checkbox-label">
+                                        <input type="checkbox" id="development-tools">
+                                        <span class="checkmark"></span>
+                                        <div class="component-info">
+                                            <strong>Development Tools</strong>
+                                            <p>API documentation and debugging tools (~200MB)</p>
+                                            <span class="component-badge optional">Optional</span>
+                                        </div>
+                                    </label>
+                                </div>
+                            </div>
+                        </div>
+
+                        <div class="config-group">
+                            <h3>Network Configuration</h3>
+                            <div class="network-settings">
+                                <div class="input-group">
+                                    <label for="web-port">Web Interface Port:</label>
+                                    <input type="number" id="web-port" value="3000" min="1024" max="65535">
+                                    <small class="input-help">Port for the web interface (default: 3000)</small>
+                                </div>
+                                <div class="input-group">
+                                    <label for="ollama-port">Ollama Port:</label>
+                                    <input type="number" id="ollama-port" value="11434" min="1024" max="65535">
+                                    <small class="input-help">Port for Ollama service (default: 11434)</small>
+                                </div>
+                                <div class="input-group">
+                                    <label for="comfyui-port">ComfyUI Port:</label>
+                                    <input type="number" id="comfyui-port" value="8188" min="1024" max="65535">
+                                    <small class="input-help">Port for ComfyUI service (default: 8188)</small>
+                                </div>
+                            </div>
+                        </div>
+
+                        <div class="config-group">
+                            <h3>Installation Mode</h3>
+                            <div class="mode-selection">
+                                <div class="mode-option">
+                                    <label class="radio-label">
+                                        <input type="radio" name="install-mode" value="express" checked>
+                                        <span class="radio-mark"></span>
+                                        <div class="mode-info">
+                                            <strong>Express Installation</strong>
+                                            <p>Quick setup with recommended settings</p>
+                                        </div>
+                                    </label>
+                                </div>
+                                <div class="mode-option">
+                                    <label class="radio-label">
+                                        <input type="radio" name="install-mode" value="custom">
+                                        <span class="radio-mark"></span>
+                                        <div class="mode-info">
+                                            <strong>Custom Installation</strong>
+                                            <p>Full control over installation options</p>
+                                        </div>
+                                    </label>
+                                </div>
+                            </div>
+                        </div>
+                    </div>
+                </div>
+            </div>
+
+            <!-- Step 4: Installation Progress -->
+            <div class="step-content" id="step-4">
+                <div class="installation-section">
+                    <h2>Installing DinoAir</h2>
+                    <p class="section-description">Please wait while DinoAir is being installed...</p>
+                    
+                    <div class="installation-progress">
+                        <div class="overall-progress">
+                            <div class="progress-info">
+                                <h3>Overall Progress</h3>
+                                <span class="progress-percentage" id="overall-percentage">0%</span>
+                            </div>
+                            <div class="progress-bar-container">
+                                <div class="progress-bar">
+                                    <div class="progress-fill" id="overall-progress-fill"></div>
+                                </div>
+                            </div>
+                        </div>
+
+                        <div class="current-task">
+                            <div class="task-info">
+                                <h3 id="current-task-title">Preparing installation...</h3>
+                                <p id="current-task-description">Initializing installer components</p>
+                            </div>
+                            <div class="task-progress">
+                                <div class="task-progress-bar">
+                                    <div class="task-progress-fill" id="task-progress-fill"></div>
+                                </div>
+                                <span class="task-percentage" id="task-percentage">0%</span>
+                            </div>
+                        </div>
+
+                        <div class="installation-phases" id="installation-phases">
+                            <div class="phase" data-phase="prerequisites">
+                                <div class="phase-icon">📋</div>
+                                <div class="phase-info">
+                                    <h4>Prerequisites</h4>
+                                    <p>Installing required dependencies</p>
+                                </div>
+                                <div class="phase-status pending">Pending</div>
+                            </div>
+                            <div class="phase" data-phase="core">
+                                <div class="phase-icon">🦕</div>
+                                <div class="phase-info">
+                                    <h4>DinoAir Core</h4>
+                                    <p>Installing main application</p>
+                                </div>
+                                <div class="phase-status pending">Pending</div>
+                            </div>
+                            <div class="phase" data-phase="ollama">
+                                <div class="phase-icon">🤖</div>
+                                <div class="phase-info">
+                                    <h4>Ollama</h4>
+                                    <p>Setting up language models</p>
+                                </div>
+                                <div class="phase-status pending">Pending</div>
+                            </div>
+                            <div class="phase" data-phase="comfyui">
+                                <div class="phase-icon">🎨</div>
+                                <div class="phase-info">
+                                    <h4>ComfyUI</h4>
+                                    <p>Installing image generation tools</p>
+                                </div>
+                                <div class="phase-status pending">Pending</div>
+                            </div>
+                            <div class="phase" data-phase="models">
+                                <div class="phase-icon">📦</div>
+                                <div class="phase-info">
+                                    <h4>AI Models</h4>
+                                    <p>Downloading default models</p>
+                                </div>
+                                <div class="phase-status pending">Pending</div>
+                            </div>
+                            <div class="phase" data-phase="configuration">
+                                <div class="phase-icon">⚙️</div>
+                                <div class="phase-info">
+                                    <h4>Configuration</h4>
+                                    <p>Finalizing setup</p>
+                                </div>
+                                <div class="phase-status pending">Pending</div>
+                            </div>
+                        </div>
+
+                        <div class="installation-log">
+                            <h4>
+                                Installation Log 
+                                <button class="toggle-log" id="toggle-log">
+                                    <span class="toggle-text">Show Details</span>
+                                    <span class="toggle-icon">▼</span>
+                                </button>
+                            </h4>
+                            <div class="log-container collapsed" id="installation-log">
+                                <!-- Log entries will be added here -->
+                            </div>
+                        </div>
+
+                        <div class="installation-stats">
+                            <div class="stat-item">
+                                <span class="stat-label">Elapsed Time:</span>
+                                <span class="stat-value" id="elapsed-time">00:00</span>
+                            </div>
+                            <div class="stat-item">
+                                <span class="stat-label">Estimated Remaining:</span>
+                                <span class="stat-value" id="remaining-time">Calculating...</span>
+                            </div>
+                            <div class="stat-item">
+                                <span class="stat-label">Download Speed:</span>
+                                <span class="stat-value" id="download-speed">--</span>
+                            </div>
+                            <div class="stat-item">
+                                <span class="stat-label">Downloaded:</span>
+                                <span class="stat-value" id="downloaded-size">0 MB</span>
+                            </div>
+                        </div>
+
+                        <div class="cancel-section">
+                            <button class="btn btn-outline" id="cancel-installation">Cancel Installation</button>
+                        </div>
+                    </div>
+                </div>
+            </div>
+
+            <!-- Step 5: Completion -->
+            <div class="step-content" id="step-5">
+                <div class="completion-section">
+                    <div class="completion-content" id="completion-content">
+                        <!-- Success or error content will be populated here -->
+                    </div>
+                </div>
+            </div>
+        </main>
+
+        <!-- Footer Actions -->
+        <footer class="installer-footer">
+            <div class="footer-actions">
+                <button type="button" class="btn btn-secondary" id="back-btn" disabled>Back</button>
+                <div class="footer-right">
+                    <button type="button" class="btn btn-outline" id="cancel-btn">Cancel</button>
+                    <button type="button" class="btn btn-primary" id="next-btn">Get Started</button>
+                </div>
+            </div>
+        </footer>
+    </div>
+
+    <!-- Modals -->
+    
+    <!-- Error Modal -->
+    <div class="modal-overlay" id="error-modal">
+        <div class="modal">
+            <div class="modal-header">
+                <h3>Installation Error</h3>
+                <button class="modal-close" id="close-error-modal">×</button>
+            </div>
+            <div class="modal-body">
+                <div class="error-content" id="error-content">
+                    <!-- Error details will be populated here -->
+                </div>
+            </div>
+            <div class="modal-footer">
+                <button class="btn btn-secondary" id="view-logs">View Logs</button>
+                <button class="btn btn-outline" id="retry-installation">Retry</button>
+                <button class="btn btn-primary" id="close-error">Close</button>
+            </div>
+        </div>
+    </div>
+
+    <!-- Confirmation Modal -->
+    <div class="modal-overlay" id="confirm-modal">
+        <div class="modal">
+            <div class="modal-header">
+                <h3 id="confirm-title">Confirm Action</h3>
+                <button class="modal-close" id="close-confirm-modal">×</button>
+            </div>
+            <div class="modal-body">
+                <p id="confirm-message">Are you sure you want to proceed?</p>
+            </div>
+            <div class="modal-footer">
+                <button class="btn btn-secondary" id="confirm-cancel">Cancel</button>
+                <button class="btn btn-primary" id="confirm-ok">Confirm</button>
+            </div>
+        </div>
+    </div>
+
+    <!-- Dependency Download Modal -->
+    <div class="modal-overlay" id="dependency-modal">
+        <div class="modal">
+            <div class="modal-header">
+                <h3>Download Dependencies</h3>
+            </div>
+            <div class="modal-body">
+                <p>DinoAir needs to download the following dependencies:</p>
+                <div class="dependency-download-list" id="dependency-download-list">
+                    <!-- Dependency list will be populated here -->
+                </div>
+                <div class="download-progress" id="dependency-progress">
+                    <div class="progress-bar">
+                        <div class="progress-fill" id="dependency-progress-fill"></div>
+                    </div>
+                    <span class="progress-text" id="dependency-progress-text">Preparing download...</span>
+                </div>
+            </div>
+            <div class="modal-footer">
+                <button class="btn btn-secondary" id="skip-dependencies">Skip</button>
+                <button class="btn btn-primary" id="download-dependencies">Download</button>
+            </div>
+        </div>
+    </div>
+
+    <!-- Loading Overlay -->
+    <div class="loading-overlay" id="loading-overlay">
+        <div class="loading-content">
+            <div class="loading-spinner"></div>
+            <p class="loading-text" id="loading-text">Initializing...</p>
+        </div>
+    </div>
+
+    <script src="modern-installer.js"></script>
+</body>
+</html>

@@ -1,0 +1,50 @@
+#!/usr/bin/env sh
+. "$(dirname -- "$0")/_/husky.sh"
+
+# This is the original strict pre-commit hook
+# Use this when you want to ensure all checks pass
+
+echo "🔍 Running pre-commit checks..."
+
+# Run pre-commit framework hooks
+if command -v pre-commit >/dev/null 2>&1; then
+    echo "📋 Running pre-commit framework hooks..."
+    pre-commit run --hook-stage pre-commit
+    if [ $? -ne 0 ]; then
+        echo "❌ Pre-commit framework hooks failed!"
+        exit 1
+    fi
+else
+    echo "⚠️  Pre-commit framework not installed, skipping framework hooks"
+fi
+
+# Run lint-staged for both directories
+echo "🧹 Running lint-staged for web-gui-node..."
+cd web-gui-node && npx lint-staged
+if [ $? -ne 0 ]; then
+    echo "❌ Lint-staged failed for web-gui-node!"
+    exit 1
+fi
+
+echo "🧹 Running lint-staged for web-gui..."
+cd ../web-gui && npx lint-staged
+if [ $? -ne 0 ]; then
+    echo "❌ Lint-staged failed for web-gui!"
+    exit 1
+fi
+
+# Run quality checks
+echo "✨ Running quality checks..."
+cd ../web-gui-node && npm run quality
+if [ $? -ne 0 ]; then
+    echo "❌ Quality checks failed for web-gui-node!"
+    exit 1
+fi
+
+cd ../web-gui && npm run quality
+if [ $? -ne 0 ]; then
+    echo "❌ Quality checks failed for web-gui!"
+    exit 1
+fi
+
+echo "✅ Pre-commit checks completed successfully!"

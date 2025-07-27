@@ -1,0 +1,47 @@
+config:
+  target: 'http://localhost:3000'
+  phases:
+    - duration: 60
+      arrivalRate: 8
+      name: "Auth API Load Test"
+  defaults:
+    headers:
+      'Content-Type': 'application/json'
+      'X-API-Key': 'test-api-key'
+
+scenarios:
+  - name: "Authentication Flow"
+    weight: 50
+    flow:
+      - post:
+          url: "/api/auth/signin"
+          name: "Sign In"
+          json:
+            email: "test@example.com"
+            password: "testpassword"
+          expect:
+            - statusCode: [200, 401, 429]
+            - contentType: json
+
+  - name: "Token Validation"
+    weight: 30
+    flow:
+      - get:
+          url: "/api/auth/validate"
+          name: "Validate Token"
+          headers:
+            'Authorization': 'Bearer test-token'
+          expect:
+            - statusCode: [200, 401, 403]
+
+  - name: "User Profile Access"
+    weight: 20
+    flow:
+      - get:
+          url: "/api/auth/profile"
+          name: "Get User Profile"
+          headers:
+            'Authorization': 'Bearer test-token'
+          expect:
+            - statusCode: [200, 401, 403]
+            - contentType: json

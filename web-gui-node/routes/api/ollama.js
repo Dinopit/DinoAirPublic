@@ -5,19 +5,30 @@
 
 const express = require('express');
 const fetch = require('node-fetch');
+const { ollamaBreaker } = require('../../lib/circuit-breaker');
+const { withRetry, isRetryableError } = require('../../lib/retry');
 const router = express.Router();
 
 // GET /api/ollama/models - Get available models
 router.get('/models', async (req, res) => {
   try {
-    const response = await fetch('http://localhost:11434/api/tags', {
-      timeout: 10000
+    const response = await ollamaBreaker.call(async () => {
+      return await withRetry(async () => {
+        const response = await fetch('http://localhost:11434/api/tags', {
+          timeout: 10000
+        });
+
+        if (!response.ok) {
+          throw new Error(`Ollama API error: ${response.statusText}`);
+        }
+
+        return response;
+      }, {
+        maxRetries: 2,
+        retryCondition: isRetryableError
+      });
     });
-    
-    if (!response.ok) {
-      throw new Error(`Ollama API error: ${response.statusText}`);
-    }
-    
+
     const data = await response.json();
     res.json({
       success: true,
@@ -26,7 +37,7 @@ router.get('/models', async (req, res) => {
     });
   } catch (error) {
     console.error('Error fetching Ollama models:', error);
-    
+
     if (error.message.includes('ECONNREFUSED')) {
       res.status(503).json({
         success: false,
@@ -46,14 +57,23 @@ router.get('/models', async (req, res) => {
 // GET /api/ollama/version - Get Ollama version
 router.get('/version', async (req, res) => {
   try {
-    const response = await fetch('http://localhost:11434/api/version', {
-      timeout: 5000
+    const response = await ollamaBreaker.call(async () => {
+      return await withRetry(async () => {
+        const response = await fetch('http://localhost:11434/api/version', {
+          timeout: 5000
+        });
+
+        if (!response.ok) {
+          throw new Error(`Ollama API error: ${response.statusText}`);
+        }
+
+        return response;
+      }, {
+        maxRetries: 2,
+        retryCondition: isRetryableError
+      });
     });
-    
-    if (!response.ok) {
-      throw new Error(`Ollama API error: ${response.statusText}`);
-    }
-    
+
     const data = await response.json();
     res.json({
       success: true,
@@ -61,7 +81,7 @@ router.get('/version', async (req, res) => {
     });
   } catch (error) {
     console.error('Error fetching Ollama version:', error);
-    
+
     if (error.message.includes('ECONNREFUSED')) {
       res.status(503).json({
         success: false,
@@ -82,7 +102,7 @@ router.get('/version', async (req, res) => {
 router.post('/pull', async (req, res) => {
   try {
     const { model } = req.body;
-    
+
     if (!model) {
       return res.status(400).json({
         success: false,
@@ -100,7 +120,7 @@ router.post('/pull', async (req, res) => {
     const response = await fetch('http://localhost:11434/api/pull', {
       method: 'POST',
       headers: {
-        'Content-Type': 'application/json',
+        'Content-Type': 'application/json'
       },
       body: JSON.stringify({
         name: model,
@@ -113,15 +133,15 @@ router.post('/pull', async (req, res) => {
     }
 
     // Stream the pull progress
-    response.body.on('data', (chunk) => {
+    response.body.on('data', chunk => {
       const text = chunk.toString();
       const lines = text.split('\n').filter(line => line.trim());
-      
+
       for (const line of lines) {
         try {
           const json = JSON.parse(line);
-          res.write(JSON.stringify(json) + '\n');
-          
+          res.write(`${JSON.stringify(json)}\n`);
+
           if (json.status === 'success') {
             res.end();
           }
@@ -131,7 +151,7 @@ router.post('/pull', async (req, res) => {
       }
     });
 
-    response.body.on('error', (error) => {
+    response.body.on('error', error => {
       console.error('Pull streaming error:', error);
       res.end();
     });
@@ -141,10 +161,9 @@ router.post('/pull', async (req, res) => {
         res.end();
       }
     });
-
   } catch (error) {
     console.error('Error pulling model:', error);
-    
+
     if (!res.headersSent) {
       if (error.message.includes('ECONNREFUSED')) {
         res.status(503).json({
@@ -167,11 +186,11 @@ router.post('/pull', async (req, res) => {
 router.delete('/models/:model', async (req, res) => {
   try {
     const { model } = req.params;
-    
+
     const response = await fetch('http://localhost:11434/api/delete', {
       method: 'DELETE',
       headers: {
-        'Content-Type': 'application/json',
+        'Content-Type': 'application/json'
       },
       body: JSON.stringify({
         name: model
@@ -186,10 +205,9 @@ router.delete('/models/:model', async (req, res) => {
       success: true,
       message: `Model ${model} deleted successfully`
     });
-
   } catch (error) {
     console.error('Error deleting model:', error);
-    
+
     if (error.message.includes('ECONNREFUSED')) {
       res.status(503).json({
         success: false,
@@ -210,31 +228,34 @@ router.delete('/models/:model', async (req, res) => {
 router.get('/status', async (req, res) => {
   try {
     const startTime = Date.now();
-    const response = await fetch('http://localhost:11434/api/tags', {
-      timeout: 5000
+    const response = await ollamaBreaker.call(async () => {
+      return await withRetry(async () => {
+        const response = await fetch('http://localhost:11434/api/tags', {
+          timeout: 5000
+        });
+
+        if (!response.ok) {
+          throw new Error(`HTTP ${response.status}`);
+        }
+
+        return response;
+      }, {
+        maxRetries: 1,
+        retryCondition: isRetryableError
+      });
     });
-    
+
     const responseTime = Date.now() - startTime;
-    
-    if (response.ok) {
-      const data = await response.json();
-      res.json({
-        success: true,
-        status: 'running',
-        responseTime,
-        modelCount: data.models ? data.models.length : 0
-      });
-    } else {
-      res.json({
-        success: false,
-        status: 'error',
-        responseTime,
-        error: `HTTP ${response.status}`
-      });
-    }
+    const data = await response.json();
+    res.json({
+      success: true,
+      status: 'running',
+      responseTime,
+      modelCount: data.models ? data.models.length : 0
+    });
   } catch (error) {
     console.error('Error checking Ollama status:', error);
-    
+
     res.json({
       success: false,
       status: 'offline',

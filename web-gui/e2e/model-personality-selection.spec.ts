@@ -30,7 +30,7 @@ test.describe('Model and Personality Selection', () => {
     
     if (options.length > 1) {
       // Select the second option
-      await options[1].click();
+      await options[1]!.click();
       
       // Verify selection changed
       // This verification might need adjustment based on how the selected value is displayed
@@ -74,7 +74,7 @@ test.describe('Model and Personality Selection', () => {
       const personalityOptions = await page.locator('[role="option"]:has-text("creative"), [role="option"]:has-text("Creative"), option:has-text("creative")').all();
       
       if (personalityOptions.length > 0) {
-        await personalityOptions[0].click();
+        await personalityOptions[0]!.click();
         
         // Verify selection
         await expect(page.locator('text=/creative|Creative/i')).toBeVisible();

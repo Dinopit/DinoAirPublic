@@ -1,6 +1,6 @@
 'use client';
 
-import React, { useState, useEffect } from 'react';
+import React, { useState } from 'react';
 import { useDebug } from '@/contexts/debug-context';
 import { X, Trash2, Download, Filter, Copy } from 'lucide-react';
 
@@ -30,11 +30,12 @@ export default function DebugPanel({ isOpen, onClose }: DebugPanelProps) {
       if (!acc[metric.name]) {
         acc[metric.name] = { count: 0, total: 0, avg: 0, min: Infinity, max: 0 };
       }
-      acc[metric.name].count++;
-      acc[metric.name].total += metric.duration!;
-      acc[metric.name].avg = acc[metric.name].total / acc[metric.name].count;
-      acc[metric.name].min = Math.min(acc[metric.name].min, metric.duration!);
-      acc[metric.name].max = Math.max(acc[metric.name].max, metric.duration!);
+      const stats = acc[metric.name]!;
+      stats.count++;
+      stats.total += metric.duration!;
+      stats.avg = stats.total / stats.count;
+      stats.min = Math.min(stats.min, metric.duration!);
+      stats.max = Math.max(stats.max, metric.duration!);
       return acc;
     }, {} as Record<string, { count: number; total: number; avg: number; min: number; max: number }>);
 

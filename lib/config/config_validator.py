@@ -6,6 +6,7 @@ Provides type checking, validation, and safe defaults for all configuration
 import os
 import json
 import yaml
+import logging
 from typing import Any, Dict, List, Optional, Union, Type, Callable
 from dataclasses import dataclass, field, fields
 from enum import Enum
@@ -13,6 +14,8 @@ from pathlib import Path
 import re
 from datetime import timedelta
 import ipaddress
+
+logger = logging.getLogger(__name__)
 
 class ConfigError(Exception):
     """Configuration validation error"""
@@ -542,6 +545,18 @@ class ConfigLoader:
         
         current[parts[-1]] = value
     
+    def _config_to_dict(self, config: DinoAirConfig) -> Dict[str, Any]:
+        """Convert config object to dictionary"""
+        def convert_value(value):
+            if hasattr(value, '__dict__'):
+                return {k: convert_value(v) for k, v in value.__dict__.items()}
+            elif isinstance(value, list):
+                return [convert_value(item) for item in value]
+            else:
+                return value
+        
+        return convert_value(config)
+
     def _deep_merge(self, base: Dict[str, Any], update: Dict[str, Any]) -> Dict[str, Any]:
         """Deep merge dictionaries"""
         result = base.copy()
@@ -554,28 +569,64 @@ class ConfigLoader:
         
         return result
 
-def load_config(config_path: Optional[str] = None) -> DinoAirConfig:
-    """Load DinoAir configuration"""
+def load_config(config_path: Optional[str] = None, environment: Optional[str] = None) -> DinoAirConfig:
+    """Load DinoAir configuration with environment-specific support"""
     loader = ConfigLoader()
+    
+    # Determine environment
+    env = environment or os.getenv("DINOAIR_ENV", "development")
     
     # Default config files to check
     config_files = []
+    
     if config_path:
         config_files.append(config_path)
     else:
-        # Check common locations
-        for path in ['config.yaml', 'config.json', './config/config.yaml']:
+        # Check common locations and environment-specific files
+        base_configs = ['config.yaml', 'config.json']
+        env_configs = [
+            f'config/environments/{env}.yaml',
+            f'config/environments/{env}.json',
+            f'config.{env}.yaml',
+            f'config.{env}.json'
+        ]
+        
+        # Add base config first
+        for path in base_configs:
             if os.path.exists(path):
                 config_files.append(path)
+                break
+        
+        # Add environment-specific config
+        for path in env_configs:
+            if os.path.exists(path):
+                config_files.append(path)
+                break
     
     # Load with defaults
-    return loader.load(
+    config = loader.load(
         config_files=config_files,
         defaults={
             "app_name": "DinoAir",
-            "environment": os.getenv("DINOAIR_ENV", "development")
+            "environment": env,
+            "version": "1.0.0"
         }
     )
+    
+    # Resolve secrets if secrets manager is available
+    try:
+        from .secrets_manager import secrets_manager
+        config_dict = loader._config_to_dict(config)
+        resolved_dict = secrets_manager.resolve_config_secrets(config_dict)
+        
+        # Re-validate with resolved secrets
+        config = loader.validator.validate(resolved_dict)
+    except ImportError:
+        pass  # Secrets manager not available
+    except Exception as e:
+        logger.warning(f"Failed to resolve secrets: {e}")
+    
+    return config
 
 # Example configuration file template
 CONFIG_TEMPLATE = """

@@ -108,7 +108,7 @@ export class RetryStrategies {
   }
 
   // Fixed delay strategy
-  static fixed(attempt: number, config: RetryConfig): number {
+  static fixed(_attempt: number, config: RetryConfig): number {
     return config.initialDelay;
   }
 
@@ -134,7 +134,7 @@ export class CircuitBreaker {
   private lastFailureTime: number = 0;
   private successCount: number = 0;
   private readonly config: CircuitBreakerConfig;
-  private resetTimer?: NodeJS.Timeout;
+  private resetTimer?: NodeJS.Timeout | undefined;
 
   constructor(config: Partial<CircuitBreakerConfig> = {}) {
     this.config = { ...DEFAULT_CIRCUIT_BREAKER_CONFIG, ...config };
@@ -374,8 +374,8 @@ export function withRetry(
   strategy: RetryStrategy = 'exponentialBackoff'
 ) {
   return function (
-    target: any,
-    propertyKey: string,
+    _target: any,
+    _propertyKey: string,
     descriptor: PropertyDescriptor
   ) {
     const originalMethod = descriptor.value;

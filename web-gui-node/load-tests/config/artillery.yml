@@ -1,0 +1,43 @@
+config:
+  target: 'http://localhost:3000'
+  phases:
+    - duration: 60
+      arrivalRate: 5
+      name: "Warm up"
+    - duration: 120
+      arrivalRate: 10
+      name: "Ramp up load"
+    - duration: 300
+      arrivalRate: 20
+      name: "Sustained load"
+    - duration: 60
+      arrivalRate: 5
+      name: "Cool down"
+  defaults:
+    headers:
+      'Content-Type': 'application/json'
+      'User-Agent': 'Artillery Load Test'
+  processor: "../processors/test-processor.js"
+  plugins:
+    metrics-by-endpoint:
+      useOnlyRequestNames: true
+    publish-metrics:
+      - type: cloudwatch
+        region: us-east-1
+        enabled: false
+  environments:
+    development:
+      target: 'http://localhost:3000'
+      phases:
+        - duration: 30
+          arrivalRate: 2
+    staging:
+      target: 'http://staging.dinoair.example.com'
+      phases:
+        - duration: 60
+          arrivalRate: 10
+    production:
+      target: 'http://production.dinoair.example.com'
+      phases:
+        - duration: 300
+          arrivalRate: 50

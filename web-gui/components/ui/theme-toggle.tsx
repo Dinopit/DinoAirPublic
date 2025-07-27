@@ -11,7 +11,7 @@ export function ThemeToggle() {
     const themeOrder: Theme[] = ['light', 'dark', 'system'];
     const currentIndex = themeOrder.indexOf(currentTheme);
     const nextIndex = (currentIndex + 1) % themeOrder.length;
-    setTheme(themeOrder[nextIndex]);
+    setTheme(themeOrder[nextIndex] || 'light');
   };
 
   const getNextThemeName = () => {

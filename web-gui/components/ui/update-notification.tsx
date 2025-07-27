@@ -1,7 +1,7 @@
 'use client';
 
 import React, { useState, useEffect } from 'react';
-import { Download, X, ChevronRight, AlertCircle, CheckCircle, Clock } from 'lucide-react';
+import { Download, X, AlertCircle, Clock } from 'lucide-react';
 import {
   checkForUpdates,
   getChangelog,
@@ -97,16 +97,6 @@ export default function UpdateNotification() {
     );
   };
 
-  const getChangeIcon = (type: string) => {
-    switch (type) {
-      case 'added':
-        return <CheckCircle className="w-4 h-4 text-green-500" />;
-      case 'security':
-        return <AlertCircle className="w-4 h-4 text-red-500" />;
-      default:
-        return <ChevronRight className="w-4 h-4 text-gray-500" />;
-    }
-  };
 
   // Update banner
   if (updateInfo && !showChangelog) {

@@ -1,3 +1,5 @@
+import { NextRequest, NextResponse } from 'next/server';
+
 // Error classification types
 export enum ErrorType {
   NETWORK = 'NETWORK',
@@ -20,14 +22,14 @@ export enum ErrorSeverity {
 
 // Error context interface
 export interface ErrorContext {
-  userId?: string;
-  sessionId?: string;
-  requestId?: string;
-  endpoint?: string;
-  method?: string;
+  userId?: string | undefined;
+  sessionId?: string | undefined;
+  requestId?: string | undefined;
+  endpoint?: string | undefined;
+  method?: string | undefined;
   timestamp: number;
-  userAgent?: string;
-  additionalData?: Record<string, any>;
+  userAgent?: string | undefined;
+  additionalData?: Record<string, any> | undefined;
 }
 
 // Enhanced error class
@@ -35,7 +37,7 @@ export class DinoAirError extends Error {
   public readonly type: ErrorType;
   public readonly severity: ErrorSeverity;
   public readonly context: ErrorContext;
-  public readonly originalError?: Error;
+  public readonly originalError?: Error | undefined;
   public readonly retryable: boolean;
   public readonly userMessage: string;
   public readonly recoveryActions?: string[];
@@ -45,11 +47,11 @@ export class DinoAirError extends Error {
     type: ErrorType = ErrorType.UNKNOWN,
     severity: ErrorSeverity = ErrorSeverity.MEDIUM,
     options?: {
-      originalError?: Error;
-      context?: Partial<ErrorContext>;
-      retryable?: boolean;
-      userMessage?: string;
-      recoveryActions?: string[];
+      originalError?: Error | undefined;
+      context?: Partial<ErrorContext> | undefined;
+      retryable?: boolean | undefined;
+      userMessage?: string | undefined;
+      recoveryActions?: string[] | undefined;
     }
   ) {
     super(message);
@@ -200,10 +202,10 @@ export class ErrorHandlerService {
           type,
           severity,
           {
-            originalError: error,
+            originalError: error instanceof Error ? error : undefined,
             context,
-            userMessage: error.userMessage,
-            recoveryActions: error.recoveryActions
+            userMessage: typeof error.userMessage === 'string' ? error.userMessage : undefined,
+            recoveryActions: Array.isArray(error.recoveryActions) ? error.recoveryActions : undefined
           }
         );
 
@@ -359,3 +361,29 @@ export class ErrorHandlerService {
 
 // Export singleton instance
 export const errorHandler = ErrorHandlerService.getInstance();
+
+export function withErrorHandler<T extends any[]>(
+  handler: (request: NextRequest, ...args: T) => Promise<NextResponse>
+) {
+  return async (request: NextRequest, ...args: T): Promise<NextResponse> => {
+    try {
+      return await handler(request, ...args);
+    } catch (error) {
+      const dinoAirError = await errorHandler.handleError(error, {
+        endpoint: request.url,
+        method: request.method,
+        requestId: request.headers.get('x-request-id') ?? undefined,
+        userAgent: request.headers.get('user-agent') ?? undefined
+      });
+
+      return NextResponse.json(
+        {
+          error: dinoAirError.userMessage,
+          type: dinoAirError.type,
+          recoveryActions: dinoAirError.recoveryActions
+        },
+        { status: dinoAirError.type === ErrorType.SERVER ? 500 : 400 }
+      );
+    }
+  };
+}

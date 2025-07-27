@@ -1,6 +1,6 @@
 import { NextRequest, NextResponse } from 'next/server';
 
-export async function GET(request: NextRequest) {
+export async function GET(_request: NextRequest) {
   try {
     // Call Ollama API to get available models
     const response = await fetch('http://localhost:11434/api/tags', {

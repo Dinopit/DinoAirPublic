@@ -41,6 +41,7 @@ export const useKeyboardShortcuts = ({ shortcuts, enabled = true }: UseKeyboardS
       window.addEventListener('keydown', handleKeyDown);
       return () => window.removeEventListener('keydown', handleKeyDown);
     }
+    return undefined;
   }, [handleKeyDown, enabled]);
 
   return shortcuts;

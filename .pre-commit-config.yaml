@@ -1,0 +1,47 @@
+# See https://pre-commit.com for more information
+# See https://pre-commit.com/hooks.html for more hooks
+repos:
+-   repo: https://github.com/pre-commit/pre-commit-hooks
+    rev: v5.0.0
+    hooks:
+    -   id: trailing-whitespace
+    -   id: end-of-file-fixer
+    -   id: check-yaml
+    -   id: check-added-large-files
+    -   id: check-merge-conflict
+    -   id: detect-private-key
+
+-   repo: https://github.com/pre-commit/mirrors-eslint
+    rev: v9.32.0
+    hooks:
+    -   id: eslint
+        files: \.[jt]sx?$ # Run on *.js, *.jsx, *.ts, *.tsx
+        types: [file]
+        args: [--fix] # Attempt to automatically fix issues
+
+-   repo: https://github.com/pre-commit/mirrors-prettier
+    rev: v4.0.0-alpha.8
+    hooks:
+    -   id: prettier
+        types_or: [javascript, jsx, ts, tsx, json, css, scss, html, yaml, markdown]
+        # Prettier will automatically use your project's .prettierrc file
+
+-   repo: https://github.com/gitleaks/gitleaks
+    rev: v8.18.1
+    hooks:
+    -   id: gitleaks
+
+-   repo: local
+    hooks:
+    -   id: no-commit-env-files
+        name: Block .env files
+        entry: .env files must not be committed
+        language: fail
+        files: '\.env$'
+        exclude: '\.env\.example$'
+
+    -   id: check-credentials
+        name: Check for hardcoded credentials
+        entry: bash -c 'if git diff --cached --name-only | xargs grep -E "(password|secret|key|token|credential)\\s*=\\s*[\"\x27][^\"\x27]+" | grep -v -E "(\.env\.example|example|test|spec|mock|fake|dummy|placeholder)"; then echo "Potential hardcoded credentials detected!"; exit 1; fi || exit 0'
+        language: system
+        pass_filenames: false
