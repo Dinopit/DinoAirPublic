@@ -38,7 +38,7 @@ export const useTextToSpeech = (options: TextToSpeechOptions = {}): UseTextToSpe
   const [currentVolume, setCurrentVolume] = useState(volume);
   const [error, setError] = useState<string | null>(null);
 
-  const utteranceRef = useRef<any>(null);
+  const utteranceRef = useRef<SpeechSynthesisUtterance | null>(null);
   const isSupported = typeof window !== 'undefined' && 'speechSynthesis' in window;
 
   // Load available voices
