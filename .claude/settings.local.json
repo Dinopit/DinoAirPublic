@@ -12,7 +12,8 @@
       "Bash(ls:*)",
       "Bash(git clone:*)",
       "Bash(npm install:*)",
-      "Bash(npm run build:*)"
+      "Bash(npm run build:*)",
+      "Bash(rm:*)"
     ],
     "deny": []
   }
