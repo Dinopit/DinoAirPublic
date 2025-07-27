@@ -105,7 +105,7 @@ export const useMarketplace = (options: UseMarketplaceOptions = {}) => {
         const { done, value } = await reader.read();
         if (done) break;
 
-        const chunk = decoder.decode(value);
+        const chunk = decoder.decode(value, { stream: true });
         const lines = chunk.split('\n');
 
         for (const line of lines) {
