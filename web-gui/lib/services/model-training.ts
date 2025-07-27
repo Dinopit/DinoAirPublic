@@ -3,7 +3,7 @@ export const modelTrainingService = {
   getDatasets: async () => {
     throw new Error('Model training service not implemented');
   },
-  uploadDataset: async (file: File, metadata: any) => {
+  uploadDataset: async (file: any, metadata: any) => {
     throw new Error('Model training service not implemented');
   },
   getTrainingJobs: async (filters: any) => {
