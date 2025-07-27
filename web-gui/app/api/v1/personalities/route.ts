@@ -1,8 +1,10 @@
-import { NextRequest } from 'next/server';
 import fs from 'fs/promises';
 import path from 'path';
-import { apiMiddleware, createApiResponse, handleOptionsRequest, createErrorResponse } from '@/lib/api-utils';
+
+import type { NextRequest } from 'next/server';
+
 import { withCache, generateCacheKey } from '@/lib/api-cache';
+import { apiMiddleware, createApiResponse, handleOptionsRequest, createErrorResponse } from '@/lib/api-utils';
 
 /**
  * @typedef {Object} Personality
@@ -81,7 +83,7 @@ async function listPersonalities(request: NextRequest) {
                 systemPrompt: data.system_prompt || data.systemPrompt || '',
                 temperature: data.temperature,
                 topP: data.top_p || data.topP,
-                topK: data.top_k || data.topK,
+                topK: data.top_k || data.topK
               });
             }
           }
@@ -92,35 +94,35 @@ async function listPersonalities(request: NextRequest) {
               id: 'assistant',
               name: 'Assistant',
               description: 'A helpful AI assistant',
-              systemPrompt: 'You are a helpful AI assistant.',
+              systemPrompt: 'You are a helpful AI assistant.'
             },
             {
               id: 'creative',
               name: 'Creative',
               description: 'A creative and imaginative AI',
               systemPrompt: 'You are a creative and imaginative AI assistant.',
-              temperature: 0.9,
+              temperature: 0.9
             },
             {
               id: 'technical',
               name: 'Technical',
               description: 'A technical and precise AI',
               systemPrompt: 'You are a technical and precise AI assistant focused on accuracy.',
-              temperature: 0.3,
+              temperature: 0.3
             },
             {
               id: 'witty',
               name: 'Witty',
               description: 'A witty and humorous AI',
               systemPrompt: 'You are a witty and humorous AI assistant.',
-              temperature: 0.8,
+              temperature: 0.8
             }
           );
         }
 
         return {
           personalities,
-          total: personalities.length,
+          total: personalities.length
         };
       },
       30 * 60 * 1000 // 30 minutes TTL

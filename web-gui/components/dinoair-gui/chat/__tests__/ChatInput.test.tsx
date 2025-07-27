@@ -1,6 +1,7 @@
-import React from 'react';
-import { render, screen } from '../../../../tests/utils/test-utils';
 import userEvent from '@testing-library/user-event';
+import React from 'react';
+
+import { render, screen } from '../../../../tests/utils/test-utils';
 import ChatInput from '../ChatInput';
 
 describe('ChatInput', () => {
@@ -11,7 +12,7 @@ describe('ChatInput', () => {
     isLoading: false,
     isStreaming: false,
     onSendMessage: mockOnSendMessage,
-    onCancelStreaming: mockOnCancelStreaming,
+    onCancelStreaming: mockOnCancelStreaming
   };
 
   beforeEach(() => {

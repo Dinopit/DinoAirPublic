@@ -1,8 +1,10 @@
 'use client';
 
 import React, { useState } from 'react';
+
+import type { BaseModalProps } from '@/types';
+
 import { useUserPreferences } from '@/lib/contexts/UserPreferencesContext';
-import { BaseModalProps } from '@/types';
 
 interface PreferencesModalProps extends BaseModalProps {
   isOpen: boolean;
@@ -47,7 +49,7 @@ export function PreferencesModal({ isOpen, onClose }: PreferencesModalProps) {
                 { id: 'accessibility', label: 'Accessibility', icon: '♿' },
                 { id: 'notifications', label: 'Notifications', icon: '🔔' },
                 { id: 'chat', label: 'Chat', icon: '💬' },
-                { id: 'advanced', label: 'Advanced', icon: '⚙️' },
+                { id: 'advanced', label: 'Advanced', icon: '⚙️' }
               ].map((tab) => (
                 <button
                   key={tab.id}
@@ -73,7 +75,7 @@ export function PreferencesModal({ isOpen, onClose }: PreferencesModalProps) {
                 { id: 'accessibility', label: 'Accessibility', icon: '♿' },
                 { id: 'notifications', label: 'Notifications', icon: '🔔' },
                 { id: 'chat', label: 'Chat', icon: '💬' },
-                { id: 'advanced', label: 'Advanced', icon: '⚙️' },
+                { id: 'advanced', label: 'Advanced', icon: '⚙️' }
               ].map((tab) => (
                 <button
                   key={tab.id}
@@ -103,7 +105,7 @@ export function PreferencesModal({ isOpen, onClose }: PreferencesModalProps) {
                     {[
                       { value: 'light', label: 'Light' },
                       { value: 'dark', label: 'Dark' },
-                      { value: 'auto', label: 'Auto (System)' },
+                      { value: 'auto', label: 'Auto (System)' }
                     ].map((option) => (
                       <label key={option.value} className="flex items-center">
                         <input

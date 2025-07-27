@@ -3,7 +3,9 @@
  * Provides comprehensive search functionality with filtering, sorting, and pagination
  */
 
-import { NextRequest, NextResponse } from 'next/server';
+import type { NextRequest} from 'next/server';
+import { NextResponse } from 'next/server';
+
 import { withApiAuth } from '@/lib/middleware/api-auth';
 
 // Mock data for demonstration - in a real app, this would come from a database
@@ -368,7 +370,7 @@ async function handleSearch(request: NextRequest) {
       sortBy: searchParams.get('sortBy') || 'relevance',
       sortOrder: (searchParams.get('sortOrder') as 'asc' | 'desc') || 'desc',
       page: parseInt(searchParams.get('page') || '1'),
-      pageSize: parseInt(searchParams.get('pageSize') || '20'),
+      pageSize: parseInt(searchParams.get('pageSize') || '20')
     };
 
     // Start with all data

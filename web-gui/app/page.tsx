@@ -1,15 +1,15 @@
-'use client'
+'use client';
 
-import { useEffect } from 'react'
-import { useRouter } from 'next/navigation'
+import { useRouter } from 'next/navigation';
+import { useEffect } from 'react';
 
 export default function HomePage() {
-  const router = useRouter()
+  const router = useRouter();
 
   useEffect(() => {
     // Redirect to the local GUI interface for free tier
-    router.push('/dinoair-gui')
-  }, [router])
+    router.push('/dinoair-gui');
+  }, [router]);
 
   return (
     <div className="min-h-screen flex items-center justify-center bg-gradient-to-br from-background to-muted">
@@ -19,5 +19,5 @@ export default function HomePage() {
         <p className="text-muted-foreground">Redirecting to local interface...</p>
       </div>
     </div>
-  )
+  );
 }

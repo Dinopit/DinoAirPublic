@@ -1,5 +1,6 @@
-import { GET } from '../route';
 import { createMockRequest, parseApiResponse } from '@/tests/utils/api-test-utils';
+
+import { GET } from '../route';
 
 // Mock fetch
 global.fetch = jest.fn();
@@ -34,15 +35,15 @@ describe('/api/v1/models', () => {
               family: 'llama',
               families: ['llama'],
               parameter_size: '7B',
-              quantization_level: 'Q4_0',
-            },
-          },
-        ],
+              quantization_level: 'Q4_0'
+            }
+          }
+        ]
       };
 
       (global.fetch as jest.Mock).mockResolvedValue({
         ok: true,
-        json: async () => mockModels,
+        json: async () => mockModels
       });
 
       const request = createMockRequest();
@@ -57,7 +58,7 @@ describe('/api/v1/models', () => {
         size: 3826793472,
         modified: '2024-01-01T00:00:00Z',
         family: 'llama',
-        parameterSize: '7B',
+        parameterSize: '7B'
       });
       expect(result.body.data.count).toBe(1);
     });

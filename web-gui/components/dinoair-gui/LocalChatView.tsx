@@ -1,10 +1,11 @@
 'use client';
 
 import React, { useState, useRef, useEffect, useCallback, useMemo, memo } from 'react';
-import { CodeBlockDetector } from '@/lib/utils/code-block-detector';
+
 import { apiClient } from '@/lib/api/enhanced-client';
-import { toast } from '@/lib/stores/toast-store';
 import { usePersonalities, useCurrentPersonality } from '@/lib/stores/personality-store';
+import { toast } from '@/lib/stores/toast-store';
+import { CodeBlockDetector } from '@/lib/utils/code-block-detector';
 
 interface Message {
   id: string;
@@ -83,8 +84,8 @@ const LocalChatView = memo(() => {
       role: 'assistant',
       content:
         'Welcome to DinoAir Free Tier! I can help you with AI-powered conversations and image generation. How can I assist you today?',
-      timestamp: new Date(),
-    },
+      timestamp: new Date()
+    }
   ]);
   const [inputValue, setInputValue] = useState(() => '');
   const [isLoading, setIsLoading] = useState(() => false);
@@ -159,8 +160,8 @@ const LocalChatView = memo(() => {
           updatedAt: new Date(conv.updatedAt),
           messages: conv.messages.map((msg: any) => ({
             ...msg,
-            timestamp: new Date(msg.timestamp),
-          })),
+            timestamp: new Date(msg.timestamp)
+          }))
         }));
         setConversations(conversations);
       }
@@ -185,12 +186,12 @@ const LocalChatView = memo(() => {
       const response = await apiClient.get<{ models: Model[] }>('/ollama/models', {
         retryConfig: {
           maxAttempts: 2,
-          initialDelay: 500,
+          initialDelay: 500
         },
         context: {
           endpoint: '/api/ollama/models',
-          method: 'GET',
-        },
+          method: 'GET'
+        }
       });
 
       if (response.error) {
@@ -211,9 +212,9 @@ const LocalChatView = memo(() => {
               label: 'Retry',
               onClick: () => {
                 fetchModels();
-              },
-            },
-          ],
+              }
+            }
+          ]
         }
       );
     }
@@ -232,7 +233,7 @@ const LocalChatView = memo(() => {
         createdAt: activeConversationId
           ? conversations.find((c) => c.id === activeConversationId)?.createdAt || new Date()
           : new Date(),
-        updatedAt: new Date(),
+        updatedAt: new Date()
       };
 
       const updatedConversations = activeConversationId
@@ -273,8 +274,8 @@ const LocalChatView = memo(() => {
               role: 'assistant',
               content:
                 'Welcome to DinoAir Free Tier! I can help you with AI-powered conversations and image generation. How can I assist you today?',
-              timestamp: new Date(),
-            },
+              timestamp: new Date()
+            }
           ]);
         }
       }
@@ -291,8 +292,8 @@ const LocalChatView = memo(() => {
         role: 'assistant',
         content:
           'Welcome to DinoAir Free Tier! I can help you with AI-powered conversations and image generation. How can I assist you today?',
-        timestamp: new Date(),
-      },
+        timestamp: new Date()
+      }
     ]);
   }, []);
 
@@ -341,7 +342,7 @@ const LocalChatView = memo(() => {
           name: info.name,
           type: info.type,
           content: info.content,
-          createdAt: new Date(),
+          createdAt: new Date()
         }));
 
         // Save artifacts
@@ -365,7 +366,7 @@ const LocalChatView = memo(() => {
       id: Date.now().toString(),
       role: 'user',
       content: inputValue.trim(),
-      timestamp: new Date(),
+      timestamp: new Date()
     };
 
     const updatedMessages = [...messages, userMessage];
@@ -379,7 +380,7 @@ const LocalChatView = memo(() => {
       id: (Date.now() + 1).toString(),
       role: 'assistant',
       content: '',
-      timestamp: new Date(),
+      timestamp: new Date()
     };
     setMessages((prev) => [...prev, assistantMessage]);
 
@@ -391,16 +392,16 @@ const LocalChatView = memo(() => {
       const response = await fetch('/api/v1/chat', {
         method: 'POST',
         headers: {
-          'Content-Type': 'application/json',
+          'Content-Type': 'application/json'
         },
         body: JSON.stringify({
           messages: updatedMessages,
           model: selectedModel,
           personality: currentPersonality?.id || 'default',
           systemPrompt: systemPrompt,
-          stream: true,
+          stream: true
         }),
-        signal: abortControllerRef.current.signal,
+        signal: abortControllerRef.current.signal
       });
 
       if (!response.ok) {
@@ -479,9 +480,9 @@ const LocalChatView = memo(() => {
                 // Remove the error message and retry
                 setMessages((prev) => prev.filter((msg) => msg.id !== assistantMessage.id));
                 setInputValue(userMessage.content);
-              },
-            },
-          ],
+              }
+            }
+          ]
         });
       }
     } finally {
@@ -498,7 +499,7 @@ const LocalChatView = memo(() => {
     systemPrompt,
     activeConversationId,
     saveCurrentConversation,
-    createArtifactsFromCodeBlocks,
+    createArtifactsFromCodeBlocks
   ]);
 
   const handleKeyPress = useCallback(
@@ -528,7 +529,7 @@ const LocalChatView = memo(() => {
               className="bg-green-500 text-white px-4 py-2 rounded-lg shadow-lg animate-fade-in flex items-center gap-2"
               style={{
                 animation: 'fadeIn 0.3s ease-in-out',
-                animationDelay: `${index * 0.1}s`,
+                animationDelay: `${index * 0.1}s`
               }}
             >
               <span>📄</span>

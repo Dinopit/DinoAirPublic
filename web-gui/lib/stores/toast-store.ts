@@ -1,5 +1,7 @@
 import { create } from 'zustand';
-import { DinoAirError, ErrorSeverity } from '../services/error-handler';
+
+import type { DinoAirError} from '../services/error-handler';
+import { ErrorSeverity } from '../services/error-handler';
 
 // Toast types
 export type ToastType = 'error' | 'warning' | 'success' | 'info';
@@ -83,7 +85,7 @@ export const useToastStore = create<ToastStoreState>((set, get) => ({
       timestamp,
       priority: toastData.priority || DEFAULT_CONFIG.defaultPriority,
       duration: toastData.duration !== undefined ? toastData.duration : DEFAULT_CONFIG.defaultDuration,
-      closable: toastData.closable !== undefined ? toastData.closable : true,
+      closable: toastData.closable !== undefined ? toastData.closable : true
     };
 
     set((state) => {

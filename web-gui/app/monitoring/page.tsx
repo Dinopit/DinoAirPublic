@@ -6,22 +6,6 @@
 
 'use client';
 
-import React, { useState, useEffect } from 'react';
-import { Card, CardContent, CardHeader, CardTitle } from '@/components/ui/card';
-import { Badge } from '@/components/ui/badge';
-import { Button } from '@/components/ui/button';
-import {
-  Select,
-  SelectContent,
-  SelectItem,
-  SelectTrigger,
-  SelectValue,
-} from '@/components/ui/select';
-import { Tabs, TabsContent, TabsList, TabsTrigger } from '@/components/ui/tabs';
-import { LazyLineChart, LazyBarChart, LazyPieChart } from '@/components/ui/charts/lazy-chart-loader';
-import { AccessibleChartWrapper } from '@/components/ui/charts/accessible-chart-wrapper';
-import { ChartErrorBoundary } from '@/components/ui/charts/chart-error-boundary';
-import { AnalyticsData } from '@/types/analytics';
 import {
   Activity,
   Cpu,
@@ -39,6 +23,27 @@ import {
   TrendingUp,
   Brain,
 } from 'lucide-react';
+import React, { useState, useEffect } from 'react';
+
+import { Badge } from '@/components/ui/badge';
+import { Button } from '@/components/ui/button';
+import { Card, CardContent, CardHeader, CardTitle } from '@/components/ui/card';
+import { AccessibleChartWrapper } from '@/components/ui/charts/accessible-chart-wrapper';
+import { ChartErrorBoundary } from '@/components/ui/charts/chart-error-boundary';
+import {
+  LazyLineChart,
+  LazyBarChart,
+  LazyPieChart,
+} from '@/components/ui/charts/lazy-chart-loader';
+import {
+  Select,
+  SelectContent,
+  SelectItem,
+  SelectTrigger,
+  SelectValue,
+} from '@/components/ui/select';
+import { Tabs, TabsContent, TabsList, TabsTrigger } from '@/components/ui/tabs';
+import type { AnalyticsData } from '@/types/analytics';
 
 interface SystemOverview {
   timestamp: string;
@@ -544,19 +549,23 @@ export default function MonitoringDashboard() {
                   <CardContent>
                     <ChartErrorBoundary>
                       <AccessibleChartWrapper
-                        data={analyticsData.metrics.user.userBehavior.mostActiveHours.map((item) => ({
-                          label: `${item.hour}:00`,
-                          value: item.activity,
-                        }))}
+                        data={analyticsData.metrics.user.userBehavior.mostActiveHours.map(
+                          (item) => ({
+                            label: `${item.hour}:00`,
+                            value: item.activity,
+                          })
+                        )}
                         title="Activity by Hour"
                         description="Hourly user activity patterns showing peak usage times"
                         chartType="bar"
                       >
                         <LazyBarChart
-                          data={analyticsData.metrics.user.userBehavior.mostActiveHours.map((item) => ({
-                            label: `${item.hour}:00`,
-                            value: item.activity,
-                          }))}
+                          data={analyticsData.metrics.user.userBehavior.mostActiveHours.map(
+                            (item) => ({
+                              label: `${item.hour}:00`,
+                              value: item.activity,
+                            })
+                          )}
                           title="Activity by Hour"
                           color="#10b981"
                           height={250}

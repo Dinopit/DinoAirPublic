@@ -1,21 +1,23 @@
 'use client';
 
-import React, { useState, useCallback, useEffect } from 'react';
-import LocalChatView from './LocalChatView';
-import LocalArtifactsView from './LocalArtifactsView';
-import DinoLocalAssistant from './DinoLocalAssistant';
-import { ThemeToggle } from '../ui/theme-toggle';
-import { useKeyboardShortcuts, KeyboardShortcut } from '../../hooks/useKeyboardShortcuts';
-import { KeyboardShortcutsModal } from '../ui/keyboard-shortcuts-modal';
-import { OnboardingTutorial } from '../ui/onboarding-tutorial';
-import { SettingsPanel } from '../ui/settings-panel';
 import { ToastProvider, useToast } from '../ui/toast';
 import { Menu, X, Settings, Keyboard, Bug, BarChart3, Puzzle } from 'lucide-react';
+import React, { useState, useCallback, useEffect } from 'react';
 import { DebugProvider, useDebug } from '../../contexts/debug-context';
-import DebugPanel from '../ui/debug-panel';
-import { PluginManager } from '../plugins';
+import { useKeyboardShortcuts } from '../../hooks/useKeyboardShortcuts';
+import type { KeyboardShortcut } from '../../hooks/useKeyboardShortcuts';
 import { useScreenReader } from '../../hooks/useScreenReader';
+import { PluginManager } from '../plugins';
+import DebugPanel from '../ui/debug-panel';
+import { KeyboardShortcutsModal } from '../ui/keyboard-shortcuts-modal';
 import { OfflineIndicator } from '../ui/offline-indicator';
+import { OnboardingTutorial } from '../ui/onboarding-tutorial';
+import { SettingsPanel } from '../ui/settings-panel';
+import { ThemeToggle } from '../ui/theme-toggle';
+
+import DinoLocalAssistant from './DinoLocalAssistant';
+import LocalArtifactsView from './LocalArtifactsView';
+import LocalChatView from './LocalChatView';
 
 type Tab = 'chat' | 'artifacts' | 'local-tools' | 'plugins';
 
@@ -63,13 +65,13 @@ const LocalGuiContent = () => {
       addToast({
         type: 'success',
         title: 'Conversation saved',
-        message: 'Your conversation has been saved successfully.',
+        message: 'Your conversation has been saved successfully.'
       });
     } else {
       addToast({
         type: 'info',
         title: 'No active conversation',
-        message: 'Start a conversation first before saving.',
+        message: 'Start a conversation first before saving.'
       });
     }
   }, [addToast]);
@@ -111,56 +113,56 @@ const LocalGuiContent = () => {
       ctrl: true,
       cmd: true,
       description: 'Focus on chat input',
-      action: handleFocusChatInput,
+      action: handleFocusChatInput
     },
     {
       key: '1',
       ctrl: true,
       cmd: true,
       description: 'Switch to Chat tab',
-      action: () => setActiveTab('chat'),
+      action: () => setActiveTab('chat')
     },
     {
       key: '2',
       ctrl: true,
       cmd: true,
       description: 'Switch to Artifacts tab',
-      action: () => setActiveTab('artifacts'),
+      action: () => setActiveTab('artifacts')
     },
     {
       key: '3',
       ctrl: true,
       cmd: true,
       description: 'Switch to Plugins tab',
-      action: () => setActiveTab('plugins'),
+      action: () => setActiveTab('plugins')
     },
     {
       key: '/',
       ctrl: true,
       cmd: true,
       description: 'Show keyboard shortcuts',
-      action: () => setShowShortcutsModal(true),
+      action: () => setShowShortcutsModal(true)
     },
     {
       key: 's',
       ctrl: true,
       cmd: true,
       description: 'Save current conversation',
-      action: handleSaveConversation,
+      action: handleSaveConversation
     },
     {
       key: 'n',
       ctrl: true,
       cmd: true,
       description: 'New chat',
-      action: handleNewChat,
+      action: handleNewChat
     },
     {
       key: 'd',
       ctrl: true,
       cmd: true,
       description: 'Toggle dark mode',
-      action: handleToggleDarkMode,
+      action: handleToggleDarkMode
     },
     {
       key: 'd',
@@ -178,23 +180,23 @@ const LocalGuiContent = () => {
           title: debugMode ? 'Debug mode disabled' : 'Debug mode enabled',
           message: debugMode
             ? 'Debug logging has been turned off'
-            : 'Debug panel can be opened from the toolbar',
+            : 'Debug panel can be opened from the toolbar'
         });
-      },
+      }
     },
     {
       key: ',',
       ctrl: true,
       cmd: true,
       description: 'Open settings',
-      action: handleOpenSettings,
+      action: handleOpenSettings
     },
     {
       key: 'm',
       ctrl: true,
       cmd: true,
       description: 'Open monitoring dashboard',
-      action: handleOpenMonitoring,
+      action: handleOpenMonitoring
     },
     {
       key: 'Escape',
@@ -204,8 +206,8 @@ const LocalGuiContent = () => {
         setShowSettings(false);
         setShowDebugPanel(false);
         setIsMobileMenuOpen(false);
-      },
-    },
+      }
+    }
   ];
 
   useKeyboardShortcuts({ shortcuts });
@@ -218,7 +220,7 @@ const LocalGuiContent = () => {
       chat: 'Chat',
       artifacts: 'Artifacts',
       plugins: 'Plugins',
-      'local-tools': 'Local Tools',
+      'local-tools': 'Local Tools'
     };
     announceNavigation(`${tabNames[tab]} tab`);
   };
@@ -425,7 +427,7 @@ const LocalGuiContent = () => {
             <Puzzle className="w-4 h-4" aria-hidden="true" />
             Plugins
           </button>
-          <div className="border-t border-border my-1" role="separator"></div>
+          <div className="border-t border-border my-1" role="separator" />
           <button
             className="w-full px-6 py-3 text-left font-medium text-muted-foreground hover:bg-muted transition-colors"
             onClick={handleOpenMonitoring}
@@ -500,7 +502,7 @@ const LocalGuiContent = () => {
           addToast({
             type: 'success',
             title: 'Tutorial completed!',
-            message: 'You can always access help via the keyboard shortcuts.',
+            message: 'You can always access help via the keyboard shortcuts.'
           });
         }}
       />

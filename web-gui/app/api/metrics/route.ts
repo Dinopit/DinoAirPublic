@@ -4,7 +4,8 @@
  * Provides Prometheus-compatible metrics endpoint for monitoring
  */
 
-import { NextRequest, NextResponse } from 'next/server';
+import type { NextRequest} from 'next/server';
+import { NextResponse } from 'next/server';
 
 // We'll create a simple proxy to the Python metrics service
 // In a production setup, this could directly integrate with the metrics collector
@@ -24,8 +25,8 @@ export async function GET(request: NextRequest) {
         status: 200,
         headers: {
           'Content-Type': 'text/plain; version=0.0.4; charset=utf-8',
-          'Cache-Control': 'no-cache, no-store, must-revalidate',
-        },
+          'Cache-Control': 'no-cache, no-store, must-revalidate'
+        }
       });
     } else if (format === 'json') {
       const jsonData = generateMockJsonMetrics();
@@ -33,8 +34,8 @@ export async function GET(request: NextRequest) {
       return NextResponse.json(jsonData, {
         status: 200,
         headers: {
-          'Cache-Control': 'no-cache, no-store, must-revalidate',
-        },
+          'Cache-Control': 'no-cache, no-store, must-revalidate'
+        }
       });
     } else {
       return NextResponse.json(
@@ -109,53 +110,53 @@ function generateMockJsonMetrics() {
     timestamp: new Date().toISOString(),
     metrics: [
       {
-        name: "dinoair_system_health_score",
+        name: 'dinoair_system_health_score',
         value: 95.5,
-        type: "gauge",
-        labels: { instance: "dinoair" },
-        help: "Overall system health score (0-100)"
+        type: 'gauge',
+        labels: { instance: 'dinoair' },
+        help: 'Overall system health score (0-100)'
       },
       {
-        name: "dinoair_cpu_usage_percent",
+        name: 'dinoair_cpu_usage_percent',
         value: 25.4,
-        type: "gauge",
-        labels: { instance: "dinoair", resource_type: "cpu" },
-        help: "CPU usage percentage"
+        type: 'gauge',
+        labels: { instance: 'dinoair', resource_type: 'cpu' },
+        help: 'CPU usage percentage'
       },
       {
-        name: "dinoair_memory_usage_percent",
+        name: 'dinoair_memory_usage_percent',
         value: 68.2,
-        type: "gauge",
-        labels: { instance: "dinoair", resource_type: "memory" },
-        help: "Memory usage percentage"
+        type: 'gauge',
+        labels: { instance: 'dinoair', resource_type: 'memory' },
+        help: 'Memory usage percentage'
       },
       {
-        name: "dinoair_disk_usage_percent",
+        name: 'dinoair_disk_usage_percent',
         value: 45.8,
-        type: "gauge",
-        labels: { instance: "dinoair", resource_type: "disk" },
-        help: "Disk usage percentage"
+        type: 'gauge',
+        labels: { instance: 'dinoair', resource_type: 'disk' },
+        help: 'Disk usage percentage'
       },
       {
-        name: "dinoair_network_bandwidth_mbps",
+        name: 'dinoair_network_bandwidth_mbps',
         value: 12.3,
-        type: "gauge",
-        labels: { instance: "dinoair", resource_type: "network" },
-        help: "Network bandwidth usage"
+        type: 'gauge',
+        labels: { instance: 'dinoair', resource_type: 'network' },
+        help: 'Network bandwidth usage'
       },
       {
-        name: "dinoair_active_services_total",
+        name: 'dinoair_active_services_total',
         value: 3,
-        type: "gauge",
-        labels: { instance: "dinoair" },
-        help: "Number of active DinoAir services"
+        type: 'gauge',
+        labels: { instance: 'dinoair' },
+        help: 'Number of active DinoAir services'
       },
       {
-        name: "dinoair_custom_active_sessions",
+        name: 'dinoair_custom_active_sessions',
         value: 15,
-        type: "gauge",
-        labels: { instance: "dinoair", type: "custom" },
-        help: "Number of active user sessions"
+        type: 'gauge',
+        labels: { instance: 'dinoair', type: 'custom' },
+        help: 'Number of active user sessions'
       }
     ],
     count: 7

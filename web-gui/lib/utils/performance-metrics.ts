@@ -21,19 +21,19 @@ const performanceMetrics: PerformanceMetrics = {
   apiResponseTimes: [],
   tokenUsage: {
     total: 0,
-    byModel: {},
+    byModel: {}
   },
   activeConnections: 0,
   memoryUsage: {
     heapUsed: 0,
     heapTotal: 0,
     external: 0,
-    rss: 0,
+    rss: 0
   },
   cpuUsage: {
     user: 0,
-    system: 0,
-  },
+    system: 0
+  }
 };
 
 // Helper to record metrics

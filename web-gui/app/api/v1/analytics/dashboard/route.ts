@@ -1,13 +1,15 @@
-import { NextRequest, NextResponse } from 'next/server';
-import { withAnalyticsAuth } from '@/lib/middleware/analytics-auth';
+import type { NextRequest } from 'next/server';
+import { NextResponse } from 'next/server';
+
 import { analyticsClient } from '@/lib/analytics/analytics-client';
+import { withAnalyticsAuth } from '@/lib/middleware/analytics-auth';
 
 declare const process: any;
 
 async function getAnalyticsDashboard(request: NextRequest) {
   try {
     const { searchParams } = new URL(request.url);
-    const timeframe = searchParams.get('timeframe') || '7d';
+    const timeframe = searchParams.get('timeframe') ?? '7d';
     const includeInsights = searchParams.get('includeInsights') === 'true';
 
     const chatAnalyticsData = await analyticsClient.getAdvancedAnalytics(timeframe);
@@ -52,7 +54,7 @@ async function getAnalyticsDashboard(request: NextRequest) {
 }
 
 async function getSystemAnalytics(timeframe: string) {
-  const memUsage = process?.memoryUsage() || { rss: 0, heapUsed: 0, heapTotal: 0, external: 0 };
+  const memUsage = process?.memoryUsage() ?? { rss: 0, heapUsed: 0, heapTotal: 0, external: 0 };
 
   const now = new Date();
   const dataPoints = getTimeframeDataPoints(timeframe);

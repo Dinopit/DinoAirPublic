@@ -1,15 +1,19 @@
 'use client';
 
-import React, { useState, useEffect, useMemo, useCallback } from 'react';
 import { X, Download, Upload, Trash2, Save, Bug, Plus } from 'lucide-react';
+import React, { useState, useEffect, useMemo, useCallback } from 'react';
+
 import { useDebug } from '@/contexts/debug-context';
+import type { Personality } from '@/lib/stores/personality-store';
+import { usePersonalities, useCurrentPersonality } from '@/lib/stores/personality-store';
 import { useThemeStore } from '@/lib/stores/theme-store';
-import { usePersonalities, useCurrentPersonality, Personality } from '@/lib/stores/personality-store';
 import { toast } from '@/lib/stores/toast-store';
+
+import { useFocusManagement } from '../../hooks/useFocusManagement';
+
 import { PersonalityCard } from './personality-card';
 import { PersonalityDetailsModal } from './personality-details-modal';
 import { PersonalityImportModal } from './personality-import-modal';
-import { useFocusManagement } from '../../hooks/useFocusManagement';
 
 interface SettingsPanelProps {
   isOpen: boolean;

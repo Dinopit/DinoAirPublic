@@ -1,7 +1,8 @@
 'use client';
 
-import React, { useState, useEffect } from 'react';
 import { Server, CheckCircle, XCircle, AlertCircle, RefreshCw, Terminal, FileText, X } from 'lucide-react';
+import React, { useState, useEffect } from 'react';
+
 import { ConnectionStatusBadge } from './offline-indicator';
 
 interface ServiceHealth {
@@ -37,21 +38,21 @@ const serviceInfo: Record<string, ServiceInfo> = {
     description: 'AI Model Server',
     port: 11434,
     icon: <Server className="w-5 h-5" />,
-    restartCommand: 'ollama serve',
+    restartCommand: 'ollama serve'
   },
   comfyui: {
     name: 'ComfyUI',
     description: 'Image Generation Server',
     port: 8188,
     icon: <Server className="w-5 h-5" />,
-    restartCommand: 'python main.py --port 8188',
+    restartCommand: 'python main.py --port 8188'
   },
   webGui: {
     name: 'Web GUI',
     description: 'DinoAir Interface',
     port: 3000,
-    icon: <Server className="w-5 h-5" />,
-  },
+    icon: <Server className="w-5 h-5" />
+  }
 };
 
 export default function ServiceStatus() {
@@ -68,8 +69,8 @@ export default function ServiceStatus() {
       const apiKey = localStorage.getItem('dinoair-active-api-key') || 'dinoair_development_key';
       const response = await fetch('/api/v1/system/health', {
         headers: {
-          'X-API-Key': apiKey,
-        },
+          'X-API-Key': apiKey
+        }
       });
 
       if (!response.ok) {
@@ -153,14 +154,14 @@ export default function ServiceStatus() {
       `[${now.toISOString()}] Service ${service} started`,
       `[${now.toISOString()}] Listening on port ${serviceInfo[service]?.port}`,
       `[${now.toISOString()}] Health check endpoint available`,
-      `[${now.toISOString()}] Ready to accept connections`,
+      `[${now.toISOString()}] Ready to accept connections`
     ];
   };
 
   if (loading) {
     return (
       <div className="flex items-center justify-center h-64">
-        <div className="animate-spin rounded-full h-12 w-12 border-b-2 border-primary"></div>
+        <div className="animate-spin rounded-full h-12 w-12 border-b-2 border-primary" />
       </div>
     );
   }

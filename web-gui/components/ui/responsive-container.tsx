@@ -1,6 +1,7 @@
 'use client';
 
 import React from 'react';
+
 import { cn } from '@/lib/utils';
 
 interface ResponsiveContainerProps {
@@ -34,7 +35,7 @@ export function ResponsiveContainer({
   className,
   maxWidth = 'lg',
   padding = 'md',
-  centerContent = true,
+  centerContent = true
 }: ResponsiveContainerProps) {
   const maxWidthClasses = {
     sm: 'max-w-sm',
@@ -42,7 +43,7 @@ export function ResponsiveContainer({
     lg: 'max-w-4xl',
     xl: 'max-w-6xl',
     '2xl': 'max-w-7xl',
-    full: 'max-w-full',
+    full: 'max-w-full'
   };
 
   const paddingClasses = {
@@ -50,7 +51,7 @@ export function ResponsiveContainer({
     sm: 'px-2 sm:px-4',
     md: 'px-4 sm:px-6 lg:px-8',
     lg: 'px-6 sm:px-8 lg:px-12',
-    xl: 'px-8 sm:px-12 lg:px-16',
+    xl: 'px-8 sm:px-12 lg:px-16'
   };
 
   return (
@@ -102,13 +103,13 @@ export function ResponsiveGrid({
   children,
   className,
   cols = { default: 1, sm: 2, lg: 3 },
-  gap = 'md',
+  gap = 'md'
 }: ResponsiveGridProps) {
   const gapClasses = {
     sm: 'gap-2',
     md: 'gap-4',
     lg: 'gap-6',
-    xl: 'gap-8',
+    xl: 'gap-8'
   };
 
   const getGridCols = () => {
@@ -170,20 +171,20 @@ export function ResponsiveStack({
   direction = 'vertical',
   spacing = 'md',
   align = 'stretch',
-  justify = 'start',
+  justify = 'start'
 }: ResponsiveStackProps) {
   const spacingClasses = {
     sm: 'gap-2',
     md: 'gap-4',
     lg: 'gap-6',
-    xl: 'gap-8',
+    xl: 'gap-8'
   };
 
   const alignClasses = {
     start: 'items-start',
     center: 'items-center',
     end: 'items-end',
-    stretch: 'items-stretch',
+    stretch: 'items-stretch'
   };
 
   const justifyClasses = {
@@ -192,13 +193,13 @@ export function ResponsiveStack({
     end: 'justify-end',
     between: 'justify-between',
     around: 'justify-around',
-    evenly: 'justify-evenly',
+    evenly: 'justify-evenly'
   };
 
   const directionClasses = {
     vertical: 'flex flex-col',
     horizontal: 'flex flex-row',
-    responsive: 'flex flex-col sm:flex-row',
+    responsive: 'flex flex-col sm:flex-row'
   };
 
   return (

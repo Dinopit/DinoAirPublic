@@ -1,8 +1,9 @@
 'use client';
 
-import React, { useCallback, useEffect } from 'react';
 import { X, Copy, Download } from 'lucide-react';
-import { Personality } from '@/lib/stores/personality-store';
+import React, { useCallback, useEffect } from 'react';
+
+import type { Personality } from '@/lib/stores/personality-store';
 import { toast } from '@/lib/stores/toast-store';
 
 interface PersonalityDetailsModalProps {
@@ -14,7 +15,7 @@ interface PersonalityDetailsModalProps {
 export const PersonalityDetailsModal: React.FC<PersonalityDetailsModalProps> = ({
   personality,
   isOpen,
-  onClose,
+  onClose
 }) => {
   // Handle escape key
   useEffect(() => {
@@ -58,7 +59,7 @@ export const PersonalityDetailsModal: React.FC<PersonalityDetailsModalProps> = (
       temperature: personality.temperature,
       maxTokens: personality.maxTokens,
       isDefault: personality.isDefault,
-      exportDate: new Date().toISOString(),
+      exportDate: new Date().toISOString()
     };
 
     const blob = new Blob([JSON.stringify(exportData, null, 2)], { 

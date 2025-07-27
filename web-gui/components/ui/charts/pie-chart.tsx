@@ -1,7 +1,7 @@
 'use client';
 
-import React from 'react';
 import { Chart as ChartJS, ArcElement, Tooltip, Legend } from 'chart.js';
+import React from 'react';
 import { Pie, Doughnut } from 'react-chartjs-2';
 
 ChartJS.register(ArcElement, Tooltip, Legend);
@@ -60,14 +60,14 @@ export function PieChart({
   };
 
   const isMobile = typeof window !== 'undefined' && window.innerWidth < 768;
-  
+
   const options = {
     responsive: true,
     maintainAspectRatio: false,
     plugins: {
       legend: {
         display: showLegend,
-        position: (isMobile ? 'bottom' : 'right') as const,
+        position: isMobile ? 'bottom' : 'right',
         labels: {
           boxWidth: isMobile ? 12 : 16,
           font: {
@@ -127,11 +127,8 @@ export function PieChart({
   const ChartComponent = variant === 'doughnut' ? Doughnut : Pie;
 
   return (
-    <div 
-      style={{ height: `${height}px` }}
-      className="w-full"
-    >
-      <ChartComponent data={chartData} options={options} />
+    <div style={{ height: `${height}px` }} className="w-full">
+      <ChartComponent data={chartData} options={options as any} />
     </div>
   );
 }

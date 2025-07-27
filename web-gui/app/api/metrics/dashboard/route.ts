@@ -4,7 +4,8 @@
  * Provides structured data for monitoring dashboards
  */
 
-import { NextRequest, NextResponse } from 'next/server';
+import type { NextRequest} from 'next/server';
+import { NextResponse } from 'next/server';
 
 export async function GET(request: NextRequest) {
   try {
@@ -46,8 +47,8 @@ export async function GET(request: NextRequest) {
     return NextResponse.json(data, {
       status: 200,
       headers: {
-        'Cache-Control': 'no-cache, no-store, must-revalidate',
-      },
+        'Cache-Control': 'no-cache, no-store, must-revalidate'
+      }
     });
   } catch (error) {
     console.error('Error in dashboard API:', error);
@@ -61,8 +62,8 @@ export async function GET(request: NextRequest) {
 function getSystemOverview() {
   return {
     timestamp: new Date().toISOString(),
-    status: "healthy",
-    uptime: "24h 35m",
+    status: 'healthy',
+    uptime: '24h 35m',
     resources: {
       cpu: 25.4,
       memory: 68.2,
@@ -70,9 +71,9 @@ function getSystemOverview() {
       network_mbps: 12.3
     },
     services: {
-      comfyui: "healthy",
-      ollama: "healthy",
-      web_gui: "healthy"
+      comfyui: 'healthy',
+      ollama: 'healthy',
+      web_gui: 'healthy'
     },
     health_score: 95.5,
     active_sessions: 15,
@@ -132,21 +133,21 @@ function getApiMetrics(timeframeHours: number) {
         errors: 12,
         avg_response_time: 0.234,
         error_rate: 0.96,
-        status: "healthy"
+        status: 'healthy'
       },
       ollama: {
         requests: 856,
         errors: 3,
         avg_response_time: 0.156,
         error_rate: 0.35,
-        status: "healthy"
+        status: 'healthy'
       },
       web_gui: {
         requests: 2103,
         errors: 8,
         avg_response_time: 0.089,
         error_rate: 0.38,
-        status: "healthy"
+        status: 'healthy'
       }
     },
     totals: {
@@ -167,7 +168,7 @@ function getModelMetrics() {
   return {
     timestamp: new Date().toISOString(),
     models: {
-      "llama2-7b": {
+      'llama2-7b': {
         total_generations: 156,
         successful_generations: 149,
         total_time: 2341.5,
@@ -176,7 +177,7 @@ function getModelMetrics() {
         avg_prompt_length: 234,
         avg_output_length: 567
       },
-      "stable-diffusion-v1-5": {
+      'stable-diffusion-v1-5': {
         total_generations: 89,
         successful_generations: 87,
         total_time: 1456.8,
@@ -213,36 +214,36 @@ function getErrorMetrics(timeframeHours: number) {
       unique_error_types: 5
     },
     by_type: {
-      "connection_timeout": 8,
-      "validation_error": 6,
-      "model_error": 4,
-      "file_not_found": 3,
-      "permission_denied": 2
+      'connection_timeout': 8,
+      'validation_error': 6,
+      'model_error': 4,
+      'file_not_found': 3,
+      'permission_denied': 2
     },
     by_service: {
-      "comfyui": 12,
-      "web_gui": 8,
-      "ollama": 3
+      'comfyui': 12,
+      'web_gui': 8,
+      'ollama': 3
     },
     by_severity: {
-      "error": 18,
-      "warning": 4,
-      "critical": 1
+      'error': 18,
+      'warning': 4,
+      'critical': 1
     },
     recent_errors: [
       {
         timestamp: new Date(now.getTime() - 5 * 60 * 1000).toISOString(),
-        type: "connection_timeout",
-        service: "comfyui",
-        severity: "error",
-        message: "Connection to ComfyUI timed out after 30 seconds"
+        type: 'connection_timeout',
+        service: 'comfyui',
+        severity: 'error',
+        message: 'Connection to ComfyUI timed out after 30 seconds'
       },
       {
         timestamp: new Date(now.getTime() - 12 * 60 * 1000).toISOString(),
-        type: "validation_error",
-        service: "web_gui",
-        severity: "warning",
-        message: "Invalid input parameter in API request"
+        type: 'validation_error',
+        service: 'web_gui',
+        severity: 'warning',
+        message: 'Invalid input parameter in API request'
       }
     ]
   };
@@ -257,7 +258,7 @@ function getUserMetrics(timeframeHours: number) {
   for (let i = 0; i < timeframeHours; i++) {
     const hourTime = new Date(start.getTime() + i * 60 * 60 * 1000);
     timeline.push({
-      timestamp: hourTime.toISOString().slice(0, 13) + ":00",
+      timestamp: hourTime.toISOString().slice(0, 13) + ':00',
       sessions: Math.floor(Math.random() * 10) + 1
     });
   }
@@ -283,21 +284,21 @@ function getUserMetrics(timeframeHours: number) {
 
 function getDashboardConfig() {
   return {
-    version: "1.0.0",
+    version: '1.0.0',
     refresh_interval: 30,
     available_timeframes: [
-      { label: "Last Hour", hours: 1 },
-      { label: "Last 6 Hours", hours: 6 },
-      { label: "Last 24 Hours", hours: 24 },
-      { label: "Last 7 Days", hours: 168 }
+      { label: 'Last Hour', hours: 1 },
+      { label: 'Last 6 Hours', hours: 6 },
+      { label: 'Last 24 Hours', hours: 24 },
+      { label: 'Last 7 Days', hours: 168 }
     ],
     widgets: [
-      { id: "system_overview", title: "System Overview", type: "overview" },
-      { id: "resource_usage", title: "Resource Usage", type: "timeseries" },
-      { id: "api_metrics", title: "API Performance", type: "metrics" },
-      { id: "model_usage", title: "Model Usage", type: "metrics" },
-      { id: "error_tracking", title: "Error Tracking", type: "errors" },
-      { id: "user_activity", title: "User Activity", type: "users" }
+      { id: 'system_overview', title: 'System Overview', type: 'overview' },
+      { id: 'resource_usage', title: 'Resource Usage', type: 'timeseries' },
+      { id: 'api_metrics', title: 'API Performance', type: 'metrics' },
+      { id: 'model_usage', title: 'Model Usage', type: 'metrics' },
+      { id: 'error_tracking', title: 'Error Tracking', type: 'errors' },
+      { id: 'user_activity', title: 'User Activity', type: 'users' }
     ],
     thresholds: {
       cpu_warning: 70,

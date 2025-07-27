@@ -1,4 +1,5 @@
-import { NextRequest, NextResponse } from 'next/server';
+import type { NextRequest} from 'next/server';
+import { NextResponse } from 'next/server';
 
 export class ModelsController {
   static async handleGetModels(_request: NextRequest): Promise<NextResponse> {
@@ -6,8 +7,8 @@ export class ModelsController {
       const response = await fetch('http://localhost:11434/api/tags', {
         method: 'GET',
         headers: {
-          'Content-Type': 'application/json',
-        },
+          'Content-Type': 'application/json'
+        }
       });
 
       if (!response.ok) {

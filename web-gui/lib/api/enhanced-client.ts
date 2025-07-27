@@ -1,8 +1,12 @@
-import { DinoAirError, ErrorType, ErrorContext, errorHandler } from '../services/error-handler';
-import { retry, RetryConfig, RetryStrategy, RetryWithCircuitBreaker, CircuitBreakerConfig } from '../utils/retry-strategies';
-import { requestDeduplication } from './request-deduplication';
-import { useCacheStore, cacheTTL } from '../stores/cache-store';
 import { getCurrentCorrelationId, createCorrelationHeaders } from '../correlation/correlation-id';
+import type { ErrorContext} from '../services/error-handler';
+import { DinoAirError, ErrorType, errorHandler } from '../services/error-handler';
+import { useCacheStore, cacheTTL } from '../stores/cache-store';
+import type { RetryConfig, RetryStrategy, CircuitBreakerConfig } from '../utils/retry-strategies';
+import { retry, RetryWithCircuitBreaker } from '../utils/retry-strategies';
+
+import { requestDeduplication } from './request-deduplication';
+
 
 // Request interceptor type
 export type RequestInterceptor = (config: RequestConfig) => RequestConfig | Promise<RequestConfig>;
@@ -59,16 +63,16 @@ export class EnhancedApiClient {
     this.config = {
       baseURL: '',
       defaultHeaders: {
-        'Content-Type': 'application/json',
+        'Content-Type': 'application/json'
       },
       defaultRetryConfig: {
         maxAttempts: 3,
         initialDelay: 1000,
-        maxDelay: 30000,
+        maxDelay: 30000
       },
       defaultRetryStrategy: 'exponentialBackoff',
       defaultTimeout: 30000,
-      ...config,
+      ...config
     };
 
     // Initialize interceptors
@@ -126,7 +130,7 @@ export class EnhancedApiClient {
   async request<T = any>(config: RequestConfig): Promise<EnhancedResponse<T>> {
     try {
       // Apply request interceptors
-      let finalConfig = await this.applyRequestInterceptors(config);
+      const finalConfig = await this.applyRequestInterceptors(config);
 
       // Build full URL
       const url = this.buildURL(finalConfig.url);
@@ -169,7 +173,7 @@ export class EnhancedApiClient {
           const response = await fetch(url, {
             ...finalConfig,
             headers,
-            signal: controller.signal,
+            signal: controller.signal
           });
 
           if (timeoutId) clearTimeout(timeoutId);
@@ -219,7 +223,7 @@ export class EnhancedApiClient {
               {
                 context: finalConfig.context,
                 retryable: true,
-                userMessage: 'The request took too long. Please try again.',
+                userMessage: 'The request took too long. Please try again.'
               }
             );
           }
@@ -262,7 +266,7 @@ export class EnhancedApiClient {
         // Create error response
         const errorResponse: EnhancedResponse<T> = new Response(null, {
           status: 500,
-          statusText: 'Internal Server Error',
+          statusText: 'Internal Server Error'
         }) as EnhancedResponse<T>;
         
         errorResponse.error = handledError;
@@ -278,7 +282,7 @@ export class EnhancedApiClient {
     return this.request<T>({
       ...config,
       url,
-      method: 'GET',
+      method: 'GET'
     });
   }
 
@@ -287,7 +291,7 @@ export class EnhancedApiClient {
       ...config,
       url,
       method: 'POST',
-      body: data ? JSON.stringify(data) : null,
+      body: data ? JSON.stringify(data) : null
     });
   }
 
@@ -296,7 +300,7 @@ export class EnhancedApiClient {
       ...config,
       url,
       method: 'PUT',
-      body: data ? JSON.stringify(data) : null,
+      body: data ? JSON.stringify(data) : null
     });
   }
 
@@ -305,7 +309,7 @@ export class EnhancedApiClient {
       ...config,
       url,
       method: 'PATCH',
-      body: data ? JSON.stringify(data) : null,
+      body: data ? JSON.stringify(data) : null
     });
   }
 
@@ -313,7 +317,7 @@ export class EnhancedApiClient {
     return this.request<T>({
       ...config,
       url,
-      method: 'DELETE',
+      method: 'DELETE'
     });
   }
 
@@ -412,10 +416,10 @@ export class EnhancedApiClient {
           additionalData: {
             status: response.status,
             statusText: response.statusText,
-            responseData: errorData,
-          },
+            responseData: errorData
+          }
         },
-        retryable: this.isRetryableStatus(response.status),
+        retryable: this.isRetryableStatus(response.status)
       }
     );
   }
@@ -472,8 +476,8 @@ export const apiClient = new EnhancedApiClient({
     maxAttempts: 3,
     initialDelay: 1000,
     maxDelay: 30000,
-    jitter: true,
-  },
+    jitter: true
+  }
 });
 
 // Helper function to create custom API clients

@@ -1,7 +1,9 @@
 'use client';
 
-import React, { Component, ErrorInfo, ReactNode } from 'react';
 import { AlertTriangle, RefreshCw, Home, Bug } from 'lucide-react';
+import type { ErrorInfo, ReactNode } from 'react';
+import React, { Component } from 'react';
+
 import MemoryMonitor from './memory-monitor';
 
 interface Props {
@@ -51,7 +53,7 @@ export class EnhancedErrorBoundary extends Component<Props, State> {
       error: null,
       errorInfo: null,
       errorId: '',
-      retryCount: 0,
+      retryCount: 0
     };
   }
 
@@ -62,14 +64,14 @@ export class EnhancedErrorBoundary extends Component<Props, State> {
     return {
       hasError: true,
       error,
-      errorId,
+      errorId
     };
   }
 
   componentDidCatch(error: Error, errorInfo: ErrorInfo) {
     this.setState({
       error,
-      errorInfo,
+      errorInfo
     });
 
     // Generate comprehensive error report
@@ -104,14 +106,14 @@ export class EnhancedErrorBoundary extends Component<Props, State> {
       error: {
         name: error.name,
         message: error.message,
-        stack: error.stack,
+        stack: error.stack
       },
       errorInfo: {
-        componentStack: errorInfo.componentStack,
+        componentStack: errorInfo.componentStack
       },
       memoryInfo,
       retryCount: this.state.retryCount,
-      errorId: this.state.errorId,
+      errorId: this.state.errorId
     };
   }
 
@@ -121,7 +123,7 @@ export class EnhancedErrorBoundary extends Component<Props, State> {
       return {
         usedJSHeapSize: memory.usedJSHeapSize,
         totalJSHeapSize: memory.totalJSHeapSize,
-        jsHeapSizeLimit: memory.jsHeapSizeLimit,
+        jsHeapSizeLimit: memory.jsHeapSizeLimit
       };
     }
     return undefined;
@@ -147,9 +149,9 @@ export class EnhancedErrorBoundary extends Component<Props, State> {
       await fetch('/api/v1/errors', {
         method: 'POST',
         headers: {
-          'Content-Type': 'application/json',
+          'Content-Type': 'application/json'
         },
-        body: JSON.stringify(errorReport),
+        body: JSON.stringify(errorReport)
       });
     } catch (e) {
       // Fail silently - error reporting shouldn't break the app further
@@ -171,7 +173,7 @@ export class EnhancedErrorBoundary extends Component<Props, State> {
       hasError: false,
       error: null,
       errorInfo: null,
-      retryCount: prevState.retryCount + 1,
+      retryCount: prevState.retryCount + 1
     }));
   };
 
@@ -209,7 +211,7 @@ export class EnhancedErrorBoundary extends Component<Props, State> {
 
     const errorReport = this.generateErrorReport(this.state.error, this.state.errorInfo);
     const blob = new Blob([JSON.stringify(errorReport, null, 2)], {
-      type: 'application/json',
+      type: 'application/json'
     });
 
     const url = URL.createObjectURL(blob);
@@ -257,27 +259,27 @@ export class EnhancedErrorBoundary extends Component<Props, State> {
           'Close other browser tabs to free up memory',
           'Restart your browser',
           'Clear browser cache and cookies',
-          'Try using an incognito/private window',
+          'Try using an incognito/private window'
         ];
       case 'Network Error':
         return [
           'Check your internet connection',
           'Disable browser extensions that might block requests',
           'Try refreshing the page',
-          'Contact support if the issue persists',
+          'Contact support if the issue persists'
         ];
       case 'Script Error':
         return [
           'Clear your browser cache',
           'Disable browser extensions',
           'Try using a different browser',
-          'Ensure JavaScript is enabled',
+          'Ensure JavaScript is enabled'
         ];
       default:
         return [
           'Try refreshing the page',
           'Clear your browser cache',
-          'Contact support with the error details',
+          'Contact support with the error details'
         ];
     }
   }

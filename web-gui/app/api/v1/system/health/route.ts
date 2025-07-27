@@ -1,4 +1,6 @@
-import { NextRequest, NextResponse } from 'next/server';
+import type { NextRequest} from 'next/server';
+import { NextResponse } from 'next/server';
+
 import { withApiAuth } from '@/lib/middleware/api-auth';
 
 interface ServiceHealth {
@@ -23,21 +25,21 @@ async function checkOllamaHealth(): Promise<ServiceHealth> {
   const startTime = Date.now();
   try {
     const response = await fetch('http://localhost:11434/api/tags', {
-      signal: AbortSignal.timeout(5000),
+      signal: AbortSignal.timeout(5000)
     });
     
     if (response.ok) {
       return {
         status: 'healthy',
         lastCheck: new Date().toISOString(),
-        responseTime: Date.now() - startTime,
+        responseTime: Date.now() - startTime
       };
     } else {
       return {
         status: 'unhealthy',
         lastCheck: new Date().toISOString(),
         responseTime: Date.now() - startTime,
-        error: `HTTP ${response.status}`,
+        error: `HTTP ${response.status}`
       };
     }
   } catch (error) {
@@ -45,7 +47,7 @@ async function checkOllamaHealth(): Promise<ServiceHealth> {
       status: 'unhealthy',
       lastCheck: new Date().toISOString(),
       responseTime: Date.now() - startTime,
-      error: error instanceof Error ? error.message : 'Unknown error',
+      error: error instanceof Error ? error.message : 'Unknown error'
     };
   }
 }
@@ -54,21 +56,21 @@ async function checkComfyUIHealth(): Promise<ServiceHealth> {
   const startTime = Date.now();
   try {
     const response = await fetch('http://localhost:8188/system_stats', {
-      signal: AbortSignal.timeout(5000),
+      signal: AbortSignal.timeout(5000)
     });
     
     if (response.ok) {
       return {
         status: 'healthy',
         lastCheck: new Date().toISOString(),
-        responseTime: Date.now() - startTime,
+        responseTime: Date.now() - startTime
       };
     } else {
       return {
         status: 'unhealthy',
         lastCheck: new Date().toISOString(),
         responseTime: Date.now() - startTime,
-        error: `HTTP ${response.status}`,
+        error: `HTTP ${response.status}`
       };
     }
   } catch (error) {
@@ -76,7 +78,7 @@ async function checkComfyUIHealth(): Promise<ServiceHealth> {
       status: 'unhealthy',
       lastCheck: new Date().toISOString(),
       responseTime: Date.now() - startTime,
-      error: error instanceof Error ? error.message : 'Unknown error',
+      error: error instanceof Error ? error.message : 'Unknown error'
     };
   }
 }
@@ -86,13 +88,13 @@ async function getSystemHealth(_request: NextRequest) {
     // Check all services in parallel
     const [ollamaHealth, comfyuiHealth] = await Promise.all([
       checkOllamaHealth(),
-      checkComfyUIHealth(),
+      checkComfyUIHealth()
     ]);
 
     const webGuiHealth: ServiceHealth = {
       status: 'healthy',
       lastCheck: new Date().toISOString(),
-      responseTime: 0,
+      responseTime: 0
     };
 
     // Determine overall system status
@@ -112,9 +114,9 @@ async function getSystemHealth(_request: NextRequest) {
       services: {
         ollama: ollamaHealth,
         comfyui: comfyuiHealth,
-        webGui: webGuiHealth,
+        webGui: webGuiHealth
       },
-      uptime: process.uptime(),
+      uptime: process.uptime()
     };
 
     return NextResponse.json(health);

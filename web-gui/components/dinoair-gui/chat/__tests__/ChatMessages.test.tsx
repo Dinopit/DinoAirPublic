@@ -1,7 +1,8 @@
 import React from 'react';
+
+import { createMockMessage } from '../../../../tests/utils/mock-utils';
 import { render, screen } from '../../../../tests/utils/test-utils';
 import ChatMessages from '../ChatMessages';
-import { createMockMessage } from '../../../../tests/utils/mock-utils';
 
 // Mock scrollIntoView
 Element.prototype.scrollIntoView = jest.fn();
@@ -10,7 +11,7 @@ describe('ChatMessages', () => {
   const defaultProps = {
     messages: [],
     isLoading: false,
-    isStreaming: false,
+    isStreaming: false
   };
 
   beforeEach(() => {
@@ -28,7 +29,7 @@ describe('ChatMessages', () => {
   it('should render messages', () => {
     const messages = [
       createMockMessage({ id: '1', role: 'user', content: 'Hello' }),
-      createMockMessage({ id: '2', role: 'assistant', content: 'Hi there!' }),
+      createMockMessage({ id: '2', role: 'assistant', content: 'Hi there!' })
     ];
 
     render(<ChatMessages {...defaultProps} messages={messages} />);
@@ -39,7 +40,7 @@ describe('ChatMessages', () => {
 
   it('should display user messages on the right', () => {
     const messages = [
-      createMockMessage({ id: '1', role: 'user', content: 'User message' }),
+      createMockMessage({ id: '1', role: 'user', content: 'User message' })
     ];
 
     render(<ChatMessages {...defaultProps} messages={messages} />);
@@ -50,7 +51,7 @@ describe('ChatMessages', () => {
 
   it('should display assistant messages on the left', () => {
     const messages = [
-      createMockMessage({ id: '1', role: 'assistant', content: 'Assistant message' }),
+      createMockMessage({ id: '1', role: 'assistant', content: 'Assistant message' })
     ];
 
     render(<ChatMessages {...defaultProps} messages={messages} />);
@@ -62,7 +63,7 @@ describe('ChatMessages', () => {
   it('should display message timestamps', () => {
     const timestamp = new Date('2024-01-01T12:00:00');
     const messages = [
-      createMockMessage({ id: '1', content: 'Test', timestamp }),
+      createMockMessage({ id: '1', content: 'Test', timestamp })
     ];
 
     render(<ChatMessages {...defaultProps} messages={messages} />);
@@ -95,7 +96,7 @@ describe('ChatMessages', () => {
     expect(Element.prototype.scrollIntoView).toHaveBeenCalledTimes(1);
 
     const messages = [
-      createMockMessage({ id: '1', content: 'New message' }),
+      createMockMessage({ id: '1', content: 'New message' })
     ];
 
     rerender(<ChatMessages {...defaultProps} messages={messages} />);
@@ -106,7 +107,7 @@ describe('ChatMessages', () => {
 
   it('should apply proper styling to user messages', () => {
     const messages = [
-      createMockMessage({ id: '1', role: 'user', content: 'User message' }),
+      createMockMessage({ id: '1', role: 'user', content: 'User message' })
     ];
 
     render(<ChatMessages {...defaultProps} messages={messages} />);
@@ -117,7 +118,7 @@ describe('ChatMessages', () => {
 
   it('should apply proper styling to assistant messages', () => {
     const messages = [
-      createMockMessage({ id: '1', role: 'assistant', content: 'Assistant message' }),
+      createMockMessage({ id: '1', role: 'assistant', content: 'Assistant message' })
     ];
 
     render(<ChatMessages {...defaultProps} messages={messages} />);
@@ -130,7 +131,7 @@ describe('ChatMessages', () => {
     const messages = [
       createMockMessage({ id: '1', content: 'First' }),
       createMockMessage({ id: '2', content: 'Second' }),
-      createMockMessage({ id: '3', content: 'Third' }),
+      createMockMessage({ id: '3', content: 'Third' })
     ];
 
     render(<ChatMessages {...defaultProps} messages={messages} />);
@@ -146,7 +147,7 @@ describe('ChatMessages', () => {
       createMockMessage({ 
         id: '1', 
         content: 'Line 1\nLine 2\n\nLine 4 with    spaces' 
-      }),
+      })
     ];
 
     render(<ChatMessages {...defaultProps} messages={messages} />);
@@ -167,7 +168,7 @@ describe('ChatMessages', () => {
 
   it('should handle empty content gracefully', () => {
     const messages = [
-      createMockMessage({ id: '1', content: '' }),
+      createMockMessage({ id: '1', content: '' })
     ];
 
     render(<ChatMessages {...defaultProps} messages={messages} />);

@@ -3,7 +3,7 @@ import crypto from 'crypto';
 // In production, these should be stored in a database or environment variables
 const VALID_API_KEYS = new Set([
   'dinoair-free-tier-key-001',
-  'dinoair-free-tier-key-002',
+  'dinoair-free-tier-key-002'
   // Add more API keys as needed
 ]);
 
@@ -26,7 +26,7 @@ VALID_API_KEYS.forEach(key => {
     createdAt: new Date(),
     lastUsed: new Date(),
     usageCount: 0,
-    rateLimit: 60, // 60 requests per minute default
+    rateLimit: 60 // 60 requests per minute default
   });
 });
 
@@ -96,7 +96,7 @@ export function addApiKey(apiKey: string, rateLimit: number = 60): void {
     createdAt: new Date(),
     lastUsed: new Date(),
     usageCount: 0,
-    rateLimit,
+    rateLimit
   });
 }
 

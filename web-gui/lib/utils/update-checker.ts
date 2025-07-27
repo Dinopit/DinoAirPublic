@@ -146,8 +146,8 @@ export async function checkForUpdates(): Promise<UpdateInfo | null> {
     const response = await fetch(`${UPDATE_CHECK_URL}?current=${CURRENT_VERSION}`, {
       method: 'GET',
       headers: {
-        'Accept': 'application/json',
-      },
+        'Accept': 'application/json'
+      }
     });
 
     if (!response.ok) {
@@ -181,8 +181,8 @@ export async function getChangelog(): Promise<ChangelogEntry[]> {
     const response = await fetch(CHANGELOG_URL, {
       method: 'GET',
       headers: {
-        'Accept': 'application/json',
-      },
+        'Accept': 'application/json'
+      }
     });
 
     if (!response.ok) {
@@ -222,7 +222,7 @@ export function getUpdatePreferences(): UpdatePreferences {
     checkAutomatically: true,
     checkInterval: 24, // Check once per day
     lastCheck: null,
-    dismissedVersion: null,
+    dismissedVersion: null
   };
 }
 

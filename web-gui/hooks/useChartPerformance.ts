@@ -1,4 +1,4 @@
-import React, { useEffect, useRef, useState } from 'react';
+import { useRef, useState } from 'react';
 
 declare const process: any;
 
@@ -50,7 +50,9 @@ export function useChartPerformance(chartType: string, dataLength: number) {
     }
 
     if (totalTime > 1000) {
-      console.warn(`Slow chart render detected: ${totalTime}ms for ${chartType} with ${dataLength} points`);
+      console.warn(
+        `Slow chart render detected: ${totalTime}ms for ${chartType} with ${dataLength} points`
+      );
     }
   };
 

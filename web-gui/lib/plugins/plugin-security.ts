@@ -55,92 +55,92 @@ const SECURITY_PATTERNS = [
     type: 'critical' as const,
     category: 'code-quality' as const,
     message: 'Use of eval() is prohibited',
-    score: 100,
+    score: 100
   },
   {
     pattern: /Function\s*\(/gi,
     type: 'critical' as const,
     category: 'code-quality' as const,
     message: 'Dynamic function creation is prohibited',
-    score: 90,
+    score: 90
   },
   {
     pattern: /document\.cookie/gi,
     type: 'high' as const,
     category: 'privacy' as const,
     message: 'Direct cookie access detected',
-    score: 70,
+    score: 70
   },
   {
     pattern: /localStorage\.|sessionStorage\./gi,
     type: 'medium' as const,
     category: 'privacy' as const,
     message: 'Direct storage access (use plugin API instead)',
-    score: 50,
+    score: 50
   },
   {
     pattern: /XMLHttpRequest|fetch\(/gi,
     type: 'medium' as const,
     category: 'network' as const,
     message: 'Direct network access (use plugin API instead)',
-    score: 40,
+    score: 40
   },
   {
     pattern: /innerHTML\s*=/gi,
     type: 'medium' as const,
     category: 'code-quality' as const,
     message: 'Potential XSS vulnerability with innerHTML',
-    score: 60,
+    score: 60
   },
   {
     pattern: /outerHTML\s*=/gi,
     type: 'medium' as const,
     category: 'code-quality' as const,
     message: 'Potential XSS vulnerability with outerHTML',
-    score: 60,
+    score: 60
   },
   {
     pattern: /document\.write\(/gi,
     type: 'high' as const,
     category: 'code-quality' as const,
     message: 'Use of document.write() is dangerous',
-    score: 80,
+    score: 80
   },
   {
     pattern: /location\.(href|replace|assign)/gi,
     type: 'medium' as const,
     category: 'code-quality' as const,
     message: 'Page navigation detected',
-    score: 30,
+    score: 30
   },
   {
     pattern: /window\.open\(/gi,
     type: 'medium' as const,
     category: 'code-quality' as const,
     message: 'Popup creation detected',
-    score: 35,
+    score: 35
   },
   {
     pattern: /<script[\s>]/gi,
     type: 'high' as const,
     category: 'code-quality' as const,
     message: 'Script tag injection detected',
-    score: 85,
+    score: 85
   },
   {
     pattern: /javascript:/gi,
     type: 'high' as const,
     category: 'code-quality' as const,
     message: 'JavaScript URL scheme detected',
-    score: 75,
+    score: 75
   },
   {
     pattern: /data:.*script/gi,
     type: 'high' as const,
     category: 'code-quality' as const,
     message: 'Data URL with script detected',
-    score: 80,
-  },
+    score: 80
+  }
 ];
 
 // Trusted certificate authorities
@@ -151,8 +151,8 @@ const TRUSTED_CAS: { [key: string]: TrustedPublisher } = {
     website: 'https://dinoair.dev',
     verified: true,
     trustLevel: 'high',
-    addedAt: Date.now(),
-  },
+    addedAt: Date.now()
+  }
   // Add more trusted publishers here
 };
 
@@ -253,7 +253,7 @@ export class PluginSecurity {
           category: pattern.category,
           message: pattern.message,
           line,
-          column,
+          column
         });
 
         riskScore += pattern.score;
@@ -270,7 +270,7 @@ export class PluginSecurity {
       passed: riskScore < 50 && !issues.some((i) => i.type === 'critical'),
       riskScore,
       issues,
-      scanTimestamp: Date.now(),
+      scanTimestamp: Date.now()
     };
   }
 
@@ -286,7 +286,7 @@ export class PluginSecurity {
       issues.push({
         type: 'medium',
         category: 'code-quality',
-        message: 'Code appears to be obfuscated or heavily minified',
+        message: 'Code appears to be obfuscated or heavily minified'
       });
       score += 30;
     }
@@ -298,7 +298,7 @@ export class PluginSecurity {
       issues.push({
         type: 'low',
         category: 'code-quality',
-        message: 'Plugin is very large and complex',
+        message: 'Plugin is very large and complex'
       });
       score += 10;
     }
@@ -309,7 +309,7 @@ export class PluginSecurity {
       issues.push({
         type: 'medium',
         category: 'code-quality',
-        message: 'Multiple base64 encoded strings detected',
+        message: 'Multiple base64 encoded strings detected'
       });
       score += 25;
     }
@@ -324,7 +324,7 @@ export class PluginSecurity {
       issues.push({
         type: 'medium',
         category: 'network',
-        message: 'High network activity detected',
+        message: 'High network activity detected'
       });
       score += 20;
     }
@@ -343,7 +343,7 @@ export class PluginSecurity {
         this.base64ToArrayBuffer(signature.publicKey),
         {
           name: signature.algorithm,
-          hash: signature.hash,
+          hash: signature.hash
         },
         false,
         ['verify']
@@ -359,7 +359,7 @@ export class PluginSecurity {
       return await crypto.subtle.verify(
         {
           name: signature.algorithm,
-          saltLength: signature.algorithm === 'RSA-PSS' ? 32 : undefined,
+          saltLength: signature.algorithm === 'RSA-PSS' ? 32 : undefined
         },
         publicKey,
         signatureBuffer,
@@ -545,7 +545,7 @@ export class PluginSecurity {
       signatureValid,
       trusted,
       verificationIssues,
-      recommendation,
+      recommendation
     };
   }
 }

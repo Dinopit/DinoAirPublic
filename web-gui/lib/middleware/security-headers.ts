@@ -1,5 +1,4 @@
-import { NextResponse } from 'next/server';
-import type { NextRequest } from 'next/server';
+import type { NextResponse , NextRequest } from 'next/server';
 
 export function applySecurityHeaders(_request: NextRequest, response: NextResponse) {
   const nonce = Buffer.from(crypto.randomUUID()).toString('base64');
@@ -45,7 +44,7 @@ export function applySecurityHeaders(_request: NextRequest, response: NextRespon
     
     // Remove server information
     'X-Powered-By': '',
-    'Server': '',
+    'Server': ''
   };
 
   // Apply all headers to the response

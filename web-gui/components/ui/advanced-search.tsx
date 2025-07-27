@@ -1,6 +1,7 @@
 'use client';
 
 import React, { useState, useEffect, useCallback } from 'react';
+
 import { useDebounce } from '@/lib/hooks/useDebounce';
 
 export interface SearchFilter {
@@ -58,7 +59,7 @@ export function AdvancedSearch({
   className = '',
   showFilters = true,
   showSorting = true,
-  showPagination = true,
+  showPagination = true
 }: AdvancedSearchProps) {
   const [searchState, setSearchState] = useState<SearchState>({
     query: '',
@@ -66,7 +67,7 @@ export function AdvancedSearch({
     sortBy: 'relevance',
     sortOrder: 'desc',
     page: 1,
-    pageSize: 20,
+    pageSize: 20
   });
 
   const [results, setResults] = useState<SearchResult[]>([]);
@@ -85,7 +86,7 @@ export function AdvancedSearch({
     searchState.filters,
     searchState.sortBy,
     searchState.sortOrder,
-    searchState.page,
+    searchState.page
   ]);
 
   const performSearch = useCallback(async () => {
@@ -100,7 +101,7 @@ export function AdvancedSearch({
     try {
       const response = await onSearch({
         ...searchState,
-        query: debouncedQuery,
+        query: debouncedQuery
       });
 
       setResults(response.results);
@@ -120,7 +121,7 @@ export function AdvancedSearch({
     setSearchState((prev) => ({
       ...prev,
       ...updates,
-      page: updates.page !== undefined ? updates.page : 1, // Reset to first page unless explicitly set
+      page: updates.page !== undefined ? updates.page : 1 // Reset to first page unless explicitly set
     }));
   };
 
@@ -128,8 +129,8 @@ export function AdvancedSearch({
     updateSearchState({
       filters: {
         ...searchState.filters,
-        [filterId]: value,
-      },
+        [filterId]: value
+      }
     });
   };
 
@@ -260,7 +261,7 @@ export function AdvancedSearch({
         />
         <div className="absolute right-3 top-1/2 transform -translate-y-1/2">
           {isLoading ? (
-            <div className="animate-spin h-5 w-5 border-2 border-blue-500 border-t-transparent rounded-full"></div>
+            <div className="animate-spin h-5 w-5 border-2 border-blue-500 border-t-transparent rounded-full" />
           ) : (
             <svg
               className="h-5 w-5 text-gray-400"
@@ -368,7 +369,7 @@ export function AdvancedSearch({
           <button
             onClick={() =>
               updateSearchState({
-                sortOrder: searchState.sortOrder === 'asc' ? 'desc' : 'asc',
+                sortOrder: searchState.sortOrder === 'asc' ? 'desc' : 'asc'
               })
             }
             className="p-2 border rounded-md hover:bg-gray-50"

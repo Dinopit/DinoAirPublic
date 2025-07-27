@@ -1,10 +1,11 @@
-import type { Metadata, Viewport } from 'next'
-import { Inter } from 'next/font/google'
-import { ThemeProvider } from '@/components/ui/theme-provider'
-import { ToastNotifications } from '@/components/ui/toast-notifications'
-import './globals.css'
+import type { Metadata, Viewport } from 'next';
+import { Inter } from 'next/font/google';
 
-const inter = Inter({ subsets: ['latin'] })
+import { ThemeProvider } from '@/components/ui/theme-provider';
+import { ToastNotifications } from '@/components/ui/toast-notifications';
+import './globals.css';
+
+const inter = Inter({ subsets: ['latin'] });
 
 export const metadata: Metadata = {
   title: 'DinoAir - Local AI Platform',
@@ -17,32 +18,32 @@ export const metadata: Metadata = {
   appleWebApp: {
     capable: true,
     statusBarStyle: 'default',
-    title: 'DinoAir',
+    title: 'DinoAir'
   },
   formatDetection: {
     email: false,
     address: false,
-    telephone: false,
+    telephone: false
   },
   openGraph: {
     type: 'website',
     siteName: 'DinoAir',
     title: 'DinoAir - Local AI Platform',
-    description: 'A powerful, self-contained AI platform combining local language models with image generation capabilities',
+    description: 'A powerful, self-contained AI platform combining local language models with image generation capabilities'
   },
   twitter: {
     card: 'summary',
     title: 'DinoAir - Local AI Platform',
-    description: 'A powerful, self-contained AI platform combining local language models with image generation capabilities',
-  },
-}
+    description: 'A powerful, self-contained AI platform combining local language models with image generation capabilities'
+  }
+};
 
 export const viewport: Viewport = {
-  themeColor: '#3b82f6',
-}
+  themeColor: '#3b82f6'
+};
 
 export default function RootLayout({
-  children,
+  children
 }: {
   children: React.ReactNode
 }) {
@@ -63,5 +64,5 @@ export default function RootLayout({
         </ThemeProvider>
       </body>
     </html>
-  )
+  );
 }

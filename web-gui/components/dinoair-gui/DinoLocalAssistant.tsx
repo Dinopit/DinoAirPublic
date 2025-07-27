@@ -1,6 +1,5 @@
 'use client';
 
-import React, { useState, useEffect } from 'react';
 import { 
   FileText, 
   Calendar, 
@@ -13,6 +12,7 @@ import {
   RefreshCw,
   ExternalLink
 } from 'lucide-react';
+import React, { useState, useEffect } from 'react';
 
 interface DinoLocalAssistantProps {
   onExecuteCommand?: (tool: string, action: string, params: any) => Promise<any>;
@@ -66,9 +66,9 @@ const DinoLocalAssistant: React.FC<DinoLocalAssistantProps> = ({ onExecuteComman
         const response = await fetch('/api/dino-local', {
           method: 'POST',
           headers: {
-            'Content-Type': 'application/json',
+            'Content-Type': 'application/json'
           },
-          body: JSON.stringify({ tool, action, params }),
+          body: JSON.stringify({ tool, action, params })
         });
         return await response.json();
       } catch (error) {

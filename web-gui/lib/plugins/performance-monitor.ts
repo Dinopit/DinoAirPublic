@@ -85,7 +85,7 @@ const DEFAULT_THRESHOLDS: PerformanceThresholds = {
   maxMemoryUsage: 50 * 1024 * 1024, // 50MB
   maxApiCallsPerMinute: 100,
   maxErrorRate: 0.1, // 10% error rate
-  minHealthScore: 60, // 60% health score
+  minHealthScore: 60 // 60% health score
 };
 
 export class PluginPerformanceMonitor {
@@ -117,34 +117,34 @@ export class PluginPerformanceMonitor {
         min: Infinity,
         max: 0,
         total: 0,
-        count: 0,
+        count: 0
       },
       memory: {
         current: 0,
         peak: 0,
-        average: 0,
+        average: 0
       },
       apiCalls: {
         total: 0,
         byCategory: {},
         errors: 0,
-        averageResponseTime: 0,
+        averageResponseTime: 0
       },
       errors: {
         total: 0,
         critical: 0,
-        byType: {},
+        byType: {}
       },
       resources: {
         storageUsed: 0,
         networkRequests: 0,
         domModifications: 0,
-        eventListeners: 0,
+        eventListeners: 0
       },
       healthScore: 100,
       startTime: Date.now(),
       lastUpdate: Date.now(),
-      uptime: 0,
+      uptime: 0
     };
 
     this.metrics.set(pluginId, initialMetrics);
@@ -247,7 +247,7 @@ export class PluginPerformanceMonitor {
     errors.lastError = {
       message: error.message,
       timestamp: Date.now(),
-      stack: error.stack,
+      stack: error.stack
     };
 
     this.updateMetrics(pluginId);
@@ -256,7 +256,7 @@ export class PluginPerformanceMonitor {
     // Emit error event
     this.eventTarget.dispatchEvent(
       new CustomEvent('plugin-error', {
-        detail: { pluginId, error, critical },
+        detail: { pluginId, error, critical }
       })
     );
   }
@@ -330,7 +330,7 @@ export class PluginPerformanceMonitor {
 
       this.eventTarget.dispatchEvent(
         new CustomEvent('alert-acknowledged', {
-          detail: { alertId, alert },
+          detail: { alertId, alert }
         })
       );
     }
@@ -370,7 +370,7 @@ export class PluginPerformanceMonitor {
       totalAlerts: this.alerts.length,
       criticalAlerts: this.alerts.filter((a) => a.severity === 'critical').length,
       averageHealthScore: Math.round(avgHealth),
-      totalMemoryUsage: totalMemory,
+      totalMemoryUsage: totalMemory
     };
   }
 
@@ -525,7 +525,7 @@ export class PluginPerformanceMonitor {
       threshold,
       currentValue,
       timestamp: Date.now(),
-      acknowledged: false,
+      acknowledged: false
     };
 
     this.alerts.push(alert);
@@ -533,7 +533,7 @@ export class PluginPerformanceMonitor {
     // Emit alert event
     this.eventTarget.dispatchEvent(
       new CustomEvent('performance-alert', {
-        detail: alert,
+        detail: alert
       })
     );
   }

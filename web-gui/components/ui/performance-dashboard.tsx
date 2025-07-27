@@ -1,11 +1,14 @@
 'use client';
 
-import React, { useState, useEffect } from 'react';
 import { BarChart, Clock, Cpu, HardDrive, Activity, TrendingUp, MessageSquare, Users, AlertTriangle } from 'lucide-react';
-import { LineChart } from './charts/line-chart';
+import React, { useState, useEffect } from 'react';
+
+import type { AnalyticsData } from '../../types/analytics';
+
 import { BarChart as CustomBarChart } from './charts/bar-chart';
+import { LineChart } from './charts/line-chart';
 import { PieChart } from './charts/pie-chart';
-import { AnalyticsData } from '../../types/analytics';
+
 
 interface PerformanceStats {
   timestamp: string;
@@ -71,8 +74,8 @@ export default function PerformanceDashboard() {
       const apiKey = localStorage.getItem('dinoair-active-api-key') || 'dinoair_development_key';
       const response = await fetch('/api/v1/system/stats', {
         headers: {
-          'X-API-Key': apiKey,
-        },
+          'X-API-Key': apiKey
+        }
       });
 
       if (!response.ok) {
@@ -97,8 +100,8 @@ export default function PerformanceDashboard() {
       const apiKey = localStorage.getItem('dinoair-active-api-key') || 'dinoair_development_key';
       const response = await fetch(`/api/v1/analytics/dashboard?timeframe=${timeframe}&includeInsights=true`, {
         headers: {
-          'X-API-Key': apiKey,
-        },
+          'X-API-Key': apiKey
+        }
       });
 
       if (!response.ok) {
@@ -135,7 +138,7 @@ export default function PerformanceDashboard() {
   if (loading) {
     return (
       <div className="flex items-center justify-center h-64">
-        <div className="animate-spin rounded-full h-12 w-12 border-b-2 border-primary"></div>
+        <div className="animate-spin rounded-full h-12 w-12 border-b-2 border-primary" />
       </div>
     );
   }
@@ -196,7 +199,7 @@ export default function PerformanceDashboard() {
             { id: 'performance', label: 'Performance', icon: Activity },
             { id: 'analytics', label: 'Analytics', icon: BarChart },
             { id: 'users', label: 'Users', icon: Users },
-            { id: 'insights', label: 'Insights', icon: AlertTriangle },
+            { id: 'insights', label: 'Insights', icon: AlertTriangle }
           ].map((tab) => {
             const Icon = tab.icon;
             return (
@@ -383,7 +386,7 @@ export default function PerformanceDashboard() {
         <div className="space-y-6">
           {analyticsLoading ? (
             <div className="flex items-center justify-center h-64">
-              <div className="animate-spin rounded-full h-12 w-12 border-b-2 border-primary"></div>
+              <div className="animate-spin rounded-full h-12 w-12 border-b-2 border-primary" />
             </div>
           ) : analyticsData ? (
             <>
@@ -447,7 +450,7 @@ export default function PerformanceDashboard() {
                       { label: 'P50', value: analyticsData.metrics.chat.responseTimeMetrics.p50 },
                       { label: 'P95', value: analyticsData.metrics.chat.responseTimeMetrics.p95 },
                       { label: 'P99', value: analyticsData.metrics.chat.responseTimeMetrics.p99 },
-                      { label: 'Max', value: analyticsData.metrics.chat.responseTimeMetrics.max },
+                      { label: 'Max', value: analyticsData.metrics.chat.responseTimeMetrics.max }
                     ]}
                     title="Response Time Percentiles"
                     color="#10b981"
@@ -468,7 +471,7 @@ export default function PerformanceDashboard() {
         <div className="space-y-6">
           {analyticsLoading ? (
             <div className="flex items-center justify-center h-64">
-              <div className="animate-spin rounded-full h-12 w-12 border-b-2 border-primary"></div>
+              <div className="animate-spin rounded-full h-12 w-12 border-b-2 border-primary" />
             </div>
           ) : analyticsData ? (
             <>
@@ -501,7 +504,7 @@ export default function PerformanceDashboard() {
                   <CustomBarChart
                     data={analyticsData.metrics.user.userBehavior.mostActiveHours.slice(0, 12).map((hour: any) => ({
                       label: `${hour.hour}:00`,
-                      value: hour.activity,
+                      value: hour.activity
                     }))}
                     title="Activity by Hour"
                     color="#8b5cf6"
@@ -515,7 +518,7 @@ export default function PerformanceDashboard() {
                     data={analyticsData.metrics.user.userBehavior.featureUsage.map((feature: any) => ({
                       label: feature.feature,
                       value: feature.usage,
-                      color: feature.feature === 'chat' ? '#3b82f6' : feature.feature === 'image_generation' ? '#10b981' : '#f59e0b',
+                      color: feature.feature === 'chat' ? '#3b82f6' : feature.feature === 'image_generation' ? '#10b981' : '#f59e0b'
                     }))}
                     title="Feature Distribution"
                     height={300}
@@ -534,7 +537,7 @@ export default function PerformanceDashboard() {
         <div className="space-y-6">
           {analyticsLoading ? (
             <div className="flex items-center justify-center h-64">
-              <div className="animate-spin rounded-full h-12 w-12 border-b-2 border-primary"></div>
+              <div className="animate-spin rounded-full h-12 w-12 border-b-2 border-primary" />
             </div>
           ) : analyticsData && analyticsData.insights ? (
             <>

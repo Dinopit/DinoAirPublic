@@ -1,6 +1,7 @@
 'use client';
 
 import React, { useState } from 'react';
+
 import { PluginManager, PluginDeveloper } from '@/components/plugins';
 
 export default function PluginsPage() {

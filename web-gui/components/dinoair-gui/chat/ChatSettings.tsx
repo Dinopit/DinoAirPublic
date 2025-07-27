@@ -1,5 +1,6 @@
 import React from 'react';
-import { Personality } from '@/hooks/usePersonalities';
+
+import type { Personality } from '@/hooks/usePersonalities';
 
 interface ChatSettingsProps {
   showSettings: boolean;

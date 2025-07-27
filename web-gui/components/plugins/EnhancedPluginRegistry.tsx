@@ -73,7 +73,7 @@ export function EnhancedPluginRegistry({
   onInstall,
   onViewDetails,
   installedPlugins,
-  loading = false,
+  loading = false
 }: EnhancedPluginRegistryProps) {
   const [plugins, setPlugins] = useState<ExtendedPluginInfo[]>([]);
   const [filteredPlugins, setFilteredPlugins] = useState<ExtendedPluginInfo[]>([]);
@@ -122,7 +122,7 @@ export function EnhancedPluginRegistry({
           iconUrl: '/plugins/icons/ai-chat-enhancer.png',
           screenshots: [
             '/plugins/screenshots/ai-chat-enhancer-1.png',
-            '/plugins/screenshots/ai-chat-enhancer-2.png',
+            '/plugins/screenshots/ai-chat-enhancer-2.png'
           ],
           downloads: 15420,
           rating: 4.8,
@@ -137,7 +137,7 @@ export function EnhancedPluginRegistry({
           trustLevel: 'high',
           reviews: [],
           permissions: ['chat.read', 'chat.write', 'storage.write', 'ui.notifications'],
-          dangerousPermissions: [],
+          dangerousPermissions: []
         },
         {
           id: 'code-formatter',
@@ -167,7 +167,7 @@ export function EnhancedPluginRegistry({
           trustLevel: 'medium',
           reviews: [],
           permissions: ['chat.read', 'ui.modify', 'network.fetch'],
-          dangerousPermissions: ['ui.modify'],
+          dangerousPermissions: ['ui.modify']
         },
         {
           id: 'weather-widget',
@@ -193,8 +193,8 @@ export function EnhancedPluginRegistry({
           trustLevel: 'high',
           reviews: [],
           permissions: ['network.fetch', 'ui.notifications', 'sensitive.location'],
-          dangerousPermissions: ['sensitive.location'],
-        },
+          dangerousPermissions: ['sensitive.location']
+        }
       ];
 
       setPlugins(samplePlugins);
@@ -303,7 +303,7 @@ export function EnhancedPluginRegistry({
   if (loading || registryLoading) {
     return (
       <div className="flex items-center justify-center py-12">
-        <div className="animate-spin rounded-full h-8 w-8 border-b-2 border-blue-600"></div>
+        <div className="animate-spin rounded-full h-8 w-8 border-b-2 border-blue-600" />
         <span className="ml-3 text-gray-600">Loading plugins...</span>
       </div>
     );

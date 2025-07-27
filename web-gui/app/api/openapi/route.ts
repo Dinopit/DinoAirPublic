@@ -1,4 +1,6 @@
-import { NextRequest, NextResponse } from 'next/server';
+import type { NextRequest} from 'next/server';
+import { NextResponse } from 'next/server';
+
 import getApiSpec from '@/lib/openapi-spec';
 
 export async function GET(_request: NextRequest) {
@@ -13,8 +15,8 @@ export async function GET(_request: NextRequest) {
         'Cache-Control': 'public, max-age=3600', // Cache for 1 hour
         'Access-Control-Allow-Origin': '*',
         'Access-Control-Allow-Methods': 'GET, OPTIONS',
-        'Access-Control-Allow-Headers': 'Content-Type',
-      },
+        'Access-Control-Allow-Headers': 'Content-Type'
+      }
     });
   } catch (error) {
     console.error('Error generating OpenAPI spec:', error);
@@ -31,7 +33,7 @@ export async function OPTIONS(_request: NextRequest) {
     headers: {
       'Access-Control-Allow-Origin': '*',
       'Access-Control-Allow-Methods': 'GET, OPTIONS',
-      'Access-Control-Allow-Headers': 'Content-Type',
-    },
+      'Access-Control-Allow-Headers': 'Content-Type'
+    }
   });
 }

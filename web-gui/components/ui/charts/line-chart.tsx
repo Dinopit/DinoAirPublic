@@ -1,6 +1,5 @@
 'use client';
 
-import React from 'react';
 import {
   Chart as ChartJS,
   CategoryScale,
@@ -12,8 +11,10 @@ import {
   Legend,
   Filler,
 } from 'chart.js';
+import React from 'react';
 import { Line } from 'react-chartjs-2';
-import { TimeSeriesDataPoint } from '../../../types/analytics';
+
+import type { TimeSeriesDataPoint } from '../../../types/analytics';
 
 ChartJS.register(
   CategoryScale,
@@ -67,7 +68,7 @@ export function LineChart({
   };
 
   const isMobile = typeof window !== 'undefined' && window.innerWidth < 768;
-  
+
   const options = {
     responsive: true,
     maintainAspectRatio: false,
@@ -156,10 +157,7 @@ export function LineChart({
   };
 
   return (
-    <div 
-      style={{ height: `${height}px` }}
-      className="w-full"
-    >
+    <div style={{ height: `${height}px` }} className="w-full">
       <Line data={chartData} options={options} />
     </div>
   );

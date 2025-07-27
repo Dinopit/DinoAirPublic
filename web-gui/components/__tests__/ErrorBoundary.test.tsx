@@ -1,4 +1,5 @@
 import React from 'react';
+
 import { render, screen, fireEvent } from '../../tests/utils/test-utils';
 import ErrorBoundary from '../ErrorBoundary';
 
@@ -104,7 +105,7 @@ describe('ErrorBoundary', () => {
     const reloadSpy = jest.fn();
     Object.defineProperty(window, 'location', {
       value: { reload: reloadSpy },
-      writable: true,
+      writable: true
     });
 
     render(

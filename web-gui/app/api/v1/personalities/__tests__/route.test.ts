@@ -1,7 +1,9 @@
-import { GET, OPTIONS } from '../route';
-import { createMockRequest, parseApiResponse, createMockMiddlewareResult } from '@/tests/utils/api-test-utils';
 import fs from 'fs/promises';
 import path from 'path';
+
+import { createMockRequest, parseApiResponse, createMockMiddlewareResult } from '@/tests/utils/api-test-utils';
+
+import { GET, OPTIONS } from '../route';
 
 // Mock the dependencies
 jest.mock('@/lib/api-utils', () => ({
@@ -11,8 +13,8 @@ jest.mock('@/lib/api-utils', () => ({
       status: 200,
       headers: {
         'Content-Type': 'application/json',
-        'X-Client-ID': clientId,
-      },
+        'X-Client-ID': clientId
+      }
     });
   }),
   handleOptionsRequest: jest.fn(() => {
@@ -21,21 +23,21 @@ jest.mock('@/lib/api-utils', () => ({
       headers: {
         'Access-Control-Allow-Origin': '*',
         'Access-Control-Allow-Methods': 'GET, POST, PUT, DELETE, OPTIONS',
-        'Access-Control-Allow-Headers': 'Content-Type, Authorization',
-      },
+        'Access-Control-Allow-Headers': 'Content-Type, Authorization'
+      }
     });
   }),
   createErrorResponse: jest.fn((message, status) => {
     return new Response(JSON.stringify({ error: message }), {
       status,
-      headers: { 'Content-Type': 'application/json' },
+      headers: { 'Content-Type': 'application/json' }
     });
-  }),
+  })
 }));
 
 jest.mock('@/lib/api-cache', () => ({
   withCache: jest.fn(async (_key, fn) => fn()),
-  generateCacheKey: jest.fn((key) => `cache-${key}`),
+  generateCacheKey: jest.fn((key) => `cache-${key}`)
 }));
 
 // Mock fs
@@ -61,14 +63,14 @@ describe('/api/v1/personalities', () => {
           name: 'Assistant',
           description: 'A helpful AI assistant',
           system_prompt: 'You are a helpful AI assistant.',
-          temperature: 0.7,
+          temperature: 0.7
         },
         {
           name: 'Creative',
           description: 'Creative and imaginative',
           systemPrompt: 'You are creative.',
-          top_p: 0.9,
-        },
+          top_p: 0.9
+        }
       ];
 
       apiMiddleware.mockResolvedValue(createMockMiddlewareResult());
@@ -99,7 +101,7 @@ describe('/api/v1/personalities', () => {
         systemPrompt: 'You are a helpful AI assistant.',
         temperature: 0.7,
         topP: undefined,
-        topK: undefined,
+        topK: undefined
       });
       expect(result.body.personalities[1]).toEqual({
         id: 'creative',
@@ -108,7 +110,7 @@ describe('/api/v1/personalities', () => {
         systemPrompt: 'You are creative.',
         temperature: undefined,
         topP: 0.9,
-        topK: undefined,
+        topK: undefined
       });
     });
 
@@ -126,7 +128,7 @@ describe('/api/v1/personalities', () => {
         'assistant',
         'creative',
         'technical',
-        'witty',
+        'witty'
       ]);
     });
 
@@ -135,7 +137,7 @@ describe('/api/v1/personalities', () => {
         name: 'Test',
         system_prompt: 'System prompt text',
         top_p: 0.8,
-        top_k: 40,
+        top_k: 40
       };
 
       apiMiddleware.mockResolvedValue(createMockMiddlewareResult());
@@ -153,7 +155,7 @@ describe('/api/v1/personalities', () => {
         systemPrompt: 'System prompt text',
         temperature: undefined,
         topP: 0.8,
-        topK: 40,
+        topK: 40
       });
     });
 
@@ -186,13 +188,13 @@ describe('/api/v1/personalities', () => {
 
     it('should return error when not authorized', async () => {
       const unauthorizedResponse = new Response(JSON.stringify({ error: 'Unauthorized' }), {
-        status: 401,
+        status: 401
       });
 
       apiMiddleware.mockResolvedValue({
         authorized: false,
         rateLimited: false,
-        response: unauthorizedResponse,
+        response: unauthorizedResponse
       });
 
       const request = createMockRequest();
@@ -206,13 +208,13 @@ describe('/api/v1/personalities', () => {
 
     it('should return error when rate limited', async () => {
       const rateLimitResponse = new Response(JSON.stringify({ error: 'Rate limit exceeded' }), {
-        status: 429,
+        status: 429
       });
 
       apiMiddleware.mockResolvedValue({
         authorized: true,
         rateLimited: true,
-        response: rateLimitResponse,
+        response: rateLimitResponse
       });
 
       const request = createMockRequest();
@@ -241,7 +243,7 @@ describe('/api/v1/personalities', () => {
     it('should use filename as personality ID', async () => {
       const mockPersonality = {
         name: 'Different Name',
-        description: 'Test description',
+        description: 'Test description'
       };
 
       apiMiddleware.mockResolvedValue(createMockMiddlewareResult());
@@ -259,7 +261,7 @@ describe('/api/v1/personalities', () => {
     it('should use filename as name if name field is missing', async () => {
       const mockPersonality = {
         description: 'Test description',
-        system_prompt: 'Test prompt',
+        system_prompt: 'Test prompt'
       };
 
       apiMiddleware.mockResolvedValue(createMockMiddlewareResult());

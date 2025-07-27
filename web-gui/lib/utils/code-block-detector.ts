@@ -94,17 +94,17 @@ export class CodeBlockDetector {
     
     // Look for function/class/component names
     const functionMatch = lines[0]?.match(/(?:function|const|let|var|def|class|interface|type|export\s+default\s+function)\s+(\w+)/);
-    if (functionMatch && functionMatch[1]) {
+    if (functionMatch?.[1]) {
       baseName = functionMatch[1];
     } else {
       // Look for React component
       const componentMatch = codeBlock.code.match(/(?:const|function|class)\s+(\w+)\s*[:=]?\s*(?:\(|React\.FC|Component)/);
-      if (componentMatch && componentMatch[1]) {
+      if (componentMatch?.[1]) {
         baseName = componentMatch[1];
       } else {
         // Look for Python class/function
         const pythonMatch = codeBlock.code.match(/(?:class|def)\s+(\w+)/);
-        if (pythonMatch && pythonMatch[1]) {
+        if (pythonMatch?.[1]) {
           baseName = pythonMatch[1];
         }
       }

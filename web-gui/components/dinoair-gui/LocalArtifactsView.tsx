@@ -1,11 +1,14 @@
 'use client';
 
 import React, { useState, useEffect, useMemo } from 'react';
-import { versionControl } from '@/lib/utils/artifact-version-control';
+
 import { ArtifactExporter } from '@/lib/utils/artifact-export';
-import { SkeletonCard } from '../ui/skeleton';
-import { initializePrism } from '@/lib/utils/prism-initializer';
+import { versionControl } from '@/lib/utils/artifact-version-control';
 import { getFileTypeIcon } from '@/lib/utils/file-type-utils';
+import { initializePrism } from '@/lib/utils/prism-initializer';
+
+import { SkeletonCard } from '../ui/skeleton';
+
 
 interface Artifact {
   id: string;
@@ -84,7 +87,7 @@ const LocalArtifactsView = () => {
         try {
           // Ensure Prism is loaded
           const prismInstance = await initializePrism();
-          if (prismInstance && prismInstance.highlightAll) {
+          if (prismInstance?.highlightAll) {
             // Use setTimeout to ensure DOM is ready
             setTimeout(() => {
               try {

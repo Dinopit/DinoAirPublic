@@ -364,7 +364,7 @@ export function circuitBreaker(config: CircuitBreakerConfig) {
     };
     
     // Attach breaker for inspection
-    (descriptor.value as any).circuitBreaker = breaker;
+    (descriptor.value).circuitBreaker = breaker;
     
     return descriptor;
   };

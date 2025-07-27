@@ -1,10 +1,12 @@
 'use client';
 
 import React, { useState, useEffect, useRef, useCallback } from 'react';
+
+import type { 
+  CollaborationUser, 
+  CollaborationOperation} from '@/lib/websocket/collaboration-client';
 import { 
   CollaborationClient, 
-  CollaborationUser, 
-  CollaborationOperation, 
   OperationalTransform 
 } from '@/lib/websocket/collaboration-client';
 
@@ -29,7 +31,7 @@ export function CollaborativeEditor({
   onUsersChange,
   className = '',
   placeholder = 'Start typing...',
-  readOnly = false,
+  readOnly = false
 }: CollaborativeEditorProps) {
   const [content, setContent] = useState(initialContent);
   const [activeUsers, setActiveUsers] = useState<CollaborationUser[]>([]);
@@ -166,8 +168,8 @@ export function CollaborativeEditor({
       y: rect.top,
       selection: {
         start: textarea.selectionStart,
-        end: textarea.selectionEnd,
-      },
+        end: textarea.selectionEnd
+      }
     });
   }, [isConnected]);
 
@@ -214,7 +216,7 @@ export function CollaborativeEditor({
         position: prefixEnd,
         content: newContent.slice(prefixEnd),
         userId,
-        timestamp: new Date().toISOString(),
+        timestamp: new Date().toISOString()
       };
     }
 
@@ -226,7 +228,7 @@ export function CollaborativeEditor({
         position: prefixEnd,
         length: oldContent.length - prefixEnd,
         userId,
-        timestamp: new Date().toISOString(),
+        timestamp: new Date().toISOString()
       };
     }
 
@@ -259,7 +261,7 @@ export function CollaborativeEditor({
         position: prefixEnd,
         content: insertedContent,
         userId,
-        timestamp: new Date().toISOString(),
+        timestamp: new Date().toISOString()
       };
     } else if (deletedLength > 0) {
       // Pure deletion: remove characters from the middle
@@ -268,7 +270,7 @@ export function CollaborativeEditor({
         position: prefixEnd,
         length: deletedLength,
         userId,
-        timestamp: new Date().toISOString(),
+        timestamp: new Date().toISOString()
       };
     } else if (insertedContent.length > 0) {
       // Pure insertion: add characters in the middle
@@ -277,7 +279,7 @@ export function CollaborativeEditor({
         position: prefixEnd,
         content: insertedContent,
         userId,
-        timestamp: new Date().toISOString(),
+        timestamp: new Date().toISOString()
       };
     }
 
@@ -358,7 +360,7 @@ export function CollaborativeEditor({
                 left: user.cursor!.x,
                 top: user.cursor!.y,
                 borderLeft: `2px solid ${user.color}`,
-                height: '20px',
+                height: '20px'
               }}
             >
               <div
@@ -419,7 +421,7 @@ export function UserPresence({ users, currentUserId, maxVisible = 5 }: UserPrese
             {/* Tooltip */}
             <div className="absolute bottom-full left-1/2 transform -translate-x-1/2 mb-2 px-2 py-1 bg-gray-800 text-white text-xs rounded whitespace-nowrap opacity-0 group-hover:opacity-100 transition-opacity pointer-events-none">
               {user.name}
-              <div className="absolute top-full left-1/2 transform -translate-x-1/2 border-4 border-transparent border-t-gray-800"></div>
+              <div className="absolute top-full left-1/2 transform -translate-x-1/2 border-4 border-transparent border-t-gray-800" />
             </div>
           </div>
         ))}

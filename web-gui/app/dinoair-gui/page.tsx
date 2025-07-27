@@ -1,7 +1,8 @@
 'use client';
 
-import React, { Suspense } from 'react';
 import dynamic from 'next/dynamic';
+import React, { Suspense } from 'react';
+
 import MemoryMonitor from '@/components/ui/memory-monitor';
 
 // Use optimized LocalGui with better memory management
@@ -13,10 +14,10 @@ const OptimizedLocalGui = dynamic(() => import('@/components/dinoair-gui/Optimiz
         <div className="text-6xl animate-bounce">🦕</div>
         <h1 className="text-2xl font-bold">Loading DinoAir...</h1>
         <p className="text-muted-foreground">Initializing optimized interface</p>
-        <div className="w-8 h-8 border-4 border-primary border-t-transparent rounded-full animate-spin mx-auto"></div>
+        <div className="w-8 h-8 border-4 border-primary border-t-transparent rounded-full animate-spin mx-auto" />
       </div>
     </div>
-  ),
+  )
 });
 
 export default function DinoAirGUIPage() {

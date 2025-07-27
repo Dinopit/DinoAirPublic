@@ -1,4 +1,6 @@
-import { NextRequest, NextResponse } from 'next/server';
+import type { NextRequest} from 'next/server';
+import { NextResponse } from 'next/server';
+
 import { withApiAuth } from './api-auth';
 
 declare const process: any;
@@ -17,9 +19,6 @@ export function withAnalyticsAuth(handler: (request: NextRequest) => Promise<Nex
         );
       }
 
-      const rateLimitKey = `analytics:${request.headers.get('x-forwarded-for') || 'unknown'}`;
-      const rateLimitWindow = 60 * 1000;
-      const rateLimitMax = 20;
 
       return await handler(request);
     } catch (error) {

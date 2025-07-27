@@ -54,7 +54,7 @@ export function PluginConfigDialog({
   pluginName,
   schema,
   currentConfig,
-  onSave,
+  onSave
 }: PluginConfigDialogProps) {
   const [config, setConfig] = useState(currentConfig || {});
   const [errors, setErrors] = useState<{ [key: string]: string }>({});
@@ -397,7 +397,7 @@ export function PluginConfigDialog({
               className="px-4 py-2 bg-blue-600 text-white hover:bg-blue-700 disabled:bg-gray-400 rounded-lg transition-colors flex items-center gap-2"
             >
               {saving && (
-                <div className="w-4 h-4 border-2 border-white border-t-transparent rounded-full animate-spin"></div>
+                <div className="w-4 h-4 border-2 border-white border-t-transparent rounded-full animate-spin" />
               )}
               {saving ? 'Saving...' : 'Save Configuration'}
             </button>

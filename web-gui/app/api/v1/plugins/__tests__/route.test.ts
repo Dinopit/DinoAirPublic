@@ -1,4 +1,5 @@
 import { NextRequest } from 'next/server';
+
 import { GET, POST } from '../route';
 
 // Mock the auth middleware

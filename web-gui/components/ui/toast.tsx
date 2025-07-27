@@ -1,7 +1,7 @@
 'use client';
 
-import React, { createContext, useContext, useState, useCallback } from 'react';
 import { X, CheckCircle, AlertCircle, Info, AlertTriangle } from 'lucide-react';
+import React, { createContext, useContext, useState, useCallback } from 'react';
 
 export type ToastType = 'success' | 'error' | 'info' | 'warning';
 
@@ -37,7 +37,7 @@ export const ToastProvider: React.FC<{ children: React.ReactNode }> = ({ childre
     const newToast: Toast = {
       id,
       duration: 5000,
-      ...toast,
+      ...toast
     };
     setToasts((prev) => [...prev, newToast]);
 
@@ -98,14 +98,14 @@ const ToastItem: React.FC<ToastItemProps> = ({ toast, onRemove }) => {
     success: <CheckCircle className="w-5 h-5 text-green-500" />,
     error: <AlertCircle className="w-5 h-5 text-red-500" />,
     info: <Info className="w-5 h-5 text-blue-500" />,
-    warning: <AlertTriangle className="w-5 h-5 text-yellow-500" />,
+    warning: <AlertTriangle className="w-5 h-5 text-yellow-500" />
   };
 
   const backgrounds = {
     success: 'bg-green-50 dark:bg-green-900/20 border-green-200 dark:border-green-800',
     error: 'bg-red-50 dark:bg-red-900/20 border-red-200 dark:border-red-800',
     info: 'bg-blue-50 dark:bg-blue-900/20 border-blue-200 dark:border-blue-800',
-    warning: 'bg-yellow-50 dark:bg-yellow-900/20 border-yellow-200 dark:border-yellow-800',
+    warning: 'bg-yellow-50 dark:bg-yellow-900/20 border-yellow-200 dark:border-yellow-800'
   };
 
   return (
@@ -184,5 +184,5 @@ export const toast = {
       ...(message !== undefined && { message }),
       ...(duration !== undefined && { duration })
     });
-  },
+  }
 };

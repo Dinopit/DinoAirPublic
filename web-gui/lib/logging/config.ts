@@ -3,7 +3,8 @@
  * Centralized configuration for logging system across the application
  */
 
-import { LogLevel, LoggerConfig } from './logger';
+import type { LoggerConfig } from './logger';
+import { LogLevel } from './logger';
 
 export interface DinoAirLoggingConfig extends LoggerConfig {
   // Application-specific settings

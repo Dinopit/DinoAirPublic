@@ -1,7 +1,11 @@
 'use client';
 
-import React, { useState, useEffect } from 'react';
 import { Download, X, AlertCircle, Clock } from 'lucide-react';
+import React, { useState, useEffect } from 'react';
+
+import type {
+  UpdateInfo,
+  ChangelogEntry} from '@/lib/utils/update-checker';
 import {
   checkForUpdates,
   getChangelog,
@@ -11,10 +15,9 @@ import {
   isUpdateDismissed,
   getUpdatePreferences,
   saveUpdatePreferences,
-  UpdateInfo,
-  ChangelogEntry,
   CURRENT_VERSION
 } from '@/lib/utils/update-checker';
+
 import { useToast } from './toast';
 
 export default function UpdateNotification() {

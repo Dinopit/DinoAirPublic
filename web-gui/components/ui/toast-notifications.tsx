@@ -1,8 +1,9 @@
 'use client';
 
-import React, { useEffect, useRef } from 'react';
-import { useToastStore, type Toast } from '@/lib/stores/toast-store';
 import { X, AlertCircle, CheckCircle, Info, AlertTriangle } from 'lucide-react';
+import React, { useEffect, useRef } from 'react';
+
+import { useToastStore, type Toast } from '@/lib/stores/toast-store';
 
 // Toast notification component
 const ToastNotification: React.FC<{ toast: Toast }> = ({ toast }) => {
@@ -42,7 +43,7 @@ const ToastNotification: React.FC<{ toast: Toast }> = ({ toast }) => {
   };
 
   const getToastStyles = () => {
-    const baseStyles = "relative flex items-start gap-3 p-4 rounded-lg shadow-lg border transition-all duration-300";
+    const baseStyles = 'relative flex items-start gap-3 p-4 rounded-lg shadow-lg border transition-all duration-300';
     
     switch (toast.type) {
       case 'error':
@@ -58,7 +59,7 @@ const ToastNotification: React.FC<{ toast: Toast }> = ({ toast }) => {
   };
 
   const getButtonStyles = (variant?: string) => {
-    const baseStyles = "px-3 py-1 text-sm font-medium rounded transition-colors";
+    const baseStyles = 'px-3 py-1 text-sm font-medium rounded transition-colors';
     
     if (variant === 'destructive') {
       return `${baseStyles} bg-red-600 text-white hover:bg-red-700 dark:bg-red-700 dark:hover:bg-red-800`;
@@ -201,7 +202,7 @@ export const useToast = () => {
     addToast,
     removeToast,
     clearAllToasts,
-    showError,
+    showError
   };
 };
 

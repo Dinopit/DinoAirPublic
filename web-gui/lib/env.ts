@@ -41,7 +41,7 @@ export const env = createEnv({
     
     // Performance
     ENABLE_CACHE: z.coerce.boolean().default(true),
-    CACHE_TTL: z.coerce.number().default(3600), // 1 hour
+    CACHE_TTL: z.coerce.number().default(3600) // 1 hour
   },
 
   /**
@@ -74,7 +74,7 @@ export const env = createEnv({
     NEXT_PUBLIC_ENABLE_ANALYTICS: z.coerce.boolean().default(false),
     
     // Development
-    NEXT_PUBLIC_DEBUG_MODE: z.coerce.boolean().default(false),
+    NEXT_PUBLIC_DEBUG_MODE: z.coerce.boolean().default(false)
   },
 
   /**
@@ -113,7 +113,7 @@ export const env = createEnv({
     NEXT_PUBLIC_MAX_MESSAGE_LENGTH: process.env.NEXT_PUBLIC_MAX_MESSAGE_LENGTH,
     NEXT_PUBLIC_GA_ID: process.env.NEXT_PUBLIC_GA_ID,
     NEXT_PUBLIC_ENABLE_ANALYTICS: process.env.NEXT_PUBLIC_ENABLE_ANALYTICS,
-    NEXT_PUBLIC_DEBUG_MODE: process.env.NEXT_PUBLIC_DEBUG_MODE,
+    NEXT_PUBLIC_DEBUG_MODE: process.env.NEXT_PUBLIC_DEBUG_MODE
   },
 
   /**
@@ -124,7 +124,7 @@ export const env = createEnv({
   /**
    * Empty string is treated as undefined
    */
-  emptyStringAsUndefined: true,
+  emptyStringAsUndefined: true
 });
 
 // Export typed environment variables

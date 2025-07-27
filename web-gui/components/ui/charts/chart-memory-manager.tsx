@@ -2,7 +2,11 @@
 
 import React, { useEffect, useRef } from 'react';
 
-declare const Chart: any;
+declare const process: any;
+
+interface IChartInstance {
+  destroy: () => void;
+}
 
 interface ChartMemoryManagerProps {
   children: React.ReactNode;
@@ -10,13 +14,16 @@ interface ChartMemoryManagerProps {
 }
 
 export function ChartMemoryManager({ children, maxCharts = 5 }: ChartMemoryManagerProps) {
-  const chartInstancesRef = useRef<any[]>([]);
+  const chartInstancesRef = useRef<IChartInstance[]>([]);
 
   useEffect(() => {
     const cleanupOldCharts = () => {
       if (chartInstancesRef.current.length > maxCharts) {
-        const chartsToDestroy = chartInstancesRef.current.splice(0, chartInstancesRef.current.length - maxCharts);
-        chartsToDestroy.forEach(chart => {
+        const chartsToDestroy = chartInstancesRef.current.splice(
+          0,
+          chartInstancesRef.current.length - maxCharts
+        );
+        chartsToDestroy.forEach((chart) => {
           try {
             chart.destroy();
           } catch (error) {
@@ -30,7 +37,7 @@ export function ChartMemoryManager({ children, maxCharts = 5 }: ChartMemoryManag
 
     return () => {
       clearInterval(interval);
-      chartInstancesRef.current.forEach(chart => {
+      chartInstancesRef.current.forEach((chart) => {
         try {
           chart.destroy();
         } catch (error) {
@@ -41,26 +48,18 @@ export function ChartMemoryManager({ children, maxCharts = 5 }: ChartMemoryManag
     };
   }, [maxCharts]);
 
-  const registerChart = (chart: Chart) => {
-    chartInstancesRef.current.push(chart);
-  };
-
-  return (
-    <div data-chart-manager="true">
-      {children}
-    </div>
-  );
+  return <div data-chart-manager="true">{children}</div>;
 }
 
 export function useChartMemoryManager() {
-  const chartInstancesRef = useRef<any[]>([]);
+  const chartInstancesRef = useRef<IChartInstance[]>([]);
 
-  const registerChart = (chart: any) => {
+  const registerChart = (chart: IChartInstance) => {
     chartInstancesRef.current.push(chart);
   };
 
   const cleanup = () => {
-    chartInstancesRef.current.forEach(chart => {
+    chartInstancesRef.current.forEach((chart) => {
       try {
         chart.destroy();
       } catch (error) {

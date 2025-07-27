@@ -4,6 +4,7 @@
  */
 
 import React from 'react';
+
 import { ChatValidator } from '@/lib/validation/chat-validation';
 
 interface CharacterCounterProps {
@@ -15,7 +16,7 @@ interface CharacterCounterProps {
 export const CharacterCounter: React.FC<CharacterCounterProps> = ({
   content,
   className = '',
-  showCount = true,
+  showCount = true
 }) => {
   const status = ChatValidator.getCharacterCountStatus(content);
 

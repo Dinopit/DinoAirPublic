@@ -1,8 +1,10 @@
 'use client';
 
-import React from 'react';
 import { Wifi, WifiOff, Clock, X } from 'lucide-react';
+import React from 'react';
+
 import { useOfflineStatus } from '../../hooks/useOfflineStatus';
+
 import { useToast } from './toast';
 
 export const OfflineIndicator = () => {

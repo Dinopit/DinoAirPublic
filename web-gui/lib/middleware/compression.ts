@@ -1,6 +1,9 @@
-import { NextRequest, NextResponse } from 'next/server';
-import { gzip as gzipCallback } from 'zlib';
 import { promisify } from 'util';
+import { gzip as gzipCallback } from 'zlib';
+
+import type { NextRequest} from 'next/server';
+import { NextResponse } from 'next/server';
+
 
 const gzip = promisify(gzipCallback);
 
@@ -32,7 +35,7 @@ export async function compressResponse(
   const opts = { ...DEFAULT_OPTIONS, ...options };
   
   // Check if compression should be applied
-  if (!opts.filter || !opts.filter(request)) {
+  if (!opts.filter?.(request)) {
     return response;
   }
   
@@ -57,7 +60,7 @@ export async function compressResponse(
     'application/x-font-ttf',
     'application/x-font-otf',
     'application/x-font-woff',
-    'image/svg+xml',
+    'image/svg+xml'
   ];
   
   const shouldCompress = compressibleTypes.some(type => contentType.includes(type));
@@ -73,7 +76,7 @@ export async function compressResponse(
     const compressedResponse = new NextResponse(compressed, {
       status: response.status,
       statusText: response.statusText,
-      headers: new Headers(response.headers),
+      headers: new Headers(response.headers)
     });
     
     // Update headers
@@ -94,6 +97,6 @@ export function configureBrotliCompression() {
   // Files are pre-compressed during build with .br extension
   return {
     brotli: true,
-    gzip: true,
+    gzip: true
   };
 }

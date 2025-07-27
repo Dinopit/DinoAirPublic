@@ -1,7 +1,7 @@
 export default function DinoAirGUILayout({
-  children,
+  children
 }: {
   children: React.ReactNode
 }) {
-  return <>{children}</>
+  return <>{children}</>;
 }

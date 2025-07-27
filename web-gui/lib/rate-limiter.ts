@@ -1,4 +1,5 @@
-import { NextRequest } from 'next/server';
+import type { NextRequest } from 'next/server';
+
 import { getApiKeyConfig } from './api-auth';
 
 interface RateLimitEntry {
@@ -49,14 +50,14 @@ export function checkRateLimit(request: NextRequest, identifier: string): RateLi
     // First request in this window
     rateLimitStore.set(key, {
       count: 1,
-      resetTime: now + windowMs,
+      resetTime: now + windowMs
     });
     
     return {
       allowed: true,
       limit,
       remaining: limit - 1,
-      reset: Math.floor((now + windowMs) / 1000),
+      reset: Math.floor((now + windowMs) / 1000)
     };
   }
   
@@ -66,7 +67,7 @@ export function checkRateLimit(request: NextRequest, identifier: string): RateLi
       allowed: false,
       limit,
       remaining: 0,
-      reset: Math.floor(entry.resetTime / 1000),
+      reset: Math.floor(entry.resetTime / 1000)
     };
   }
   
@@ -78,7 +79,7 @@ export function checkRateLimit(request: NextRequest, identifier: string): RateLi
     allowed: true,
     limit,
     remaining: limit - entry.count,
-    reset: Math.floor(entry.resetTime / 1000),
+    reset: Math.floor(entry.resetTime / 1000)
   };
 }
 
@@ -91,7 +92,7 @@ export function getRateLimitHeaders(result: RateLimitResult): Record<string, str
   return {
     'X-RateLimit-Limit': result.limit.toString(),
     'X-RateLimit-Remaining': result.remaining.toString(),
-    'X-RateLimit-Reset': result.reset.toString(),
+    'X-RateLimit-Reset': result.reset.toString()
   };
 }
 

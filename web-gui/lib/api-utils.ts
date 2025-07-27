@@ -1,11 +1,13 @@
-import { NextRequest, NextResponse } from 'next/server';
+import type { NextRequest} from 'next/server';
+import { NextResponse } from 'next/server';
+
 import { validateApiKey, updateApiKeyUsage } from './api-auth';
 import { checkRateLimit, getRateLimitHeaders, getClientIdentifier } from './rate-limiter';
 
 export const corsHeaders = {
   'Access-Control-Allow-Origin': '*',
   'Access-Control-Allow-Methods': 'GET, POST, PUT, DELETE, OPTIONS',
-  'Access-Control-Allow-Headers': 'Content-Type, Authorization',
+  'Access-Control-Allow-Headers': 'Content-Type, Authorization'
 };
 
 export interface ApiMiddlewareResult {
@@ -50,7 +52,7 @@ export async function apiMiddleware(request: NextRequest): Promise<ApiMiddleware
           headers: {
             ...corsHeaders,
             ...getRateLimitHeaders(rateLimitResult),
-            'Retry-After': (rateLimitResult.reset - Math.floor(Date.now() / 1000)).toString(),
+            'Retry-After': (rateLimitResult.reset - Math.floor(Date.now() / 1000)).toString()
           }
         }
       )

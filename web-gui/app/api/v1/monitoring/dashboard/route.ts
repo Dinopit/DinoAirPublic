@@ -1,4 +1,5 @@
 import { NextResponse } from 'next/server';
+
 import { getAPMInstance } from '@/lib/monitoring/apm';
 
 interface ServiceStatus {
@@ -47,20 +48,20 @@ export async function GET() {
         responseTime: performanceMetrics.responseTime,
         lastCheck: new Date().toISOString(),
         uptime: performanceMetrics.uptime,
-        version: process.env.NEXT_PUBLIC_VERSION || '1.0.0',
+        version: process.env.NEXT_PUBLIC_VERSION || '1.0.0'
       },
       {
         name: 'Ollama',
         status: await checkOllamaHealth(),
         responseTime: await getServiceResponseTime('ollama'),
-        lastCheck: new Date().toISOString(),
+        lastCheck: new Date().toISOString()
       },
       {
         name: 'ComfyUI',
         status: await checkComfyUIHealth(),
         responseTime: await getServiceResponseTime('comfyui'),
-        lastCheck: new Date().toISOString(),
-      },
+        lastCheck: new Date().toISOString()
+      }
     ];
 
     const memUsage = performanceMetrics.memoryUsage;
@@ -74,12 +75,12 @@ export async function GET() {
       memoryUsage: {
         used: memUsage.heapUsed,
         total: memUsage.heapTotal,
-        percentage: (memUsage.heapUsed / memUsage.heapTotal) * 100,
+        percentage: (memUsage.heapUsed / memUsage.heapTotal) * 100
       },
       cpuUsage: {
         user: cpuUsage.user / 1000000, // Convert microseconds to seconds
-        system: cpuUsage.system / 1000000,
-      },
+        system: cpuUsage.system / 1000000
+      }
     };
 
     const alerts: Alert[] = generateAlerts(metrics, services);
@@ -91,21 +92,21 @@ export async function GET() {
       alerts,
       apm: {
         enabled: apmStatus.isStarted,
-        metricsEndpoint: `http://localhost:${apmStatus.config.metricsPort}${apmStatus.config.metricsEndpoint}`,
+        metricsEndpoint: `http://localhost:${apmStatus.config.metricsPort}${apmStatus.config.metricsEndpoint}`
       },
       system: {
         nodeVersion: process.version,
         platform: process.platform,
-        environment: process.env.NODE_ENV || 'development',
-      },
+        environment: process.env.NODE_ENV || 'development'
+      }
     };
 
     return NextResponse.json(dashboardData, {
       headers: {
         'Cache-Control': 'no-cache, no-store, must-revalidate',
         'Pragma': 'no-cache',
-        'Expires': '0',
-      },
+        'Expires': '0'
+      }
     });
   } catch (error) {
     console.error('Failed to load dashboard data:', error);
@@ -113,7 +114,7 @@ export async function GET() {
     return NextResponse.json(
       { 
         error: 'Failed to load dashboard data',
-        timestamp: new Date().toISOString(),
+        timestamp: new Date().toISOString()
       },
       { status: 500 }
     );
@@ -146,7 +147,7 @@ async function checkComfyUIHealth(): Promise<'healthy' | 'degraded' | 'unhealthy
 async function getServiceResponseTime(service: string): Promise<number> {
   const baseTimes = {
     ollama: 120,
-    comfyui: 200,
+    comfyui: 200
   };
   
   const baseTime = baseTimes[service as keyof typeof baseTimes] || 100;
@@ -177,7 +178,7 @@ function generateAlerts(metrics: DashboardMetrics, services: ServiceStatus[]): A
       severity: metrics.memoryUsage.percentage > 90 ? 'critical' : 'warning',
       message: `High memory usage: ${metrics.memoryUsage.percentage.toFixed(1)}%`,
       timestamp: new Date().toISOString(),
-      resolved: false,
+      resolved: false
     });
   }
   
@@ -187,7 +188,7 @@ function generateAlerts(metrics: DashboardMetrics, services: ServiceStatus[]): A
       severity: metrics.errorRate > 0.1 ? 'error' : 'warning',
       message: `High error rate: ${(metrics.errorRate * 100).toFixed(2)}%`,
       timestamp: new Date().toISOString(),
-      resolved: false,
+      resolved: false
     });
   }
   
@@ -198,7 +199,7 @@ function generateAlerts(metrics: DashboardMetrics, services: ServiceStatus[]): A
         severity: 'error',
         message: `Service ${service.name} is unhealthy`,
         timestamp: new Date().toISOString(),
-        resolved: false,
+        resolved: false
       });
     } else if (service.status === 'degraded') {
       alerts.push({
@@ -206,7 +207,7 @@ function generateAlerts(metrics: DashboardMetrics, services: ServiceStatus[]): A
         severity: 'warning',
         message: `Service ${service.name} is degraded`,
         timestamp: new Date().toISOString(),
-        resolved: false,
+        resolved: false
       });
     }
   });

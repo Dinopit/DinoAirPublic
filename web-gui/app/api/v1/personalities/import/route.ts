@@ -1,7 +1,10 @@
-import { NextRequest, NextResponse } from 'next/server';
+import crypto from 'crypto';
 import fs from 'fs/promises';
 import path from 'path';
-import crypto from 'crypto';
+
+import type { NextRequest} from 'next/server';
+import { NextResponse } from 'next/server';
+
 
 // Maximum file size: 100KB
 const MAX_FILE_SIZE = 100 * 1024;
@@ -78,7 +81,7 @@ function normalizePersonalityData(data: PersonalityData): any {
     system_prompt: (data.systemPrompt || data.system_prompt || '').trim(),
     temperature: data.temperature,
     max_tokens: data.maxTokens || data.max_tokens,
-    isDefault: false, // Imported personalities are never default
+    isDefault: false // Imported personalities are never default
   };
 }
 
@@ -189,7 +192,7 @@ export async function POST(request: NextRequest) {
       personality: {
         id: personalityId,
         ...normalizedData,
-        createdAt: new Date().toISOString(),
+        createdAt: new Date().toISOString()
       }
     });
 
@@ -213,7 +216,7 @@ export async function OPTIONS(_request: NextRequest) {
     headers: {
       'Access-Control-Allow-Origin': '*',
       'Access-Control-Allow-Methods': 'POST, OPTIONS',
-      'Access-Control-Allow-Headers': 'Content-Type',
-    },
+      'Access-Control-Allow-Headers': 'Content-Type'
+    }
   });
 }

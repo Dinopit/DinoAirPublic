@@ -1,4 +1,4 @@
-import { ChatAnalytics, UserAnalytics, TimeSeriesDataPoint } from '@/types/analytics';
+import type { ChatAnalytics, UserAnalytics, TimeSeriesDataPoint } from '@/types/analytics';
 
 declare const process: any;
 
@@ -80,7 +80,7 @@ export class AnalyticsClient {
       '1h': 1 * 60 * 60 * 1000,
       '24h': 24 * 60 * 60 * 1000,
       '7d': 7 * 24 * 60 * 60 * 1000,
-      '30d': 30 * 24 * 60 * 60 * 1000,
+      '30d': 30 * 24 * 60 * 60 * 1000
     };
     
     const offset = timeMap[timeframe] || timeMap['7d'] || (7 * 24 * 60 * 60 * 1000);
@@ -98,7 +98,7 @@ export class AnalyticsClient {
       max: Math.max(...responseTimes) || 0,
       p50: this.percentile(responseTimes, 0.5),
       p95: this.percentile(responseTimes, 0.95),
-      p99: this.percentile(responseTimes, 0.99),
+      p99: this.percentile(responseTimes, 0.99)
     };
 
     const hourlyActivity = this.generateTimeSeriesFromData(messages, 'hour');
@@ -116,7 +116,7 @@ export class AnalyticsClient {
       weeklyActivity: this.generateTimeSeriesFromData(messages, 'week'),
       monthlyActivity: this.generateTimeSeriesFromData(messages, 'month'),
       errorRate: this.calculateErrorRate(messages),
-      successRate: 100 - this.calculateErrorRate(messages),
+      successRate: 100 - this.calculateErrorRate(messages)
     };
   }
 
@@ -128,7 +128,7 @@ export class AnalyticsClient {
       activeUsers: {
         daily: uniqueUsers,
         weekly: uniqueUsers,
-        monthly: uniqueUsers,
+        monthly: uniqueUsers
       },
       userEngagement: {
         averageSessionsPerUser: sessions.length / uniqueUsers || 0,
@@ -136,31 +136,31 @@ export class AnalyticsClient {
         retentionRate: {
           day1: 85.2,
           day7: 62.8,
-          day30: 34.5,
-        },
+          day30: 34.5
+        }
       },
       userBehavior: {
         mostActiveHours: [
           { hour: 14, activity: 45 },
           { hour: 15, activity: 38 },
-          { hour: 10, activity: 32 },
+          { hour: 10, activity: 32 }
         ],
         mostActiveDays: [
           { day: 'Tuesday', activity: 28 },
           { day: 'Wednesday', activity: 25 },
-          { day: 'Thursday', activity: 22 },
+          { day: 'Thursday', activity: 22 }
         ],
         featureUsage: [
           { feature: 'Chat', usage: 890, percentage: 78.2 },
           { feature: 'Image Generation', usage: 156, percentage: 13.7 },
-          { feature: 'Code Analysis', usage: 92, percentage: 8.1 },
-        ],
+          { feature: 'Code Analysis', usage: 92, percentage: 8.1 }
+        ]
       },
       geographicDistribution: [
         { region: 'North America', users: 45, percentage: 52.3 },
         { region: 'Europe', users: 28, percentage: 32.6 },
-        { region: 'Asia', users: 13, percentage: 15.1 },
-      ],
+        { region: 'Asia', users: 13, percentage: 15.1 }
+      ]
     };
   }
 
@@ -178,19 +178,19 @@ export class AnalyticsClient {
         max: Math.floor(Math.random() * 5000) + 2000,
         p50: Math.floor(Math.random() * 1500) + 400,
         p95: Math.floor(Math.random() * 3000) + 1500,
-        p99: Math.floor(Math.random() * 4000) + 2500,
+        p99: Math.floor(Math.random() * 4000) + 2500
       },
       popularModels: [
         { model: 'qwen2-vl:7b', usage: 450, percentage: 65.2 },
         { model: 'llama2:7b', usage: 180, percentage: 26.1 },
-        { model: 'mistral:7b', usage: 60, percentage: 8.7 },
+        { model: 'mistral:7b', usage: 60, percentage: 8.7 }
       ],
       hourlyActivity: this.generateMockTimeSeries(24, now),
       dailyActivity: this.generateMockTimeSeries(7, now),
       weeklyActivity: this.generateMockTimeSeries(4, now),
       monthlyActivity: this.generateMockTimeSeries(12, now),
       errorRate: Math.random() * 5,
-      successRate: 95 + Math.random() * 5,
+      successRate: 95 + Math.random() * 5
     };
   }
 
@@ -200,7 +200,7 @@ export class AnalyticsClient {
       activeUsers: {
         daily: Math.floor(Math.random() * 100) + 20,
         weekly: Math.floor(Math.random() * 200) + 50,
-        monthly: Math.floor(Math.random() * 400) + 100,
+        monthly: Math.floor(Math.random() * 400) + 100
       },
       userEngagement: {
         averageSessionsPerUser: Math.floor(Math.random() * 10) + 2,
@@ -208,31 +208,31 @@ export class AnalyticsClient {
         retentionRate: {
           day1: 80 + Math.random() * 15,
           day7: 60 + Math.random() * 20,
-          day30: 30 + Math.random() * 25,
-        },
+          day30: 30 + Math.random() * 25
+        }
       },
       userBehavior: {
         mostActiveHours: [
           { hour: 14, activity: 45 },
           { hour: 15, activity: 38 },
-          { hour: 10, activity: 32 },
+          { hour: 10, activity: 32 }
         ],
         mostActiveDays: [
           { day: 'Tuesday', activity: 28 },
           { day: 'Wednesday', activity: 25 },
-          { day: 'Thursday', activity: 22 },
+          { day: 'Thursday', activity: 22 }
         ],
         featureUsage: [
           { feature: 'Chat', usage: 890, percentage: 78.2 },
           { feature: 'Image Generation', usage: 156, percentage: 13.7 },
-          { feature: 'Code Analysis', usage: 92, percentage: 8.1 },
-        ],
+          { feature: 'Code Analysis', usage: 92, percentage: 8.1 }
+        ]
       },
       geographicDistribution: [
         { region: 'North America', users: 45, percentage: 52.3 },
         { region: 'Europe', users: 28, percentage: 32.6 },
-        { region: 'Asia', users: 13, percentage: 15.1 },
-      ],
+        { region: 'Asia', users: 13, percentage: 15.1 }
+      ]
     };
   }
 
@@ -247,7 +247,7 @@ export class AnalyticsClient {
     return Object.entries(grouped).map(([timestamp, count]: [string, number]) => ({
       timestamp,
       value: count,
-      label: new Date(timestamp).toLocaleDateString(),
+      label: new Date(timestamp).toLocaleDateString()
     }));
   }
 
@@ -289,7 +289,7 @@ export class AnalyticsClient {
       return {
         timestamp: timestamp.toISOString(),
         value: Math.floor(Math.random() * 100) + 20,
-        label: timestamp.toLocaleDateString(),
+        label: timestamp.toLocaleDateString()
       };
     });
   }
@@ -324,7 +324,7 @@ export class AnalyticsClient {
       .map(([model, usage]: [string, number]) => ({
         model,
         usage,
-        percentage: (usage / total) * 100,
+        percentage: (usage / total) * 100
       }))
       .sort((a, b) => b.usage - a.usage)
       .slice(0, 5);

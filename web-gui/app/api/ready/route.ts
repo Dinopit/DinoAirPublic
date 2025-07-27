@@ -1,4 +1,5 @@
-import { NextRequest, NextResponse } from 'next/server';
+import type { NextRequest} from 'next/server';
+import { NextResponse } from 'next/server';
 
 /**
  * Readiness endpoint for blue-green deployments
@@ -17,21 +18,21 @@ async function checkDependencies(): Promise<{ ready: boolean; details: any }> {
     
     const response = await fetch(`${comfyUrl}/`, {
       signal: controller.signal,
-      method: 'HEAD',
+      method: 'HEAD'
     });
     
     clearTimeout(timeoutId);
     checks.push({
       name: 'comfyui',
       ready: response.ok,
-      endpoint: comfyUrl,
+      endpoint: comfyUrl
     });
   } catch (error) {
     checks.push({
       name: 'comfyui',
       ready: false,
       endpoint: process.env.COMFYUI_API_URL || 'http://localhost:8188',
-      error: 'Connection failed',
+      error: 'Connection failed'
     });
   }
   
@@ -43,21 +44,21 @@ async function checkDependencies(): Promise<{ ready: boolean; details: any }> {
     
     const response = await fetch(`${ollamaUrl}/api/tags`, {
       signal: controller.signal,
-      method: 'GET',
+      method: 'GET'
     });
     
     clearTimeout(timeoutId);
     checks.push({
       name: 'ollama',
       ready: response.ok,
-      endpoint: ollamaUrl,
+      endpoint: ollamaUrl
     });
   } catch (error) {
     checks.push({
       name: 'ollama',
       ready: false,
       endpoint: process.env.NEXT_PUBLIC_OLLAMA_URL || 'http://localhost:11434',
-      error: 'Connection failed',
+      error: 'Connection failed'
     });
   }
   
@@ -67,7 +68,7 @@ async function checkDependencies(): Promise<{ ready: boolean; details: any }> {
   checks.push({
     name: 'memory',
     ready: memoryHealthy,
-    usage_percent: Math.round((memoryUsage.heapUsed / memoryUsage.heapTotal) * 100),
+    usage_percent: Math.round((memoryUsage.heapUsed / memoryUsage.heapTotal) * 100)
   });
   
   // Check if application has been running long enough to be stable
@@ -76,7 +77,7 @@ async function checkDependencies(): Promise<{ ready: boolean; details: any }> {
   checks.push({
     name: 'startup',
     ready: uptimeHealthy,
-    uptime_seconds: Math.round(uptime),
+    uptime_seconds: Math.round(uptime)
   });
   
   // Determine overall readiness
@@ -89,7 +90,7 @@ async function checkDependencies(): Promise<{ ready: boolean; details: any }> {
   
   return {
     ready: overallReady,
-    details: checks,
+    details: checks
   };
 }
 
@@ -106,7 +107,7 @@ export async function GET(_request: NextRequest) {
       responseTime: `${responseTime}ms`,
       environment: process.env.NEXT_PUBLIC_ENVIRONMENT || 'unknown',
       version: process.env.NEXT_PUBLIC_VERSION || '1.0.0',
-      checks: details,
+      checks: details
     };
     
     // Return 200 if ready, 503 if not ready
@@ -117,8 +118,8 @@ export async function GET(_request: NextRequest) {
       headers: {
         'Cache-Control': 'no-cache, no-store, must-revalidate',
         'X-Environment': process.env.NEXT_PUBLIC_ENVIRONMENT || 'unknown',
-        'X-Ready': ready.toString(),
-      },
+        'X-Ready': ready.toString()
+      }
     });
     
   } catch (error) {
@@ -130,14 +131,14 @@ export async function GET(_request: NextRequest) {
       responseTime: `${responseTime}ms`,
       environment: process.env.NEXT_PUBLIC_ENVIRONMENT || 'unknown',
       error: 'Readiness check failed',
-      details: error instanceof Error ? error.message : 'Unknown error',
+      details: error instanceof Error ? error.message : 'Unknown error'
     }, {
       status: 503,
       headers: {
         'Cache-Control': 'no-cache, no-store, must-revalidate',
         'X-Environment': process.env.NEXT_PUBLIC_ENVIRONMENT || 'unknown',
-        'X-Ready': 'false',
-      },
+        'X-Ready': 'false'
+      }
     });
   }
 }
@@ -152,16 +153,16 @@ export async function HEAD(_request: NextRequest) {
       status: statusCode,
       headers: {
         'X-Environment': process.env.NEXT_PUBLIC_ENVIRONMENT || 'unknown',
-        'X-Ready': ready.toString(),
-      },
+        'X-Ready': ready.toString()
+      }
     });
   } catch (error) {
     return new NextResponse(null, {
       status: 503,
       headers: {
         'X-Environment': process.env.NEXT_PUBLIC_ENVIRONMENT || 'unknown',
-        'X-Ready': 'false',
-      },
+        'X-Ready': 'false'
+      }
     });
   }
 }

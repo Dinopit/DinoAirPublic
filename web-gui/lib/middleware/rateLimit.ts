@@ -3,8 +3,11 @@
  * Protects API endpoints from abuse and ensures fair usage
  */
 
-import { NextRequest, NextResponse } from 'next/server';
 import { createHash } from 'crypto';
+
+import type { NextRequest} from 'next/server';
+import { NextResponse } from 'next/server';
+
 
 // Types
 export interface RateLimitConfig {

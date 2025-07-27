@@ -99,7 +99,7 @@ export async function applySyntaxHighlighting(delay: number = 100): Promise<void
   try {
     // Ensure Prism is loaded
     const prismInstance = await initializePrism();
-    if (!prismInstance || !prismInstance.highlightAll) {
+    if (!prismInstance?.highlightAll) {
       console.warn('PrismJS not available for syntax highlighting');
       return;
     }

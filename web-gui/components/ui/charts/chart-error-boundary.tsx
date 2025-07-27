@@ -1,37 +1,37 @@
 'use client';
 
-import React from 'react';
 import { AlertTriangle, RefreshCw } from 'lucide-react';
+import React from 'react';
 
-interface ChartErrorBoundaryState {
+interface IChartErrorBoundaryState {
   hasError: boolean;
   error?: Error;
 }
 
-interface ChartErrorBoundaryProps {
+interface IChartErrorBoundaryProps {
   children: React.ReactNode;
-  fallback?: React.ReactNode;
-  onRetry?: () => void;
+  fallback?: React.ReactNode | undefined;
+  onRetry?: (() => void) | undefined;
 }
 
 export class ChartErrorBoundary extends React.Component<
-  ChartErrorBoundaryProps,
-  ChartErrorBoundaryState
+  IChartErrorBoundaryProps,
+  IChartErrorBoundaryState
 > {
-  constructor(props: ChartErrorBoundaryProps) {
+  constructor(props: IChartErrorBoundaryProps) {
     super(props);
     this.state = { hasError: false };
   }
 
-  static getDerivedStateFromError(error: Error): ChartErrorBoundaryState {
+  static getDerivedStateFromError(error: Error): IChartErrorBoundaryState {
     return { hasError: true, error };
   }
 
-  componentDidCatch(error: Error, errorInfo: React.ErrorInfo) {
+  override componentDidCatch(error: Error, errorInfo: React.ErrorInfo) {
     console.error('Chart Error Boundary caught an error:', error, errorInfo);
   }
 
-  render() {
+  override render() {
     if (this.state.hasError) {
       if (this.props.fallback) {
         return this.props.fallback;
@@ -47,7 +47,7 @@ export class ChartErrorBoundary extends React.Component<
           {this.props.onRetry && (
             <button
               onClick={() => {
-                this.setState({ hasError: false, error: undefined });
+                this.setState({ hasError: false, error: undefined as any });
                 this.props.onRetry?.();
               }}
               className="flex items-center px-4 py-2 bg-blue-600 text-white rounded-lg hover:bg-blue-700 transition-colors"
@@ -74,11 +74,12 @@ export class ChartErrorBoundary extends React.Component<
 
 export function withChartErrorBoundary<P extends object>(
   Component: React.ComponentType<P>,
+  fallback?: React.ReactNode,
   onRetry?: () => void
 ) {
   return function WrappedComponent(props: P) {
     return (
-      <ChartErrorBoundary onRetry={onRetry}>
+      <ChartErrorBoundary onRetry={onRetry} fallback={fallback}>
         <Component {...props} />
       </ChartErrorBoundary>
     );

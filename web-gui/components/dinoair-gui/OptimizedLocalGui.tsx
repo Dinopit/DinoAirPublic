@@ -1,42 +1,44 @@
 'use client';
 
-import React, { useState, useCallback, useEffect, useMemo, useRef } from 'react';
+import { Menu, X, Settings, Keyboard, Bug, BarChart3, Puzzle } from 'lucide-react';
 import dynamic from 'next/dynamic';
-import { ThemeToggle } from '../ui/theme-toggle';
-import { useKeyboardShortcuts, KeyboardShortcut } from '../../hooks/useKeyboardShortcuts';
+import React, { useState, useCallback, useEffect, useMemo, useRef } from 'react';
+
+import { DebugProvider, useDebug } from '../../contexts/debug-context';
+import { useKeyboardShortcuts } from '../../hooks/useKeyboardShortcuts';
+import type { KeyboardShortcut } from '../../hooks/useKeyboardShortcuts';
+import { useScreenReader } from '../../hooks/useScreenReader';
 import { KeyboardShortcutsModal } from '../ui/keyboard-shortcuts-modal';
+import { OfflineIndicator } from '../ui/offline-indicator';
 import { OnboardingTutorial } from '../ui/onboarding-tutorial';
 import { SettingsPanel } from '../ui/settings-panel';
+import { ThemeToggle } from '../ui/theme-toggle';
 import { ToastProvider, useToast } from '../ui/toast';
-import { Menu, X, Settings, Keyboard, Bug, BarChart3, Puzzle } from 'lucide-react';
-import { DebugProvider, useDebug } from '../../contexts/debug-context';
-import { useScreenReader } from '../../hooks/useScreenReader';
-import { OfflineIndicator } from '../ui/offline-indicator';
 
 // Dynamically import heavy components to reduce initial bundle size
 const LocalChatView = dynamic(() => import('./LocalChatView'), {
   ssr: false,
-  loading: () => <div className="flex items-center justify-center h-64">Loading chat...</div>,
+  loading: () => <div className="flex items-center justify-center h-64">Loading chat...</div>
 });
 
 const LocalArtifactsView = dynamic(() => import('./LocalArtifactsView'), {
   ssr: false,
-  loading: () => <div className="flex items-center justify-center h-64">Loading artifacts...</div>,
+  loading: () => <div className="flex items-center justify-center h-64">Loading artifacts...</div>
 });
 
 const DinoLocalAssistant = dynamic(() => import('./DinoLocalAssistant'), {
   ssr: false,
-  loading: () => <div className="flex items-center justify-center h-64">Loading assistant...</div>,
+  loading: () => <div className="flex items-center justify-center h-64">Loading assistant...</div>
 });
 
 const DebugPanel = dynamic(() => import('../ui/debug-panel'), {
   ssr: false,
-  loading: () => <div>Loading debug panel...</div>,
+  loading: () => <div>Loading debug panel...</div>
 });
 
 const PluginManager = dynamic(() => import('../plugins'), {
   ssr: false,
-  loading: () => <div className="flex items-center justify-center h-64">Loading plugins...</div>,
+  loading: () => <div className="flex items-center justify-center h-64">Loading plugins...</div>
 });
 
 type Tab = 'chat' | 'artifacts' | 'local-tools' | 'plugins';
@@ -93,7 +95,7 @@ const OptimizedLocalGuiContent = () => {
 
     window.addEventListener('resize', handleResize, {
       passive: true,
-      signal: controller.signal, // 🧹 AbortController cleanup
+      signal: controller.signal // 🧹 AbortController cleanup
     });
 
     return () => {
@@ -136,13 +138,13 @@ const OptimizedLocalGuiContent = () => {
       addToast({
         type: 'success',
         title: 'Conversation saved',
-        message: 'Your conversation has been saved successfully.',
+        message: 'Your conversation has been saved successfully.'
       });
     } else {
       addToast({
         type: 'info',
         title: 'No active conversation',
-        message: 'Start a conversation first before saving.',
+        message: 'Start a conversation first before saving.'
       });
     }
   }, [addToast, updateSaveButtonRef]);
@@ -169,7 +171,7 @@ const OptimizedLocalGuiContent = () => {
       addToast({
         type: 'error',
         title: 'Error',
-        message: 'Could not open monitoring dashboard',
+        message: 'Could not open monitoring dashboard'
       });
     }
   }, [addToast]);
@@ -191,7 +193,7 @@ const OptimizedLocalGuiContent = () => {
         ctrl: true,
         cmd: true,
         description: 'Focus on chat input',
-        action: handleFocusChatInput,
+        action: handleFocusChatInput
       },
       {
         key: '1',
@@ -201,7 +203,7 @@ const OptimizedLocalGuiContent = () => {
         action: () => {
           setActiveTab('chat');
           announceNavigation('Switched to Chat tab');
-        },
+        }
       },
       {
         key: '2',
@@ -211,7 +213,7 @@ const OptimizedLocalGuiContent = () => {
         action: () => {
           setActiveTab('artifacts');
           announceNavigation('Switched to Artifacts tab');
-        },
+        }
       },
       {
         key: '3',
@@ -221,35 +223,35 @@ const OptimizedLocalGuiContent = () => {
         action: () => {
           setActiveTab('plugins');
           announceNavigation('Switched to Plugins tab');
-        },
+        }
       },
       {
         key: '/',
         ctrl: true,
         cmd: true,
         description: 'Show keyboard shortcuts',
-        action: () => setShowShortcutsModal(true),
+        action: () => setShowShortcutsModal(true)
       },
       {
         key: 's',
         ctrl: true,
         cmd: true,
         description: 'Save current conversation',
-        action: handleSaveConversation,
+        action: handleSaveConversation
       },
       {
         key: 'n',
         ctrl: true,
         cmd: true,
         description: 'New chat',
-        action: handleNewChat,
+        action: handleNewChat
       },
       {
         key: 'd',
         ctrl: true,
         cmd: true,
         description: 'Toggle dark mode',
-        action: handleToggleDarkMode,
+        action: handleToggleDarkMode
       },
       {
         key: 'd',
@@ -267,24 +269,24 @@ const OptimizedLocalGuiContent = () => {
             title: debugMode ? 'Debug mode disabled' : 'Debug mode enabled',
             message: debugMode
               ? 'Debug logging has been turned off'
-              : 'Debug panel can be opened from the toolbar',
+              : 'Debug panel can be opened from the toolbar'
           });
-        },
+        }
       },
       {
         key: ',',
         ctrl: true,
         cmd: true,
         description: 'Open settings',
-        action: handleOpenSettings,
+        action: handleOpenSettings
       },
       {
         key: 'm',
         ctrl: true,
         cmd: true,
         description: 'Open monitoring dashboard',
-        action: handleOpenMonitoring,
-      },
+        action: handleOpenMonitoring
+      }
     ],
     [
       handleFocusChatInput,
@@ -296,7 +298,7 @@ const OptimizedLocalGuiContent = () => {
       toggleDebugMode,
       debugMode,
       addToast,
-      announceNavigation,
+      announceNavigation
     ]
   );
 
@@ -323,7 +325,7 @@ const OptimizedLocalGuiContent = () => {
       { id: 'chat' as Tab, label: 'Chat', icon: '💬' },
       { id: 'artifacts' as Tab, label: 'Artifacts', icon: '📦' },
       { id: 'local-tools' as Tab, label: 'Local Tools', icon: '🛠️' },
-      { id: 'plugins' as Tab, label: 'Plugins', icon: '🔌' },
+      { id: 'plugins' as Tab, label: 'Plugins', icon: '🔌' }
     ],
     []
   );

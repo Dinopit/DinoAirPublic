@@ -1,6 +1,9 @@
-import { NextRequest, NextResponse } from 'next/server';
 import { spawn } from 'child_process';
 import path from 'path';
+
+import type { NextRequest} from 'next/server';
+import { NextResponse } from 'next/server';
+
 
 export async function POST(request: NextRequest): Promise<NextResponse> {
   try {
@@ -28,7 +31,7 @@ export async function POST(request: NextRequest): Promise<NextResponse> {
       path: params.path ? params.path.toString() : undefined,
       days: params.days ? parseInt(params.days, 10) : undefined,
       limit: params.limit ? parseInt(params.limit, 10) : undefined,
-      note_id: params.note_id ? params.note_id.toString() : undefined,
+      note_id: params.note_id ? params.note_id.toString() : undefined
     };
 
     const scriptPath = path.join(process.cwd(), '..', 'dino_local_toolset', 'main.py');
@@ -71,7 +74,7 @@ export async function POST(request: NextRequest): Promise<NextResponse> {
                 success: false,
                 error: 'Failed to parse Python script output',
                 stdout,
-                stderr,
+                stderr
               })
             );
           }
@@ -80,7 +83,7 @@ export async function POST(request: NextRequest): Promise<NextResponse> {
             NextResponse.json({
               success: false,
               error: `Python script exited with code ${code}`,
-              stderr,
+              stderr
             })
           );
         }
@@ -90,7 +93,7 @@ export async function POST(request: NextRequest): Promise<NextResponse> {
         resolve(
           NextResponse.json({
             success: false,
-            error: `Failed to start Python script: ${error.message}`,
+            error: `Failed to start Python script: ${error.message}`
           })
         );
       });
@@ -98,7 +101,7 @@ export async function POST(request: NextRequest): Promise<NextResponse> {
   } catch (error) {
     return NextResponse.json({
       success: false,
-      error: `API error: ${error instanceof Error ? error.message : 'Unknown error'}`,
+      error: `API error: ${error instanceof Error ? error.message : 'Unknown error'}`
     });
   }
 }

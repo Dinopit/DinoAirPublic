@@ -1,4 +1,4 @@
-import { RequestConfig } from './enhanced-client';
+import type { RequestConfig } from './enhanced-client';
 
 interface InFlightRequest {
   promise: Promise<Response>;

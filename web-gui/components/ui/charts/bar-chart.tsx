@@ -1,6 +1,5 @@
 'use client';
 
-import React from 'react';
 import {
   Chart as ChartJS,
   CategoryScale,
@@ -10,18 +9,19 @@ import {
   Tooltip,
   Legend,
 } from 'chart.js';
+import React from 'react';
 import { Bar } from 'react-chartjs-2';
 
 ChartJS.register(CategoryScale, LinearScale, BarElement, Title, Tooltip, Legend);
 
-interface BarChartData {
+interface IBarChartData {
   label: string;
   value: number;
   color?: string;
 }
 
-interface BarChartProps {
-  data: BarChartData[];
+interface IBarChartProps {
+  data: IBarChartData[];
   title?: string;
   color?: string;
   height?: number;
@@ -42,15 +42,15 @@ export function BarChart({
   showLegend = false,
   yAxisLabel,
   xAxisLabel,
-}: BarChartProps) {
+}: IBarChartProps) {
   const chartData = {
-    labels: data.map((item) => item.label),
+    labels: data.map((item: IBarChartData) => item.label),
     datasets: [
       {
-        label: title || 'Data',
-        data: data.map((item) => item.value),
-        backgroundColor: data.map((item) => item.color || `${color}80`),
-        borderColor: data.map((item) => item.color || color),
+        label: title ?? 'Data',
+        data: data.map((item: IBarChartData) => item.value),
+        backgroundColor: data.map((item: IBarChartData) => item.color ?? `${color}80`),
+        borderColor: data.map((item: IBarChartData) => item.color ?? color),
         borderWidth: 1,
         borderRadius: 4,
         borderSkipped: false,
@@ -59,7 +59,7 @@ export function BarChart({
   };
 
   const isMobile = typeof window !== 'undefined' && window.innerWidth < 768;
-  
+
   const options = {
     responsive: true,
     maintainAspectRatio: false,
@@ -143,10 +143,7 @@ export function BarChart({
   };
 
   return (
-    <div 
-      style={{ height: `${height}px` }}
-      className="w-full"
-    >
+    <div style={{ height: `${height}px` }} className="w-full">
       <Bar data={chartData} options={options} />
     </div>
   );

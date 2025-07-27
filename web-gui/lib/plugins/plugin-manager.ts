@@ -160,7 +160,7 @@ export class PluginManager extends EventEmitter {
       logger: {
         log: (...args) => console.log(`[Plugin: ${pluginId}]`, ...args),
         error: (...args) => console.error(`[Plugin: ${pluginId}]`, ...args),
-        warn: (...args) => console.warn(`[Plugin: ${pluginId}]`, ...args),
+        warn: (...args) => console.warn(`[Plugin: ${pluginId}]`, ...args)
       }
     };
   }

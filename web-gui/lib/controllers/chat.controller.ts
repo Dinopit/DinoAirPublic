@@ -1,4 +1,6 @@
-import { NextRequest, NextResponse } from 'next/server';
+import type { NextRequest} from 'next/server';
+import { NextResponse } from 'next/server';
+
 import { ChatValidator } from '../validation/chat-validation';
 
 export class ChatController {
@@ -19,7 +21,7 @@ export class ChatController {
           {
             error: 'Invalid request',
             details: validation.errors,
-            code: 'VALIDATION_ERROR',
+            code: 'VALIDATION_ERROR'
           },
           { status: 400 }
         );
@@ -48,13 +50,13 @@ export class ChatController {
             const response = await fetch(`${ChatController.OLLAMA_BASE_URL}/api/generate`, {
               method: 'POST',
               headers: {
-                'Content-Type': 'application/json',
+                'Content-Type': 'application/json'
               },
               body: JSON.stringify({
                 model: selectedModel,
                 prompt: prompt,
-                stream: stream,
-              }),
+                stream: stream
+              })
             });
 
             clearTimeout(timeoutId); // Clear timeout on successful response
@@ -99,7 +101,7 @@ export class ChatController {
             console.error('Streaming error:', error);
             controller.error(error);
           }
-        },
+        }
       });
 
       // Easy win: Add security headers to response
@@ -109,8 +111,8 @@ export class ChatController {
           'Transfer-Encoding': 'chunked',
           'Cache-Control': 'no-cache, no-store, must-revalidate',
           'X-Content-Type-Options': 'nosniff',
-          'X-Frame-Options': 'DENY',
-        },
+          'X-Frame-Options': 'DENY'
+        }
       });
     } catch (error) {
       console.error('Chat API error:', error);
@@ -123,7 +125,7 @@ export class ChatController {
               error: 'AI service unavailable',
               message: 'The AI service is not running. Please try again later.',
               code: 'SERVICE_UNAVAILABLE',
-              retryable: true,
+              retryable: true
             },
             { status: 503 }
           );
@@ -135,7 +137,7 @@ export class ChatController {
               error: 'Request timeout',
               message: 'The request took too long to process. Please try again.',
               code: 'TIMEOUT',
-              retryable: true,
+              retryable: true
             },
             { status: 408 }
           );
@@ -147,7 +149,7 @@ export class ChatController {
               error: 'Invalid request format',
               message: 'The request format is invalid. Please check your input.',
               code: 'INVALID_FORMAT',
-              retryable: false,
+              retryable: false
             },
             { status: 400 }
           );
@@ -159,7 +161,7 @@ export class ChatController {
           error: 'Internal server error',
           message: 'An unexpected error occurred. Please try again later.',
           code: 'INTERNAL_ERROR',
-          retryable: true,
+          retryable: true
         },
         { status: 500 }
       );

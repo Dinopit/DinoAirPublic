@@ -1,6 +1,7 @@
 'use client';
 
 import React, { useState } from 'react';
+
 import { generateApiKey } from '@/lib/middleware/api-auth';
 
 interface ApiEndpoint {
@@ -243,7 +244,7 @@ export default function ApiDocsPage() {
           All API endpoints require authentication using an API key. Include your API key in the request headers:
         </p>
         <pre className="bg-gray-900 text-white p-4 rounded overflow-x-auto">
-          <code>{`X-API-Key: your_api_key_here`}</code>
+          <code>{'X-API-Key: your_api_key_here'}</code>
         </pre>
         
         <div className="mt-6">

@@ -1,8 +1,9 @@
 'use client';
 
-import React from 'react';
 import { Eye } from 'lucide-react';
-import { Personality } from '@/lib/stores/personality-store';
+import React from 'react';
+
+import type { Personality } from '@/lib/stores/personality-store';
 
 interface PersonalityCardProps {
   personality: Personality;
@@ -15,7 +16,7 @@ export const PersonalityCard: React.FC<PersonalityCardProps> = ({
   personality,
   isSelected,
   onSelect,
-  onViewDetails,
+  onViewDetails
 }) => {
   // Truncate description to preview length
   const truncateDescription = (text: string, maxLength: number = 80) => {

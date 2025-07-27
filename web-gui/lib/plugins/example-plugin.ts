@@ -1,7 +1,7 @@
 // Example DinoAir Plugin
 // This demonstrates how to create a plugin for DinoAir
 
-import { PluginInstance, PluginAPI, PluginManifest } from './plugin-manager';
+import type { PluginInstance, PluginAPI, PluginManifest } from './plugin-manager';
 
 // Plugin manifest - this would normally be in a separate JSON file
 export const examplePluginManifest: PluginManifest = {
@@ -168,8 +168,8 @@ export default class ExamplePlugin implements PluginInstance {
       }
     }
     
-    helpText += `• **help** - Show this help message\n`;
-    helpText += `• **stats** - Show plugin statistics\n`;
+    helpText += '• **help** - Show this help message\n';
+    helpText += '• **stats** - Show plugin statistics\n';
     
     await this.api?.sendChatMessage(helpText);
   }
@@ -178,7 +178,7 @@ export default class ExamplePlugin implements PluginInstance {
     const totalTokens = this.api?.storage.get('totalTokens') || 0;
     const commandCount = this.api?.storage.get('commandCount') || 0;
     
-    const stats = `📊 **Plugin Statistics**\n\n` +
+    const stats = '📊 **Plugin Statistics**\n\n' +
       `• Total tokens processed: ${totalTokens}\n` +
       `• Commands executed: ${commandCount}\n` +
       `• Plugin version: ${examplePluginManifest.version}`;

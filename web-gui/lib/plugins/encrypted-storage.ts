@@ -43,7 +43,7 @@ const ENCRYPTION_CONFIG = {
   ivLength: 12,
   tagLength: 16,
   iterations: 100000, // PBKDF2 iterations
-  hash: 'SHA-256',
+  hash: 'SHA-256'
 };
 
 // Default quota limits per plugin
@@ -51,7 +51,7 @@ const DEFAULT_QUOTA: StorageQuota = {
   maxSizeBytes: 10 * 1024 * 1024, // 10MB per plugin
   currentSizeBytes: 0,
   maxKeys: 1000, // Max 1000 keys per plugin
-  currentKeys: 0,
+  currentKeys: 0
 };
 
 export class EncryptedPluginStorage {
@@ -95,7 +95,7 @@ export class EncryptedPluginStorage {
       this.encryptionKey = await crypto.subtle.generateKey(
         {
           name: ENCRYPTION_CONFIG.algorithm,
-          length: ENCRYPTION_CONFIG.keyLength,
+          length: ENCRYPTION_CONFIG.keyLength
         },
         false, // Not extractable for security
         ['encrypt', 'decrypt']
@@ -138,8 +138,8 @@ export class EncryptedPluginStorage {
           encrypted: true,
           createdAt: Date.now(),
           expiresAt: options.ttl ? Date.now() + options.ttl : undefined,
-          tags: options.tags || [],
-        },
+          tags: options.tags || []
+        }
       };
 
       // Store encrypted data
@@ -380,12 +380,12 @@ export class EncryptedPluginStorage {
         name: 'PBKDF2',
         salt: this.keyDerivationSalt,
         iterations: ENCRYPTION_CONFIG.iterations,
-        hash: ENCRYPTION_CONFIG.hash,
+        hash: ENCRYPTION_CONFIG.hash
       },
       keyMaterial,
       {
         name: ENCRYPTION_CONFIG.algorithm,
-        length: ENCRYPTION_CONFIG.keyLength,
+        length: ENCRYPTION_CONFIG.keyLength
       },
       false,
       ['encrypt', 'decrypt']
@@ -402,7 +402,7 @@ export class EncryptedPluginStorage {
     const encryptedBuffer = await crypto.subtle.encrypt(
       {
         name: ENCRYPTION_CONFIG.algorithm,
-        iv: iv,
+        iv: iv
       },
       this.encryptionKey,
       data
@@ -432,7 +432,7 @@ export class EncryptedPluginStorage {
     const decryptedBuffer = await crypto.subtle.decrypt(
       {
         name: ENCRYPTION_CONFIG.algorithm,
-        iv: iv,
+        iv: iv
       },
       this.encryptionKey,
       encrypted
@@ -494,7 +494,7 @@ export class EncryptedPluginStorage {
       accessCount: existing?.accessCount || 0,
       lastAccessedAt: existing?.lastAccessedAt || now,
       expiresAt: options.ttl ? now + options.ttl : undefined,
-      tags: options.tags,
+      tags: options.tags
     };
 
     this.metadataCache.set(key, metadata);
@@ -538,7 +538,7 @@ export class EncryptedPluginStorage {
       const backupKey = `${this.getStorageKey(key)}_backup`;
       const backup = {
         ...storageEntry,
-        backedUpAt: Date.now(),
+        backedUpAt: Date.now()
       };
       localStorage.setItem(backupKey, JSON.stringify(backup));
     } catch (error) {

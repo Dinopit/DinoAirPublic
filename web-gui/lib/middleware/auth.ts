@@ -3,8 +3,10 @@
  * Provides API key authentication and user session management
  */
 
-import { NextRequest, NextResponse } from 'next/server';
 import { createHash } from 'crypto';
+
+import type { NextRequest} from 'next/server';
+import { NextResponse } from 'next/server';
 import { z } from 'zod';
 
 // Simple JWT implementation without external dependencies

@@ -1,12 +1,14 @@
-import { NextRequest, NextResponse } from 'next/server';
-import { withAnalyticsAuth } from '@/lib/middleware/analytics-auth';
+import type { NextRequest } from 'next/server';
+import { NextResponse } from 'next/server';
+
 import { analyticsClient } from '@/lib/analytics/analytics-client';
+import { withAnalyticsAuth } from '@/lib/middleware/analytics-auth';
 
 async function getUserAnalytics(request: NextRequest) {
   try {
     const { searchParams } = new URL(request.url);
-    const timeframe = searchParams.get('timeframe') || '30d';
-    const segment = searchParams.get('segment') || 'all';
+    const timeframe = searchParams.get('timeframe') ?? '30d';
+    const segment = searchParams.get('segment') ?? 'all';
 
     const userAnalyticsData = await analyticsClient.getUserBehaviorAnalytics(timeframe);
 

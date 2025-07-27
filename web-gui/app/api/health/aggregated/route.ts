@@ -1,4 +1,5 @@
-import { NextRequest, NextResponse } from 'next/server';
+import type { NextRequest} from 'next/server';
+import { NextResponse } from 'next/server';
 
 interface ServiceHealth {
   name: string;
@@ -46,7 +47,7 @@ async function performDeepHealthCheck(serviceName: string, url: string, timeout 
     const controller = new AbortController();
     const timeoutId = setTimeout(() => controller.abort(), timeout);
     
-    let endpoints: string[] = [];
+    const endpoints: string[] = [];
     let version: string | undefined;
     let metrics: any = {};
     
@@ -170,7 +171,7 @@ export async function GET(_request: NextRequest) {
   // Perform deep health checks for all services
   const [ollamaHealth, comfyUIHealth] = await Promise.all([
     performDeepHealthCheck('ollama', ollamaUrl, healthCheckTimeout),
-    performDeepHealthCheck('comfyui', comfyUrl, healthCheckTimeout),
+    performDeepHealthCheck('comfyui', comfyUrl, healthCheckTimeout)
   ]);
   
   // Add Web GUI health

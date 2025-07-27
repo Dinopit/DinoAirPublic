@@ -1,4 +1,6 @@
-import { NextRequest, NextResponse } from 'next/server';
+import type { NextRequest} from 'next/server';
+import { NextResponse } from 'next/server';
+
 import { withApiAuth } from '@/lib/middleware/api-auth';
 
 interface Artifact {
@@ -69,7 +71,7 @@ async function updateArtifact(
       ...(content && { content }),
       ...(language !== undefined && { language }),
       ...(tags && { tags }),
-      updatedAt: new Date().toISOString(),
+      updatedAt: new Date().toISOString()
     };
 
     return NextResponse.json({

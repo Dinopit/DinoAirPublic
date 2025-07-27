@@ -1,4 +1,6 @@
-import { NextRequest, NextResponse } from 'next/server';
+import type { NextRequest} from 'next/server';
+import { NextResponse } from 'next/server';
+
 import { getCurrentCorrelationId } from '@/lib/correlation/correlation-id';
 import { getLogger } from '@/lib/logging/logger';
 
@@ -27,11 +29,11 @@ async function checkOllama(): Promise<ServiceHealthCheck> {
     const [tagsResponse, versionResponse] = await Promise.allSettled([
       fetch(`${ollamaUrl}/api/tags`, {
         signal: controller.signal,
-        method: 'GET',
+        method: 'GET'
       }),
       fetch(`${ollamaUrl}/api/version`, {
         signal: controller.signal,
-        method: 'GET',
+        method: 'GET'
       })
     ]);
     
@@ -102,7 +104,7 @@ async function getMetricsOverview() {
     // Get basic metrics overview
     const response = await fetch('http://localhost:3000/api/metrics/dashboard?widget=overview', {
       method: 'GET',
-      signal: AbortSignal.timeout(2000),
+      signal: AbortSignal.timeout(2000)
     }).catch(() => null);
     
     if (response?.ok) {
@@ -129,11 +131,11 @@ async function checkComfyUI(): Promise<ServiceHealthCheck> {
     const [healthResponse, systemStatsResponse] = await Promise.allSettled([
       fetch(`${comfyUrl}/`, {
         signal: controller.signal,
-        method: 'HEAD',
+        method: 'HEAD'
       }),
       fetch(`${comfyUrl}/system_stats`, {
         signal: controller.signal,
-        method: 'GET',
+        method: 'GET'
       })
     ]);
     
@@ -206,7 +208,7 @@ export async function GET(_request: NextRequest) {
   const [ollamaHealth, comfyUIHealth, metricsData] = await Promise.all([
     checkOllama(),
     checkComfyUI(),
-    getMetricsOverview(),
+    getMetricsOverview()
   ]);
   
   // Calculate overall system health
@@ -248,7 +250,7 @@ export async function GET(_request: NextRequest) {
     deployment: {
       environment: deploymentEnvironment,
       instance_id: process.env.HOSTNAME || 'unknown',
-      started_at: new Date(Date.now() - process.uptime() * 1000).toISOString(),
+      started_at: new Date(Date.now() - process.uptime() * 1000).toISOString()
     },
     system: systemInfo,
     checks: {
@@ -279,18 +281,18 @@ export async function GET(_request: NextRequest) {
         usage: {
           used_mb: Math.round(memoryUsage.heapUsed / 1024 / 1024),
           total_mb: Math.round(memoryUsage.heapTotal / 1024 / 1024),
-          percentage: Math.round((memoryUsage.heapUsed / memoryUsage.heapTotal) * 100),
-        },
+          percentage: Math.round((memoryUsage.heapUsed / memoryUsage.heapTotal) * 100)
+        }
       },
       uptime: {
         status: 'healthy',
         seconds: Math.round(process.uptime()),
-        human_readable: formatUptime(process.uptime()),
+        human_readable: formatUptime(process.uptime())
       },
       metrics: {
         status: metricsData ? 'healthy' : 'unavailable',
-        enabled: !!metricsData,
-      },
+        enabled: !!metricsData
+      }
     },
     dependencies: {
       ollama: {
@@ -316,8 +318,8 @@ export async function GET(_request: NextRequest) {
       active_sessions: metricsData.active_sessions,
       total_requests: metricsData.total_requests,
       error_rate: metricsData.error_rate,
-      resources: metricsData.resources,
-    } : null,
+      resources: metricsData.resources
+    } : null
   };
   
   logger.info('Health check completed', { 
@@ -339,7 +341,7 @@ export async function GET(_request: NextRequest) {
       'X-Instance-ID': process.env.HOSTNAME || 'unknown',
       'X-Health-Check-Version': '2.0.0',
       'X-Response-Time': `${totalResponseTime}ms`
-    },
+    }
   });
 }
 
@@ -362,7 +364,7 @@ function formatUptime(seconds: number): string {
 export async function HEAD(_request: NextRequest) {
   const [ollamaHealth, comfyUIHealth] = await Promise.all([
     checkOllama(),
-    checkComfyUI(),
+    checkComfyUI()
   ]);
   
   const allHealthy = ollamaHealth.status === 'healthy' && comfyUIHealth.status === 'healthy';

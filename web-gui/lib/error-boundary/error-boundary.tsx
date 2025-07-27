@@ -3,7 +3,8 @@
  * Provides comprehensive error handling and recovery mechanisms
  */
 
-import React, { Component, ErrorInfo, ReactNode } from 'react';
+import type { ErrorInfo, ReactNode } from 'react';
+import React, { Component } from 'react';
 
 export enum ErrorSeverity {
   LOW = 'low',

@@ -1,6 +1,8 @@
 import { create } from 'zustand';
 import { persist } from 'zustand/middleware';
+
 import { apiClient } from '../api/enhanced-client';
+
 import { useCacheStore, cacheKeys, cacheTTL } from './cache-store';
 import { useToastStore } from './toast-store';
 
@@ -69,7 +71,7 @@ export const usePersonalityStore = create<PersonalityState>()(
               personalities: cachedData,
               lastFetched: Date.now(),
               loading: false,
-              error: null,
+              error: null
             });
             return;
           }
@@ -92,7 +94,7 @@ export const usePersonalityStore = create<PersonalityState>()(
             const normalizedPersonalities = personalities.map((p: any) => ({
               ...p,
               systemPrompt: p.systemPrompt || p.system_prompt,
-              maxTokens: p.maxTokens || p.max_tokens,
+              maxTokens: p.maxTokens || p.max_tokens
             }));
             
             // Update cache
@@ -103,7 +105,7 @@ export const usePersonalityStore = create<PersonalityState>()(
               personalities: normalizedPersonalities,
               lastFetched: Date.now(),
               loading: false,
-              error: null,
+              error: null
             });
 
             // Set default personality if current is not set
@@ -116,13 +118,13 @@ export const usePersonalityStore = create<PersonalityState>()(
             const errorMessage = error instanceof Error ? error.message : 'Failed to fetch personalities';
             set({
               loading: false,
-              error: errorMessage,
+              error: errorMessage
             });
             
             useToastStore.getState().addToast({
               title: 'Error',
               message: errorMessage,
-              type: 'error',
+              type: 'error'
             });
           } finally {
             fetchPromise = null;
@@ -192,8 +194,8 @@ export const usePersonalityStore = create<PersonalityState>()(
 
           const response = await apiClient.post('/v1/personalities/import', formData, {
             headers: {
-              'Content-Type': 'multipart/form-data',
-            },
+              'Content-Type': 'multipart/form-data'
+            }
           });
 
           if (response.error) {
@@ -217,7 +219,7 @@ export const usePersonalityStore = create<PersonalityState>()(
         cache.invalidate(cacheKeys.personalities());
         cache.invalidate(cacheKeys.currentPersonality());
         set({ lastFetched: null });
-      },
+      }
     }),
     {
       name: 'dinoair-personality',
@@ -225,8 +227,8 @@ export const usePersonalityStore = create<PersonalityState>()(
       partialize: (state) => ({
         currentPersonality: state.currentPersonality,
         personalities: state.personalities,
-        lastFetched: state.lastFetched,
-      }),
+        lastFetched: state.lastFetched
+      })
     }
   )
 );
@@ -260,7 +262,7 @@ export const usePersonalities = () => {
     loading,
     error,
     fetchPersonalities,
-    refreshPersonalities,
+    refreshPersonalities
   };
 };
 
@@ -270,7 +272,7 @@ export const useCurrentPersonality = () => {
   
   return {
     currentPersonality,
-    setCurrentPersonality,
+    setCurrentPersonality
   };
 };
 

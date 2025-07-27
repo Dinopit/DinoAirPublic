@@ -1,7 +1,7 @@
 'use client';
 
-import React, { useState, useEffect, useCallback, useMemo } from 'react';
 import { Activity, AlertTriangle, CheckCircle, XCircle } from 'lucide-react';
+import React, { useState, useEffect, useCallback, useMemo } from 'react';
 
 interface MemoryInfo {
   usedJSHeapSize: number;
@@ -27,7 +27,7 @@ const MemoryMonitor: React.FC<{
   showDetails = false,
   onMemoryWarning,
   warningThreshold = 0.8, // 80% of memory limit
-  criticalThreshold = 0.9, // 90% of memory limit
+  criticalThreshold = 0.9 // 90% of memory limit
 }) => {
   const [memoryInfo, setMemoryInfo] = useState<MemoryInfo | null>(null);
   const [performanceInfo, setPerformanceInfo] = useState<PerformanceInfo | null>(null);
@@ -80,7 +80,7 @@ const MemoryMonitor: React.FC<{
         usedJSHeapSize: memory.usedJSHeapSize,
         totalJSHeapSize: memory.totalJSHeapSize,
         jsHeapSizeLimit: memory.jsHeapSizeLimit,
-        timestamp: Date.now(),
+        timestamp: Date.now()
       };
 
       setMemoryInfo(memoryData);
@@ -109,7 +109,7 @@ const MemoryMonitor: React.FC<{
           memoryUsage: memoryUsageRatio,
           memoryLimit: memoryData.jsHeapSizeLimit,
           isHealthy: warnings.length === 0,
-          warnings,
+          warnings
         };
 
         setPerformanceInfo(perfInfo);

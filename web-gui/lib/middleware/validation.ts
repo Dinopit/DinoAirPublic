@@ -3,8 +3,10 @@
  * Validates and sanitizes all incoming requests to prevent security vulnerabilities
  */
 
-import { NextRequest, NextResponse } from 'next/server';
-import { z, ZodError, ZodSchema } from 'zod';
+import type { NextRequest} from 'next/server';
+import { NextResponse } from 'next/server';
+import type { ZodSchema } from 'zod';
+import { z, ZodError } from 'zod';
 
 // Types
 export interface ValidationConfig {
@@ -344,7 +346,7 @@ export async function validationMiddleware(
   }
   
   const errors: ValidationError[] = [];
-  let validatedData: any = {};
+  const validatedData: any = {};
   
   // Validate body
   if (config.body && ['POST', 'PUT', 'PATCH'].includes(request.method)) {

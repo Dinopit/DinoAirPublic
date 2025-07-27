@@ -3,7 +3,8 @@
  * Client-side health monitoring and service status tracking with APM integration
  */
 
-import { getAPMInstance, PerformanceMetrics } from '@/lib/monitoring/apm';
+import type { PerformanceMetrics } from '@/lib/monitoring/apm';
+import { getAPMInstance } from '@/lib/monitoring/apm';
 
 export interface EnhancedPerformanceMetrics extends PerformanceMetrics {
   healthMetrics?: {
@@ -327,7 +328,7 @@ export class HealthMonitor {
       unhealthyServices: Array.from(this.services.values()).filter(s => s.status === ServiceStatus.UNHEALTHY).length,
       averageResponseTime: this.calculateAverageResponseTime(),
       totalConsecutiveFailures: Array.from(this.services.values()).reduce((sum, s) => sum + s.consecutiveFailures, 0),
-      recentEventsCount: this.eventHistory.length,
+      recentEventsCount: this.eventHistory.length
     };
     
     return {
@@ -336,7 +337,7 @@ export class HealthMonitor {
       cpuUsage: apmMetrics.cpuUsage,
       uptime: apmMetrics.uptime,
       timestamp: new Date().toISOString(),
-      healthMetrics,
+      healthMetrics
     };
   }
 
@@ -363,7 +364,7 @@ export class HealthMonitor {
     
     return {
       ...baseReport,
-      performanceMetrics,
+      performanceMetrics
     };
   }
 }

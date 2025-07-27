@@ -1,8 +1,9 @@
 'use client';
 
 import React, { useState } from 'react';
+
 import { usePlugins } from '@/hooks/usePlugins';
-import { PluginManifest } from '@/lib/plugins/plugin-manager';
+import type { PluginManifest } from '@/lib/plugins/plugin-manager';
 
 interface PluginDeveloperProps {
   className?: string;
@@ -36,9 +37,9 @@ export function PluginDeveloper({ className = '' }: PluginDeveloperProps) {
       const response = await fetch('/api/v1/plugins', {
         method: 'POST',
         headers: {
-          'Content-Type': 'application/json',
+          'Content-Type': 'application/json'
         },
-        body: JSON.stringify({ manifest }),
+        body: JSON.stringify({ manifest })
       });
 
       const result = await response.json();

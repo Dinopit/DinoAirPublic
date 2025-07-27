@@ -1,8 +1,8 @@
-import { NodeSDK } from '@opentelemetry/sdk-node';
-import { resourceFromAttributes } from '@opentelemetry/resources';
-import { SemanticResourceAttributes } from '@opentelemetry/semantic-conventions';
 import { getNodeAutoInstrumentations } from '@opentelemetry/auto-instrumentations-node';
 import { PrometheusExporter } from '@opentelemetry/exporter-prometheus';
+import { resourceFromAttributes } from '@opentelemetry/resources';
+import { NodeSDK } from '@opentelemetry/sdk-node';
+import { SemanticResourceAttributes } from '@opentelemetry/semantic-conventions';
 
 export interface APMConfig {
   serviceName?: string;
@@ -33,12 +33,12 @@ export class APMMonitor {
       metricsPort: 9090,
       metricsEndpoint: '/metrics',
       enableConsoleExporter: process.env.NODE_ENV === 'development',
-      ...config,
+      ...config
     };
 
     this.metricsExporter = new PrometheusExporter({
       port: this.config.metricsPort!,
-      endpoint: this.config.metricsEndpoint!,
+      endpoint: this.config.metricsEndpoint!
     });
 
     this.sdk = new NodeSDK({
@@ -46,14 +46,14 @@ export class APMMonitor {
         [SemanticResourceAttributes.SERVICE_NAME]: this.config.serviceName!,
         [SemanticResourceAttributes.SERVICE_VERSION]: this.config.serviceVersion!,
         [SemanticResourceAttributes.SERVICE_NAMESPACE]: 'dinoair',
-        [SemanticResourceAttributes.DEPLOYMENT_ENVIRONMENT]: process.env.NODE_ENV || 'development',
+        [SemanticResourceAttributes.DEPLOYMENT_ENVIRONMENT]: process.env.NODE_ENV || 'development'
       }),
       instrumentations: [getNodeAutoInstrumentations({
         '@opentelemetry/instrumentation-fs': {
-          enabled: false, // Disable file system instrumentation to reduce noise
-        },
+          enabled: false // Disable file system instrumentation to reduce noise
+        }
       })],
-      metricReader: this.metricsExporter,
+      metricReader: this.metricsExporter
     });
   }
 
@@ -98,7 +98,7 @@ export class APMMonitor {
       memoryUsage: process.memoryUsage(),
       cpuUsage: process.cpuUsage(),
       uptime: process.uptime(),
-      timestamp: new Date().toISOString(),
+      timestamp: new Date().toISOString()
     };
 
     return metrics;
@@ -107,7 +107,7 @@ export class APMMonitor {
   getStatus(): { isStarted: boolean; config: APMConfig } {
     return {
       isStarted: this.isStarted,
-      config: this.config,
+      config: this.config
     };
   }
 }

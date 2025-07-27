@@ -1,8 +1,9 @@
 'use client';
 
-import React, { useState } from 'react';
-import { useDebug } from '@/contexts/debug-context';
 import { X, Trash2, Download, Filter, Copy } from 'lucide-react';
+import React, { useState } from 'react';
+
+import { useDebug } from '@/contexts/debug-context';
 
 interface DebugPanelProps {
   isOpen: boolean;

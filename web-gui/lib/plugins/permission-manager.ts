@@ -36,106 +36,106 @@ export const BUILT_IN_PERMISSIONS: { [key: string]: Permission } = {
     name: 'Read Storage',
     description: 'Access stored data for this plugin',
     category: 'storage',
-    riskLevel: 'low',
+    riskLevel: 'low'
   },
   'storage.write': {
     id: 'storage.write',
     name: 'Write Storage',
     description: 'Store and modify data for this plugin',
     category: 'storage',
-    riskLevel: 'low',
+    riskLevel: 'low'
   },
   'network.fetch': {
     id: 'network.fetch',
     name: 'Network Access',
     description: 'Make network requests to external services',
     category: 'network',
-    riskLevel: 'medium',
+    riskLevel: 'medium'
   },
   'network.unlimited': {
     id: 'network.unlimited',
     name: 'Unlimited Network Access',
     description: 'Make network requests to any domain',
     category: 'network',
-    riskLevel: 'high',
+    riskLevel: 'high'
   },
   'ui.notifications': {
     id: 'ui.notifications',
     name: 'Show Notifications',
     description: 'Display notifications to the user',
     category: 'ui',
-    riskLevel: 'low',
+    riskLevel: 'low'
   },
   'ui.commands': {
     id: 'ui.commands',
     name: 'Register Commands',
     description: 'Add commands to the user interface',
     category: 'ui',
-    riskLevel: 'medium',
+    riskLevel: 'medium'
   },
   'ui.modify': {
     id: 'ui.modify',
     name: 'Modify Interface',
     description: 'Change the user interface appearance',
     category: 'ui',
-    riskLevel: 'high',
+    riskLevel: 'high'
   },
   'chat.read': {
     id: 'chat.read',
     name: 'Read Messages',
     description: 'Access chat messages and conversations',
     category: 'chat',
-    riskLevel: 'medium',
+    riskLevel: 'medium'
   },
   'chat.write': {
     id: 'chat.write',
     name: 'Send Messages',
     description: 'Send messages in chat conversations',
     category: 'chat',
-    riskLevel: 'medium',
+    riskLevel: 'medium'
   },
   'chat.history': {
     id: 'chat.history',
     name: 'Access Chat History',
     description: 'Read previous chat conversations',
     category: 'chat',
-    riskLevel: 'high',
+    riskLevel: 'high'
   },
   'system.info': {
     id: 'system.info',
     name: 'System Information',
     description: 'Access basic system information',
     category: 'system',
-    riskLevel: 'low',
+    riskLevel: 'low'
   },
   'system.clipboard': {
     id: 'system.clipboard',
     name: 'Clipboard Access',
     description: 'Read from and write to clipboard',
     category: 'system',
-    riskLevel: 'medium',
+    riskLevel: 'medium'
   },
   'sensitive.location': {
     id: 'sensitive.location',
     name: 'Location Access',
     description: 'Access device location information',
     category: 'sensitive',
-    riskLevel: 'critical',
+    riskLevel: 'critical'
   },
   'sensitive.camera': {
     id: 'sensitive.camera',
     name: 'Camera Access',
     description: 'Access device camera',
     category: 'sensitive',
-    riskLevel: 'critical',
+    riskLevel: 'critical'
   },
   'sensitive.microphone': {
     id: 'sensitive.microphone',
     name: 'Microphone Access',
     description: 'Access device microphone',
     category: 'sensitive',
-    riskLevel: 'critical',
-  },
+    riskLevel: 'critical'
+  }
 };
 
 export class PermissionManager {
@@ -151,9 +151,9 @@ export class PermissionManager {
       maxDuration: {
         'network.fetch': 24 * 60 * 60 * 1000, // 24 hours
         'network.unlimited': 60 * 60 * 1000, // 1 hour
-        'ui.modify': 30 * 60 * 1000, // 30 minutes
+        'ui.modify': 30 * 60 * 1000 // 30 minutes
       },
-      ...policy,
+      ...policy
     };
 
     // Load saved permissions from storage
@@ -235,7 +235,7 @@ export class PermissionManager {
 
       this.eventTarget.dispatchEvent(
         new CustomEvent('permission-revoked', {
-          detail: { pluginId, permissionId },
+          detail: { pluginId, permissionId }
         })
       );
     }
@@ -250,7 +250,7 @@ export class PermissionManager {
 
     this.eventTarget.dispatchEvent(
       new CustomEvent('permissions-revoked', {
-        detail: { pluginId },
+        detail: { pluginId }
       })
     );
   }
@@ -320,7 +320,7 @@ export class PermissionManager {
       low: 'text-green-600 bg-green-50 border-green-200',
       medium: 'text-yellow-600 bg-yellow-50 border-yellow-200',
       high: 'text-orange-600 bg-orange-50 border-orange-200',
-      critical: 'text-red-600 bg-red-50 border-red-200',
+      critical: 'text-red-600 bg-red-50 border-red-200'
     };
 
     const riskColor = riskColors[permission.riskLevel];
@@ -428,7 +428,7 @@ export class PermissionManager {
       timestamp: now,
       approved: true,
       approvedAt: now,
-      expiresAt,
+      expiresAt
     };
 
     this.grantedPermissions.get(pluginId)!.set(permission.id, request);
@@ -446,7 +446,7 @@ export class PermissionManager {
 
     this.eventTarget.dispatchEvent(
       new CustomEvent('permission-granted', {
-        detail: request,
+        detail: request
       })
     );
 
@@ -479,7 +479,7 @@ export class PermissionManager {
 
           this.eventTarget.dispatchEvent(
             new CustomEvent('permission-expired', {
-              detail: { pluginId, permissionId },
+              detail: { pluginId, permissionId }
             })
           );
         }
@@ -559,7 +559,7 @@ export class PermissionManager {
       permissionName: permission.name,
       riskLevel: permission.riskLevel,
       approved,
-      reason,
+      reason
     };
 
     // Store audit log

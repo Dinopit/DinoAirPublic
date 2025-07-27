@@ -1,4 +1,6 @@
-import { NextRequest, NextResponse } from 'next/server';
+import type { NextRequest} from 'next/server';
+import { NextResponse } from 'next/server';
+
 import { recordChatResponseTime, recordTokenUsage } from '@/lib/utils/performance-metrics';
 
 export async function POST(request: NextRequest) {
@@ -45,13 +47,13 @@ export async function POST(request: NextRequest) {
           const response = await fetch('http://localhost:11434/api/generate', {
             method: 'POST',
             headers: {
-              'Content-Type': 'application/json',
+              'Content-Type': 'application/json'
             },
             body: JSON.stringify({
               model: selectedModel,
               prompt: prompt,
-              stream: true,
-            }),
+              stream: true
+            })
           });
 
           if (!response.ok) {
@@ -105,14 +107,14 @@ export async function POST(request: NextRequest) {
           console.error('Streaming error:', error);
           controller.error(error);
         }
-      },
+      }
     });
 
     return new Response(stream, {
       headers: {
         'Content-Type': 'text/plain; charset=utf-8',
-        'Transfer-Encoding': 'chunked',
-      },
+        'Transfer-Encoding': 'chunked'
+      }
     });
   } catch (error) {
     console.error('Chat API error:', error);

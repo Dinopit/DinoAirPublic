@@ -1,6 +1,7 @@
 import React from 'react';
-import { Model } from '@/hooks/useModels';
-import { Conversation } from '@/hooks/useConversations';
+
+import type { Conversation } from '@/hooks/useConversations';
+import type { Model } from '@/hooks/useModels';
 
 interface ChatHeaderProps {
   selectedModel: string;

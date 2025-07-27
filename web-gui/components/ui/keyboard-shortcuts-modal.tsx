@@ -1,9 +1,11 @@
 'use client';
 
-import React from 'react';
 import { X } from 'lucide-react';
-import { formatShortcut, KeyboardShortcut } from '../../hooks/useKeyboardShortcuts';
+import React from 'react';
+
 import { useFocusManagement } from '../../hooks/useFocusManagement';
+import type { KeyboardShortcut } from '../../hooks/useKeyboardShortcuts';
+import { formatShortcut } from '../../hooks/useKeyboardShortcuts';
 
 interface KeyboardShortcutsModalProps {
   isOpen: boolean;
@@ -14,7 +16,7 @@ interface KeyboardShortcutsModalProps {
 export const KeyboardShortcutsModal: React.FC<KeyboardShortcutsModalProps> = ({
   isOpen,
   onClose,
-  shortcuts,
+  shortcuts
 }) => {
   const { containerRef } = useFocusManagement(isOpen, {
     restoreFocus: true,

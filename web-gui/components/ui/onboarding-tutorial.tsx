@@ -1,7 +1,8 @@
 'use client';
 
-import React, { useState, useEffect } from 'react';
 import { X, ChevronRight, ChevronLeft } from 'lucide-react';
+import React, { useState, useEffect } from 'react';
+
 import { useFocusManagement } from '../../hooks/useFocusManagement';
 
 interface TutorialStep {
@@ -219,7 +220,7 @@ export const OnboardingTutorial: React.FC<OnboardingTutorialProps> = ({
             top: `${highlightPosition.top - 4}px`,
             left: `${highlightPosition.left - 4}px`,
             width: `${highlightPosition.width + 8}px`,
-            height: `${highlightPosition.height + 8}px`,
+            height: `${highlightPosition.height + 8}px`
           }}
           aria-hidden="true"
         />

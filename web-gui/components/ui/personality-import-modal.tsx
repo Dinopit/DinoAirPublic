@@ -1,9 +1,10 @@
 'use client';
 
-import React, { useState, useCallback, useEffect } from 'react';
 import { X, Upload, FileJson, AlertCircle } from 'lucide-react';
-import { toast } from '@/lib/stores/toast-store';
+import React, { useState, useCallback, useEffect } from 'react';
+
 import { apiClient } from '@/lib/api/enhanced-client';
+import { toast } from '@/lib/stores/toast-store';
 
 interface PersonalityImportModalProps {
   isOpen: boolean;
@@ -31,7 +32,7 @@ interface ValidationError {
 export const PersonalityImportModal: React.FC<PersonalityImportModalProps> = ({
   isOpen,
   onClose,
-  onImportSuccess,
+  onImportSuccess
 }) => {
   const [file, setFile] = useState<File | null>(null);
   const [previewData, setPreviewData] = useState<ImportedPersonality | null>(null);
@@ -132,7 +133,7 @@ export const PersonalityImportModal: React.FC<PersonalityImportModalProps> = ({
         systemPrompt: data.systemPrompt || data.system_prompt,
         temperature: data.temperature,
         maxTokens: data.maxTokens || data.max_tokens,
-        isDefault: data.isDefault,
+        isDefault: data.isDefault
       };
 
       setPreviewData(normalized);
@@ -158,7 +159,7 @@ export const PersonalityImportModal: React.FC<PersonalityImportModalProps> = ({
     e.stopPropagation();
     setDragActive(false);
 
-    if (e.dataTransfer.files && e.dataTransfer.files[0]) {
+    if (e.dataTransfer.files?.[0]) {
       const droppedFile = e.dataTransfer.files[0];
       if (droppedFile.type === 'application/json') {
         handleFileSelect(droppedFile);
@@ -180,8 +181,8 @@ export const PersonalityImportModal: React.FC<PersonalityImportModalProps> = ({
 
       const response = await apiClient.post('/v1/personalities/import', formData, {
         headers: {
-          'Content-Type': 'multipart/form-data',
-        },
+          'Content-Type': 'multipart/form-data'
+        }
       });
 
       if (response.error) {

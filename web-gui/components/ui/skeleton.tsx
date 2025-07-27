@@ -13,7 +13,7 @@ export const Skeleton: React.FC<SkeletonProps> = ({
   variant = 'rectangular',
   width,
   height,
-  animation = true,
+  animation = true
 }) => {
   const getVariantClasses = () => {
     switch (variant) {
@@ -31,7 +31,7 @@ export const Skeleton: React.FC<SkeletonProps> = ({
 
   const style: React.CSSProperties = {
     width: width || '100%',
-    height: height || (variant === 'text' ? '1rem' : '100%'),
+    height: height || (variant === 'text' ? '1rem' : '100%')
   };
 
   return (
