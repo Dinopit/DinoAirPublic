@@ -429,7 +429,7 @@ router.post('/:projectId/dependencies',
  * GET /api/projects/stats
  * Get project statistics
  */
-router.get('/api/stats',
+router.get('/stats',
   authenticateRequest,
   (req, res) => {
     try {
