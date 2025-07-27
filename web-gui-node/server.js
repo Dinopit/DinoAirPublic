@@ -49,7 +49,7 @@ if (!validationResults.isValid) {
 const { resourceManager } = require('./lib/resource-manager');
 const { memoryMonitor } = require('./lib/memory-monitor');
 const { middleware: apmMiddleware, shutdown: apmShutdown } = require('./lib/apm');
-const { AlertingManager } = require('./lib/alerting');
+const { alertingSystem } = require('./lib/alerting');
 
 // Import route modules
 console.log(`[${new Date().toISOString()}] 📁 Loading route modules...`);
