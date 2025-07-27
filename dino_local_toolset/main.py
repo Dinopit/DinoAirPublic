@@ -310,8 +310,8 @@ class AppLauncher:
                             })
         
         elif self.system == "Windows":
-            import winreg
             try:
+                import winreg
                 key = winreg.OpenKey(winreg.HKEY_LOCAL_MACHINE, r"SOFTWARE\Microsoft\Windows\CurrentVersion\Uninstall")
                 for i in range(winreg.QueryInfoKey(key)[0]):
                     subkey_name = winreg.EnumKey(key, i)
