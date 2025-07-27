@@ -15,6 +15,27 @@ const colors = {
 };
 
 // Simple implementations without external dependencies
+/**
+ * Generates a basic character-frequency-based embedding for a given text.
+ * 
+ * This function normalizes the input text, splits it into words, and computes
+ * a fixed-size vector (length 384) based on character frequencies and positions.
+ * The resulting vector is normalized to unit length.
+ * 
+ * Limitations:
+ * - Does not capture semantic relationships between words or phrases.
+ * - Ignores word order and context, making it unsuitable for tasks requiring
+ *   understanding of meaning or syntax.
+ * - Cannot handle polysemy (words with multiple meanings) or out-of-vocabulary words.
+ * 
+ * Usage:
+ * This function is intended for demonstration purposes only. It is not suitable
+ * for production use. For production, consider using advanced embedding models
+ * such as Word2Vec, GloVe, or transformer-based models like BERT or GPT.
+ * 
+ * @param {string} text - The input text to embed.
+ * @returns {number[]} A 384-dimensional normalized vector representing the text.
+ */
 function simpleEmbedding(text) {
   const normalized = text.toLowerCase().replace(/[^\w\s]/g, ' ').trim();
   const words = normalized.split(/\s+/).filter(word => word.length > 2);
