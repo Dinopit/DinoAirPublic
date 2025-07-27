@@ -92,3 +92,26 @@ Thumbs.db
 # Temporary files
 tmp/
 temp/
+
+# DinoAir Code Execution - Specific temporary files
+/tmp/dinoair-projects/
+/tmp/dinoair-execution/
+
+# Compiled language outputs
+*.exe
+*.out
+*.o
+*.so
+*.dylib
+*.class
+a.out
+main
+output
+
+# Language-specific build artifacts
+target/        # Rust/Java
+__pycache__/   # Python
+*.pyc
+*.pyo
+go.work        # Go workspace
+Cargo.lock     # Rust dependencies
