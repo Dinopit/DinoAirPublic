@@ -38,6 +38,7 @@ DinoAir has evolved from an experimental project to a **production-ready platfor
 
 - [Features](#-features)
 - [Quick Start](#-quick-start)
+- [Mobile App](#-mobile-app)
 - [Prerequisites](#-prerequisites)
 - [Installation](#-installation)
 - [Configuration](#-configuration)
@@ -72,6 +73,13 @@ DinoAir has evolved from an experimental project to a **production-ready platfor
 - **Version Control** - Track changes and iterations
 - **Backup & Sync** - Keep your data safe with automated backups
 
+### 📱 **Mobile Experience**
+- **Native Mobile Apps** - iOS and Android applications with offline capabilities
+- **Voice Integration** - Hands-free operation with speech recognition
+- **Camera Features** - Document scanning, OCR, and image analysis
+- **Push Notifications** - Real-time alerts and cross-device sync
+- **Gesture Controls** - Intuitive mobile navigation and shortcuts
+
 ### 🔧 **System Features**
 - **Modern Web UI** - Clean, responsive interface that works on all devices
 - **Real-time Monitoring** - Track system performance and resource usage
@@ -102,6 +110,35 @@ python start.py
 ```
 
 **That's it!** DinoAir will automatically detect your hardware and install the optimal configuration for your system.
+
+## 📱 Mobile App
+
+DinoAir includes a native mobile application for iOS and Android with full offline capabilities.
+
+### 🚀 **Mobile Features**
+- **Offline Mode** - Continue conversations without internet connection
+- **Voice Integration** - Speech-to-text and voice commands
+- **Camera Features** - Document scanning and OCR
+- **Push Notifications** - Real-time alerts and sync updates
+- **Gesture Controls** - Shake to clear, swipe navigation
+
+### 📲 **Quick Mobile Setup**
+```bash
+cd mobile-app
+npm install
+
+# For iOS (macOS only)
+cd ios && pod install && cd ..
+npm run ios
+
+# For Android
+npm run android
+```
+
+### 📚 **Mobile Documentation**
+- **Setup Guide**: [`mobile-app/README.md`](mobile-app/README.md)
+- **Integration Guide**: [`MOBILE_INTEGRATION_GUIDE.md`](MOBILE_INTEGRATION_GUIDE.md)
+- **Technical Details**: Complete React Native implementation with offline SQLite storage
 
 ## 📋 System Requirements
 
