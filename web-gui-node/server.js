@@ -31,7 +31,7 @@ const validationResults = envValidator.validate(process.env.NODE_ENV === 'produc
 if (!validationResults.isValid) {
   console.error(`[${new Date().toISOString()}] ❌ Environment validation failed!`);
   envValidator.printResults(validationResults);
-  
+
   if (process.env.NODE_ENV === 'production') {
     console.error('🚨 Refusing to start in production with invalid environment!');
     process.exit(1);
@@ -198,6 +198,8 @@ app.use('/api/health', require('./routes/api/health'));
 console.log(`[${new Date().toISOString()}] ✅ Enhanced health check routes mounted`);
 app.use('/api/performance', require('./routes/api/performance'));
 console.log(`[${new Date().toISOString()}] ✅ Performance API routes mounted`);
+app.use('/api/v1/security', require('./routes/api/v1/security'));
+console.log(`[${new Date().toISOString()}] ✅ Security API routes mounted`);
 app.use('/', pageRoutes);
 console.log(`[${new Date().toISOString()}] ✅ Page routes mounted`);
 
