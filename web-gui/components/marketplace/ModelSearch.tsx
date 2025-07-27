@@ -94,7 +94,10 @@ const ModelSearch: React.FC<ModelSearchProps> = ({
             onChange={handleInputChange}
             onKeyDown={handleKeyPress}
             onFocus={() => query.length > 0 && setShowSuggestions(true)}
-            onBlur={() => setTimeout(() => setShowSuggestions(false), 200)}
+            onBlur={() => {
+              if (timeoutRef.current) clearTimeout(timeoutRef.current);
+              timeoutRef.current = setTimeout(() => setShowSuggestions(false), 200);
+            }}
             placeholder={placeholder}
             className="w-full pl-10 pr-10 py-3 border border-border rounded-lg bg-background text-foreground placeholder-muted-foreground focus:outline-none focus:ring-2 focus:ring-primary focus:border-transparent"
           />
