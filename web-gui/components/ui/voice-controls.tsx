@@ -56,9 +56,16 @@ export const VoiceControls: React.FC<VoiceControlsProps> = ({
   React.useEffect(() => {
     if (transcript && onTranscriptChange) {
       onTranscriptChange(transcript);
-      resetTranscript();
+      setTranscriptConsumed(true);
     }
-  }, [transcript, onTranscriptChange, resetTranscript]);
+  }, [transcript, onTranscriptChange]);
+
+  React.useEffect(() => {
+    if (transcriptConsumed) {
+      resetTranscript();
+      setTranscriptConsumed(false);
+    }
+  }, [transcriptConsumed, resetTranscript]);
 
   React.useEffect(() => {
     if (audioBlob && onAudioMessage) {
