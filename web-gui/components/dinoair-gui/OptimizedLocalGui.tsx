@@ -13,6 +13,9 @@ import { DebugProvider, useDebug } from '../../contexts/debug-context';
 import { useScreenReader } from '../../hooks/useScreenReader';
 import { OfflineIndicator } from '../ui/offline-indicator';
 
+// Import model registry initialization
+import '../../lib/services/model-registry-init';
+
 // Dynamically import heavy components to reduce initial bundle size
 const LocalChatView = dynamic(() => import('./LocalChatView'), {
   ssr: false,
@@ -39,7 +42,12 @@ const PluginManager = dynamic(() => import('../plugins'), {
   loading: () => <div className="flex items-center justify-center h-64">Loading plugins...</div>,
 });
 
-type Tab = 'chat' | 'artifacts' | 'local-tools' | 'plugins';
+const ModelMarketplace = dynamic(() => import('../marketplace/ModelMarketplace'), {
+  ssr: false,
+  loading: () => <div className="flex items-center justify-center h-64">Loading marketplace...</div>,
+});
+
+type Tab = 'chat' | 'artifacts' | 'local-tools' | 'plugins' | 'marketplace';
 
 // Memory-optimized component with proper cleanup
 const OptimizedLocalGuiContent = () => {
@@ -217,6 +225,16 @@ const OptimizedLocalGuiContent = () => {
         key: '3',
         ctrl: true,
         cmd: true,
+        description: 'Switch to Model Marketplace tab',
+        action: () => {
+          setActiveTab('marketplace');
+          announceNavigation('Switched to Model Marketplace tab');
+        },
+      },
+      {
+        key: '4',
+        ctrl: true,
+        cmd: true,
         description: 'Switch to Plugins tab',
         action: () => {
           setActiveTab('plugins');
@@ -313,6 +331,8 @@ const OptimizedLocalGuiContent = () => {
         return <DinoLocalAssistant />;
       case 'plugins':
         return <PluginManager />;
+      case 'marketplace':
+        return <ModelMarketplace />;
       default:
         return <LocalChatView />;
     }
@@ -322,6 +342,7 @@ const OptimizedLocalGuiContent = () => {
     () => [
       { id: 'chat' as Tab, label: 'Chat', icon: '💬' },
       { id: 'artifacts' as Tab, label: 'Artifacts', icon: '📦' },
+      { id: 'marketplace' as Tab, label: 'Models', icon: '🤖' },
       { id: 'local-tools' as Tab, label: 'Local Tools', icon: '🛠️' },
       { id: 'plugins' as Tab, label: 'Plugins', icon: '🔌' },
     ],
