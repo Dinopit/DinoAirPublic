@@ -1,3 +1,5 @@
+[![Ask DeepWiki](https://deepwiki.com/badge.svg)](https://deepwiki.com/Dinopit/DinoAirPublic)
+
 # DinoAir 🦕✨
 
 ![Version](https://img.shields.io/badge/version-1.2.0-blue.svg)
