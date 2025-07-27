@@ -3,7 +3,7 @@
 import * as React from 'react';
 import { useCallback, useEffect } from 'react';
 import { useSpeechToText } from './useSpeechToText';
-import { processVoiceCommand, VoiceCommand } from '../lib/utils/voiceCommandUtils';
+import { processVoiceCommand, VoiceCommand } from './utils/voiceCommandUtils';
 
 interface UseVoiceCommandsOptions {
   enabled?: boolean;

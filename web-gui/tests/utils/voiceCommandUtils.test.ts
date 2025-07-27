@@ -5,7 +5,7 @@ import {
   processVoiceCommand,
   VoiceCommand,
   CommandMatchOptions,
-} from '../../lib/utils/voiceCommandUtils';
+} from '../../hooks/utils/voiceCommandUtils';
 
 describe('Voice Command Utils', () => {
   describe('calculateSimilarity', () => {
