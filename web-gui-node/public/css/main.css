@@ -536,6 +536,36 @@ textarea.form-control {
 .gap-2 { gap: var(--space-2); }
 .gap-4 { gap: var(--space-4); }
 
+/* Touch and Mobile Enhancements */
+@media (pointer: coarse) {
+  /* Touch-friendly sizing for all interactive elements */
+  .btn, .form-control, .nav-link {
+    min-height: 44px;
+    touch-action: manipulation;
+    -webkit-tap-highlight-color: transparent;
+  }
+  
+  /* Better touch feedback */
+  .btn:active {
+    transform: scale(0.98);
+    transition: transform 0.1s ease;
+  }
+  
+  /* Larger touch targets for icons */
+  .btn-icon {
+    min-width: 48px;
+    min-height: 48px;
+  }
+  
+  /* Better scrolling on touch devices */
+  .chat-messages,
+  .modal-body,
+  .form-control[data-scrollable] {
+    -webkit-overflow-scrolling: touch;
+    overscroll-behavior: contain;
+  }
+}
+
 /* Responsive Design */
 @media (max-width: 768px) {
   .container {
@@ -543,22 +573,52 @@ textarea.form-control {
   }
   
   .navbar {
-    flex-direction: column;
-    gap: var(--space-4);
+    flex-direction: row;
+    flex-wrap: wrap;
+    gap: var(--space-2);
     padding: var(--space-3) 0;
-    min-height: auto;
+    min-height: 60px;
+  }
+  
+  .nav-brand {
+    flex: 1;
   }
   
   .nav-menu {
-    flex-wrap: wrap;
-    justify-content: center;
+    display: none; /* Hide navigation menu on mobile */
+  }
+  
+  .nav-menu.mobile-open {
+    display: flex;
+    flex-direction: column;
+    position: absolute;
+    top: 100%;
+    left: 0;
+    right: 0;
+    background: var(--bg-primary);
+    border-top: 1px solid var(--border-light);
+    box-shadow: var(--shadow-lg);
+    padding: var(--space-4);
     gap: var(--space-3);
-    width: 100%;
+    z-index: var(--z-dropdown);
   }
   
   .nav-actions {
-    order: -1;
-    margin-bottom: var(--space-2);
+    display: flex;
+    align-items: center;
+    gap: var(--space-2);
+  }
+  
+  .mobile-menu-toggle {
+    display: block;
+    background: none;
+    border: none;
+    font-size: var(--text-lg);
+    color: var(--text-primary);
+    cursor: pointer;
+    padding: var(--space-2);
+    min-height: 44px;
+    min-width: 44px;
   }
   
   .footer-content {
@@ -573,32 +633,51 @@ textarea.form-control {
   .btn {
     width: 100%;
     justify-content: center;
-    min-height: 44px; /* Touch-friendly minimum size */
+    min-height: 48px; /* Larger touch targets */
+    font-size: var(--text-base);
   }
   
   .btn-sm {
     width: auto;
-    min-height: 36px;
+    min-height: 40px;
+    font-size: var(--text-sm);
   }
   
   .btn-icon {
-    width: 44px;
-    height: 44px;
-    min-height: 44px;
+    width: 48px;
+    height: 48px;
+    min-height: 48px;
   }
   
   .main-content {
-    min-height: calc(100vh - 140px - 80px); /* Adjust for taller mobile header */
+    min-height: calc(100vh - 80px - 60px); /* Adjust for mobile header */
     padding: var(--space-4) 0;
   }
   
   .form-control {
     font-size: 16px; /* Prevent zoom on iOS */
-    min-height: 44px;
+    min-height: 48px;
+    padding: var(--space-3) var(--space-4);
   }
   
   textarea.form-control {
-    min-height: 88px;
+    min-height: 100px;
+  }
+  
+  /* Enhanced spacing for touch */
+  .form-group {
+    margin-bottom: var(--space-6);
+  }
+  
+  /* Better modal sizing */
+  .modal {
+    padding: var(--space-2);
+  }
+  
+  .modal-content {
+    width: calc(100% - var(--space-4));
+    max-height: calc(100vh - var(--space-8));
+    margin: var(--space-2);
   }
 }
 
@@ -607,44 +686,82 @@ textarea.form-control {
     padding: 0 var(--space-2);
   }
   
-  .nav-menu {
+  .nav-menu.mobile-open {
+    padding: var(--space-3);
     gap: var(--space-2);
   }
   
   .nav-link {
-    padding: var(--space-2) var(--space-3);
-    font-size: var(--text-sm);
-    min-height: 44px;
+    padding: var(--space-3) var(--space-4);
+    font-size: var(--text-base);
+    min-height: 50px;
     display: flex;
     align-items: center;
     justify-content: center;
+    border-radius: var(--radius-lg);
+    background: var(--bg-secondary);
   }
   
   .page-title {
     font-size: var(--text-xl);
+    margin-bottom: var(--space-4);
   }
   
   .navbar {
     padding: var(--space-2) 0;
+    min-height: 56px;
   }
   
   .main-content {
-    padding: var(--space-2) 0;
+    padding: var(--space-3) 0;
   }
   
   .modal-content {
-    width: 98%;
+    width: calc(100% - var(--space-2));
     margin: var(--space-1);
-    max-height: 95vh;
+    max-height: calc(100vh - var(--space-4));
+    border-radius: var(--radius-lg);
   }
   
   .btn {
     font-size: var(--text-base);
-    padding: var(--space-3) var(--space-4);
+    padding: var(--space-4) var(--space-6);
+    min-height: 52px;
+    border-radius: var(--radius-lg);
   }
   
   .btn-sm {
     font-size: var(--text-sm);
-    padding: var(--space-2) var(--space-3);
+    padding: var(--space-3) var(--space-4);
+    min-height: 44px;
+  }
+  
+  .btn-icon {
+    width: 52px;
+    height: 52px;
+    min-height: 52px;
+    border-radius: var(--radius-lg);
+  }
+  
+  /* Enhanced touch feedback */
+  .btn:active {
+    transform: scale(0.95);
+  }
+  
+  /* Better form spacing on small screens */
+  .form-control {
+    padding: var(--space-4);
+    border-radius: var(--radius-lg);
+    min-height: 52px;
+  }
+  
+  /* Improved readability */
+  body {
+    font-size: var(--text-lg);
+    line-height: var(--leading-relaxed);
+  }
+  
+  h1, h2, h3, h4, h5, h6 {
+    line-height: var(--leading-tight);
   }
 }

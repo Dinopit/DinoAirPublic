@@ -15,15 +15,17 @@ class ChatInterface {
     this.streamer = new ChatStreamer();
     this.isStreaming = false;
     this.currentSessionId = null;
+    this.messageHistory = [];
 
     this.init();
   }
 
-  init() {
+  async init() {
     this.setupEventListeners();
     this.loadCurrentModel();
     this.setupStreamingHandlers();
     this.autoResizeTextarea();
+    await this.loadChatHistory();
   }
 
   setupEventListeners() {
@@ -32,13 +34,14 @@ class ChatInterface {
     this.chatInput.addEventListener('keydown', e => this.handleKeyDown(e));
 
     document.getElementById('clear-chat-btn')?.addEventListener('click', () => this.clearChat());
-    document.getElementById('export-chat-btn')?.addEventListener('click', () => this.exportChat());
+    document.getElementById('export-chat-btn')?.addEventListener('click', () => this.showExportDialog());
+    document.getElementById('search-chat-btn')?.addEventListener('click', () => this.showSearchInterface());
   }
 
   setupStreamingHandlers() {
     this.streamer.on('streamStart', () => {
       this.isStreaming = true;
-      this.showTypingIndicator();
+      this.showAdvancedTypingIndicator('DinoAir is preparing your response...');
       window.loadingManager.show('send-btn', {
         showSpinner: true,
         showMessage: true,
@@ -48,7 +51,17 @@ class ChatInterface {
     });
 
     this.streamer.on('streamChunk', chunk => {
-      this.updateStreamingMessage(chunk);
+      // Update typing indicator message when first chunk arrives
+      if (!this.chatMessages.querySelector('.message.streaming')) {
+        this.updateTypingIndicatorMessage('DinoAir is responding...');
+        
+        // Add slight delay to show processing state
+        setTimeout(() => {
+          this.updateStreamingMessage(chunk);
+        }, 300);
+      } else {
+        this.updateStreamingMessage(chunk);
+      }
     });
 
     this.streamer.on('streamComplete', response => {
@@ -98,10 +111,35 @@ class ChatInterface {
     }
   }
 
-  addUserMessage(content) {
+  async addUserMessage(content) {
     const messageElement = this.createMessageElement('user', content);
     this.chatMessages.appendChild(messageElement);
     this.scrollToBottom();
+
+    // Update message status to sent
+    setTimeout(() => {
+      this.updateMessageStatus(messageElement, 'sent');
+    }, 300);
+
+    // Save to persistence
+    if (window.chatPersistence) {
+      try {
+        const sessionId = this.currentSessionId || window.chatPersistence.getCurrentSessionId();
+        await window.chatPersistence.saveMessage({
+          role: 'user',
+          content: content
+        }, sessionId);
+        this.currentSessionId = sessionId;
+        
+        // Update to delivered status
+        setTimeout(() => {
+          this.updateMessageStatus(messageElement, 'delivered');
+        }, 800);
+      } catch (error) {
+        console.error('Failed to save message:', error);
+        this.updateMessageStatus(messageElement, 'failed');
+      }
+    }
   }
 
   showTypingIndicator() {
@@ -113,22 +151,44 @@ class ChatInterface {
     const indicator = document.createElement('div');
     indicator.className = 'typing-indicator';
     indicator.innerHTML = `
-      <div class="typing-dots">
-        <div class="typing-dot"></div>
-        <div class="typing-dot"></div>
-        <div class="typing-dot"></div>
+      <div class="typing-avatar">
+        <div class="typing-avatar-inner">AI</div>
       </div>
-      <div class="typing-text">AI is thinking...</div>
+      <div class="typing-content">
+        <div class="typing-bubble">
+          <div class="typing-dots">
+            <div class="typing-dot"></div>
+            <div class="typing-dot"></div>
+            <div class="typing-dot"></div>
+          </div>
+        </div>
+        <div class="typing-text">DinoAir is typing...</div>
+      </div>
     `;
 
     this.chatMessages.appendChild(indicator);
     this.scrollToBottom();
+    
+    // Add subtle animation entrance
+    indicator.style.opacity = '0';
+    indicator.style.transform = 'translateY(10px)';
+    requestAnimationFrame(() => {
+      indicator.style.transition = 'opacity 0.3s ease, transform 0.3s ease';
+      indicator.style.opacity = '1';
+      indicator.style.transform = 'translateY(0)';
+    });
   }
 
   hideTypingIndicator() {
     const indicator = this.chatMessages.querySelector('.typing-indicator');
     if (indicator) {
-      indicator.remove();
+      indicator.style.opacity = '0';
+      indicator.style.transform = 'translateY(-10px)';
+      setTimeout(() => {
+        if (indicator.parentNode) {
+          indicator.remove();
+        }
+      }, 200);
     }
   }
 
@@ -148,13 +208,22 @@ class ChatInterface {
     }
   }
 
-  finalizeMessage(response) {
+  async finalizeMessage(response) {
     const streamingMessage = this.chatMessages.querySelector('.message.streaming');
     if (streamingMessage) {
       streamingMessage.classList.remove('streaming');
       const bubble = streamingMessage.querySelector('.message-bubble');
       if (bubble && response.content) {
         bubble.innerHTML = this.formatMessageContent(response.content);
+      }
+
+      // Save assistant message to persistence
+      if (window.chatPersistence && response.content) {
+        const sessionId = this.currentSessionId || window.chatPersistence.getCurrentSessionId();
+        await window.chatPersistence.saveMessage({
+          role: 'assistant',
+          content: response.content
+        }, sessionId);
       }
     }
     this.scrollToBottom();
@@ -163,6 +232,7 @@ class ChatInterface {
   createMessageElement(role, content, isStreaming = false) {
     const messageDiv = document.createElement('div');
     messageDiv.className = `message ${role}${isStreaming ? ' streaming' : ''}`;
+    messageDiv.setAttribute('data-message-id', this.generateMessageId());
 
     const avatar = document.createElement('div');
     avatar.className = 'message-avatar';
@@ -175,12 +245,25 @@ class ChatInterface {
     bubble.className = 'message-bubble';
     bubble.innerHTML = this.formatMessageContent(content);
 
+    const metaDiv = document.createElement('div');
+    metaDiv.className = 'message-meta';
+
     const time = document.createElement('div');
     time.className = 'message-time';
     time.textContent = new Date().toLocaleTimeString();
 
+    // Add message status for user messages
+    if (role === 'user') {
+      const status = document.createElement('div');
+      status.className = 'message-status';
+      status.innerHTML = this.getMessageStatusIcon('sending');
+      status.setAttribute('data-status', 'sending');
+      metaDiv.appendChild(status);
+    }
+
+    metaDiv.appendChild(time);
     contentDiv.appendChild(bubble);
-    contentDiv.appendChild(time);
+    contentDiv.appendChild(metaDiv);
     messageDiv.appendChild(avatar);
     messageDiv.appendChild(contentDiv);
 
@@ -229,6 +312,7 @@ class ChatInterface {
     this.updateCharCount();
     this.updateSendButton();
     this.autoResizeTextarea();
+    this.handleUserTyping();
   }
 
   updateCharCount() {
@@ -278,6 +362,108 @@ class ChatInterface {
     this.chatMessages.scrollTop = this.chatMessages.scrollHeight;
   }
 
+  // New methods for enhanced typing and status features
+  
+  generateMessageId() {
+    return 'msg_' + Date.now() + '_' + Math.random().toString(36).substr(2, 9);
+  }
+
+  getMessageStatusIcon(status) {
+    switch (status) {
+      case 'sending':
+        return '<div class="status-icon status-sending">○</div>';
+      case 'sent':
+        return '<div class="status-icon status-sent">✓</div>';
+      case 'delivered':
+        return '<div class="status-icon status-delivered">✓✓</div>';
+      case 'failed':
+        return '<div class="status-icon status-failed">⚠</div>';
+      default:
+        return '';
+    }
+  }
+
+  updateMessageStatus(messageElement, status) {
+    const statusElement = messageElement.querySelector('.message-status');
+    if (statusElement) {
+      statusElement.innerHTML = this.getMessageStatusIcon(status);
+      statusElement.setAttribute('data-status', status);
+      
+      // Add animation for status change
+      statusElement.style.transform = 'scale(1.2)';
+      setTimeout(() => {
+        statusElement.style.transform = 'scale(1)';
+      }, 200);
+    }
+  }
+
+  handleUserTyping() {
+    // Show typing indicator to other users (if implementing real-time features)
+    // For now, this is a placeholder for future real-time typing indicators
+    clearTimeout(this.typingTimeout);
+    
+    if (this.chatInput.value.trim().length > 0) {
+      // User is typing
+      this.isUserTyping = true;
+      
+      // Clear typing status after 2 seconds of no activity
+      this.typingTimeout = setTimeout(() => {
+        this.isUserTyping = false;
+      }, 2000);
+    } else {
+      this.isUserTyping = false;
+    }
+  }
+
+  showAdvancedTypingIndicator(message = 'DinoAir is processing your request...') {
+    this.hideTypingIndicator();
+    
+    const indicator = document.createElement('div');
+    indicator.className = 'typing-indicator advanced';
+    indicator.innerHTML = `
+      <div class="typing-avatar">
+        <div class="typing-avatar-inner processing">AI</div>
+      </div>
+      <div class="typing-content">
+        <div class="typing-bubble processing">
+          <div class="processing-bar">
+            <div class="processing-fill"></div>
+          </div>
+        </div>
+        <div class="typing-text">${message}</div>
+      </div>
+    `;
+
+    this.chatMessages.appendChild(indicator);
+    this.scrollToBottom();
+  }
+
+  updateTypingIndicatorMessage(message) {
+    const indicator = this.chatMessages.querySelector('.typing-indicator');
+    const textElement = indicator?.querySelector('.typing-text');
+    if (textElement) {
+      textElement.textContent = message;
+    }
+  }
+
+  // Integration with search and export functionality
+  showSearchInterface() {
+    if (window.chatSearchManager) {
+      window.chatSearchManager.showSearchInterface();
+    } else {
+      console.warn('Search functionality not available');
+    }
+  }
+
+  showExportDialog() {
+    if (window.chatSearchManager) {
+      window.chatSearchManager.showExportDialog();
+    } else {
+      // Fallback to basic export
+      this.exportChat();
+    }
+  }
+
   async clearChat() {
     if (confirm('Are you sure you want to clear the chat history?')) {
       try {
@@ -307,6 +493,11 @@ class ChatInterface {
         `;
 
         this.currentSessionId = null;
+        
+        // Start a new session in persistence
+        if (window.chatPersistence) {
+          this.currentSessionId = window.chatPersistence.startNewSession();
+        }
       } catch (error) {
         console.error('Failed to clear chat:', error);
         alert('Failed to clear chat. Please try again.');
@@ -349,6 +540,90 @@ class ChatInterface {
       alert('Failed to export chat. Please try again.');
     } finally {
       window.loadingManager.hide('export-chat-btn');
+    }
+  }
+
+  /**
+   * Load chat history from persistence
+   */
+  async loadChatHistory() {
+    if (!window.chatPersistence) return;
+
+    try {
+      // Get current session ID
+      this.currentSessionId = window.chatPersistence.getCurrentSessionId();
+      
+      // Load messages for current session
+      const messages = await window.chatPersistence.loadChatHistory(this.currentSessionId);
+      
+      if (messages.length > 0) {
+        // Clear welcome message
+        this.chatMessages.innerHTML = '';
+        
+        // Render all messages
+        messages.forEach(message => {
+          const messageElement = this.createMessageElement(message.role, message.content);
+          this.chatMessages.appendChild(messageElement);
+        });
+        
+        this.scrollToBottom();
+        console.log(`Loaded ${messages.length} messages from chat history`);
+      }
+    } catch (error) {
+      console.error('Failed to load chat history:', error);
+      // Continue without history - not a breaking error
+    }
+  }
+
+  /**
+   * Load a specific session
+   */
+  async loadSession(sessionId) {
+    if (!window.chatPersistence) return;
+
+    try {
+      window.loadingManager.show('chat-messages', {
+        showSpinner: true,
+        message: 'Loading conversation...'
+      });
+
+      this.currentSessionId = sessionId;
+      window.chatPersistence.switchToSession(sessionId);
+      
+      const messages = await window.chatPersistence.loadChatHistory(sessionId);
+      
+      // Clear current messages
+      this.chatMessages.innerHTML = '';
+      
+      if (messages.length === 0) {
+        // Show welcome message for empty session
+        this.chatMessages.innerHTML = `
+          <div class="welcome-message">
+            <div class="welcome-content">
+              <h3>New Conversation</h3>
+              <p>Start a conversation with AI. Type your message below and press Enter or click Send.</p>
+            </div>
+          </div>
+        `;
+      } else {
+        // Render all messages
+        messages.forEach(message => {
+          const messageElement = this.createMessageElement(message.role, message.content);
+          this.chatMessages.appendChild(messageElement);
+        });
+      }
+      
+      this.scrollToBottom();
+    } catch (error) {
+      console.error('Failed to load session:', error);
+      if (window.errorHandler) {
+        window.errorHandler.handleError(error, {
+          container: this.chatMessages,
+          inline: true
+        });
+      }
+    } finally {
+      window.loadingManager.hide('chat-messages');
     }
   }
 }

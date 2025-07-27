@@ -16,6 +16,31 @@ class ChatStreamer extends window.EventEmitter {
   }
 
   /**
+   * Get authorization header for API requests
+   * @returns {string} Authorization header value
+   */
+  getAuthHeader() {
+    // Try to get token from localStorage or sessionStorage
+    const token = localStorage.getItem('auth_token') || 
+                  sessionStorage.getItem('auth_token') ||
+                  this.getCookie('auth_token');
+    
+    return token ? `Bearer ${token}` : '';
+  }
+
+  /**
+   * Get cookie value by name
+   * @param {string} name - Cookie name
+   * @returns {string} Cookie value
+   */
+  getCookie(name) {
+    const value = `; ${document.cookie}`;
+    const parts = value.split(`; ${name}=`);
+    if (parts.length === 2) return parts.pop().split(';').shift();
+    return '';
+  }
+
+  /**
    * Start streaming chat response
    * @param {Object} messageData - Message data to send
    * @returns {Promise<void>}
@@ -39,14 +64,19 @@ class ChatStreamer extends window.EventEmitter {
       const response = await fetch('/api/chat', {
         method: 'POST',
         headers: {
-          'Content-Type': 'application/json'
+          'Content-Type': 'application/json',
+          'Authorization': this.getAuthHeader()
         },
         body: JSON.stringify(messageData),
         signal: this.abortController.signal
       });
 
       if (!response.ok) {
-        throw new Error(`HTTP error! status: ${response.status}`);
+        const errorData = await response.json().catch(() => ({}));
+        const error = new Error(errorData.error || `HTTP error! status: ${response.status}`);
+        error.status = response.status;
+        error.category = errorData.category;
+        throw error;
       }
 
       const reader = response.body.getReader();
@@ -83,6 +113,14 @@ class ChatStreamer extends window.EventEmitter {
       if (error.name === 'AbortError') {
         this.emit('streamAborted');
       } else {
+        // Use the new error handler for user-friendly messages
+        if (window.errorHandler) {
+          window.errorHandler.handleError(error, {
+            retryCallback: () => this.startStream(messageData),
+            container: document.getElementById('chat-messages'),
+            inline: true
+          });
+        }
         this.emit('streamError', error);
       }
     } finally {
