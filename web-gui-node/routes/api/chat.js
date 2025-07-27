@@ -92,20 +92,16 @@ async function storeMessage(sessionId, role, content, metadata = {}) {
     // Extract knowledge from user and assistant messages
     if (['user', 'assistant'].includes(role) && content.length > 20) {
       try {
-        // Get user ID from session for knowledge extraction
-        const session = await chatSessions.getById(sessionId);
-        if (session?.user_id) {
-          // Process message for knowledge extraction (async, don't wait)
-          memorySystem.processMessage(
-            session.user_id,
-            sessionId,
-            messageData.id,
-            content,
-            role
-          ).catch(error => {
-            console.warn('Knowledge extraction failed:', error.message);
-          });
-        }
+        // Process message for knowledge extraction (async, don't wait)
+        memorySystem.processMessage(
+          userId,
+          sessionId,
+          messageData.id,
+          content,
+          role
+        ).catch(error => {
+          console.warn('Knowledge extraction failed:', error.message);
+        });
       } catch (knowledgeError) {
         console.warn('Failed to extract knowledge:', knowledgeError.message);
       }
