@@ -13,6 +13,7 @@ const healthRoutes = require('./health');
 const alertsRoutes = require('./alerts');
 const ollamaRoutes = require('./ollama');
 const docsRoutes = require('./docs');
+const codeExecutionRoutes = require('./code-execution');
 
 // Mount API routes
 router.use('/chat', chatRoutes);
@@ -22,6 +23,7 @@ router.use('/alerts', alertsRoutes);
 router.use('/ollama', ollamaRoutes);
 router.use('/docs', docsRoutes);
 router.use('/openapi', docsRoutes); // Alias for docs
+router.use('/code-execution', codeExecutionRoutes);
 
 // API root endpoint
 router.get('/', (req, res) => {
@@ -35,7 +37,8 @@ router.get('/', (req, res) => {
       health: '/api/health',
       alerts: '/api/alerts',
       ollama: '/api/ollama',
-      docs: '/api/docs'
+      docs: '/api/docs',
+      codeExecution: '/api/code-execution'
     }
   });
 });
