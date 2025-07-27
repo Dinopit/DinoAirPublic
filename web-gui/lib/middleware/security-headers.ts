@@ -1,4 +1,4 @@
-import type { NextResponse , NextRequest } from 'next/server';
+import type { NextResponse, NextRequest } from 'next/server';
 
 export function applySecurityHeaders(_request: NextRequest, response: NextResponse) {
   const nonce = Buffer.from(crypto.randomUUID()).toString('base64');
