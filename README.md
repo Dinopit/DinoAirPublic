@@ -58,16 +58,15 @@ See [CHANGELOG.md](CHANGELOG.md) for complete details.
 
 ## ⚠️ IMPORTANT STABILITY WARNING ⚠️
 
-**This is Version 1.1.0 - EXPERIMENTAL SOFTWARE**
+**This is Version 1.2.0 - STABLE RELEASE**
 
-While DinoAir has received significant stability improvements, users should still be aware:
+DinoAir v1.2.0 includes major stability improvements, but users should still be aware:
 
-- 🚨 **Experimental Features**: Some features are still in active development
 - 💻 **Resource Intensive**: May consume significant CPU/GPU resources
 - 💾 **Data Safety**: Always backup important data before use
 - 🛡️ **Test Environment Recommended**: Consider testing in a safe environment first
 
-**The v1.1.0 update addresses many stability issues**, but we still recommend caution in production environments. We appreciate your patience and feedback!
+**The v1.2.0 update addresses many stability issues** and is much more reliable than previous versions. We appreciate your feedback!
 
 ## 📋 Table of Contents
 
@@ -95,7 +94,7 @@ While DinoAir has received significant stability improvements, users should stil
 - 💾 **Artifact Management** - Store, organize, and manage generated content
 - 🎭 **Multiple Personalities** - Customizable AI personalities for different use cases
 
-### Recent Enhancements (v1.1.0)
+### Recent Enhancements (v1.2.0)
 - 🔒 **Enhanced Security**
   - JWT and API key authentication for all endpoints
   - Advanced rate limiting with multiple strategies
@@ -573,65 +572,29 @@ cd web-gui && vercel
 
 ## 🛠️ Development
 
-### Project Structure
+> **📖 For comprehensive development documentation, see [DEVELOPMENT.md](DEVELOPMENT.md)**
 
-```
-DinoAir/
-├── web-gui/                 # Next.js frontend
-│   ├── app/                 # App router pages
-│   ├── components/          # React components
-│   ├── hooks/              # Custom React hooks
-│   ├── lib/                # Utilities & helpers
-│   │   ├── middleware/     # Auth, rate limit, validation
-│   │   ├── monitoring/     # Health & performance
-│   │   └── security/       # Security utilities
-│   └── public/             # Static assets
-├── lib/                    # Python safety modules
-│   ├── backup/            # Backup system
-│   ├── circuit_breaker/   # Fault tolerance
-│   ├── config/            # Configuration validation
-│   ├── health_monitor/    # Service monitoring
-│   ├── logging/           # Structured logging
-│   ├── monitoring/        # Resource monitoring
-│   ├── process_manager/   # Process isolation
-│   ├── rollback/          # Rollback system
-│   ├── sandbox/           # Code sandboxing
-│   └── shutdown/          # Graceful shutdown
-├── ComfyUI/                # Image generation backend
-│   ├── models/             # AI models
-│   └── workflows/          # Generation workflows
-├── personalities/          # AI personality configs
-├── docs/                   # Documentation
-└── scripts/               # Utility scripts
+### Quick Development Setup
+
+```bash
+# Clone and setup
+git clone https://github.com/Dinopit/DinoAirPublic.git
+cd DinoAirPublic
+
+# Install dependencies
+pip install -r requirements.txt
+cd web-gui && npm install
+
+# Start development
+python start.py
 ```
 
-### Development Workflow
+### Development Resources
 
-1. **Create a feature branch**
-   ```bash
-   git checkout -b feature/your-feature
-   ```
-
-2. **Make changes and test**
-   ```bash
-   npm run dev
-   npm test
-   ```
-
-3. **Build and verify**
-   ```bash
-   npm run build
-   npm run start
-   ```
-
-4. **Submit a pull request**
-
-### Code Style
-
-- TypeScript for type safety
-- ESLint for code quality
-- Prettier for formatting
-- Conventional commits
+- **[Development Guide](DEVELOPMENT.md)** - Complete development documentation
+- **[Technical Details](docs/development/)** - Implementation details and analysis
+- **[Testing Guide](DEVELOPMENT.md#testing)** - Test setup and execution
+- **[Contributing Guidelines](DEVELOPMENT.md#contributing)** - How to contribute
 
 ## 🏗️ Architecture
 
@@ -669,22 +632,21 @@ DinoAir/
 
 ## 🤝 Contributing
 
-We welcome contributions! Please see our [Contributing Guidelines](CONTRIBUTING.md) for details.
+> **📖 For detailed contributing guidelines, see [DEVELOPMENT.md](DEVELOPMENT.md#contributing)**
 
-### How to Contribute
+We welcome contributions! Quick steps:
 
 1. Fork the repository
-2. Create your feature branch
-3. Commit your changes
-4. Push to the branch
+2. Create your feature branch (`git checkout -b feature/amazing-feature`)
+3. Commit your changes (`git commit -m 'Add amazing feature'`)
+4. Push to the branch (`git push origin feature/amazing-feature`)
 5. Open a pull request
 
-### Areas for Contribution
-
-- 🐛 Bug fixes
-- ✨ New features
-- 📚 Documentation
-- 🧪 Tests
+**What we need help with:**
+- 🐛 Bug fixes and stability improvements
+- ✨ New features and enhancements
+- 📚 Documentation improvements
+- 🧪 Test coverage and quality assurance
 - 🎨 UI/UX improvements
 
 ## 🔧 Troubleshooting
@@ -803,8 +765,8 @@ This project is licensed under the MIT License - see the [LICENSE](LICENSE) file
 
 <div align="center">
 
-**DinoAir v1.1.0** - Built with ❤️ by the DinoAir Team
+**DinoAir v1.2.0** - Built with ❤️ by the DinoAir Team
 
-[Documentation](docs/) • [Issues](https://github.com/yourusername/DinoAir/issues) • [Discord](https://discord.gg/dinoair)
+[Documentation](docs/) • [Development](DEVELOPMENT.md) • [Issues](https://github.com/Dinopit/DinoAirPublic/issues) • [Discord](https://discord.gg/GVd4jSh3)
 
 </div>
