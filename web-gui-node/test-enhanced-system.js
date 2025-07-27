@@ -293,7 +293,7 @@ class EnhancedCodeExecutionTester {
     try {
       const result = await this.codeService.executeCode({
         language: 'python',
-        code: 'import time\\ntime.sleep(5)',
+        code: 'import time\ntime.sleep(5)',
         options: { timeout: 2000 }
       });
       
