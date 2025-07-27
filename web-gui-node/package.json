@@ -70,8 +70,10 @@
     "node-fetch": "^3.3.2",
     "pg": "^8.16.3",
     "prismjs": "^1.30.0",
+    "qrcode": "^1.5.4",
     "semver": "^7.6.3",
     "socket.io": "^4.7.4",
+    "speakeasy": "^2.0.0",
     "uuid": "^11.1.0"
   },
   "devDependencies": {

@@ -3,7 +3,11 @@ console.log(`🛡️  [${new Date().toISOString()}] AuthMiddleware: Loading auth
 const auth = require('../lib/auth');
 const db = require('../lib/db');
 const { rateLimiters, addRateLimitInfo, getUserTier } = require('./enhanced-rate-limiting');
-console.log(`🛡️  [${new Date().toISOString()}] AuthMiddleware: Authentication middleware dependencies loaded successfully`);
+const { MFAManager } = require('../lib/mfa-manager');
+const { AuditLogger } = require('../lib/audit-logger');
+console.log(
+  `🛡️  [${new Date().toISOString()}] AuthMiddleware: Authentication middleware dependencies loaded successfully`
+);
 
 let sessionStore;
 let sessionStoreAvailable = false;
@@ -26,6 +30,9 @@ try {
 // In-memory cache for auth results to prevent race conditions
 const authCache = new Map();
 const CACHE_TTL = 30000; // 30 seconds
+
+const mfaManager = new MFAManager();
+const auditLogger = new AuditLogger();
 
 setInterval(() => {
   const now = Date.now();
@@ -70,7 +77,9 @@ try {
  * Middleware to check if user is authenticated via JWT token
  */
 const requireAuth = async (req, res, next) => {
-  console.log(`🛡️  [${new Date().toISOString()}] AuthMiddleware: requireAuth called for ${req.method} ${req.originalUrl} from ${req.ip}`);
+  console.log(
+    `🛡️  [${new Date().toISOString()}] AuthMiddleware: requireAuth called for ${req.method} ${req.originalUrl} from ${req.ip}`
+  );
   console.time('requireAuth');
 
   try {
@@ -126,7 +135,9 @@ const requireAuth = async (req, res, next) => {
     });
 
     console.timeEnd('requireAuth');
-    console.log(`🛡️  [${new Date().toISOString()}] AuthMiddleware: requireAuth completed successfully for ${req.user.id}`);
+    console.log(
+      `🛡️  [${new Date().toISOString()}] AuthMiddleware: requireAuth completed successfully for ${req.user.id}`
+    );
     next();
   } catch (error) {
     console.error(`🛡️  [${new Date().toISOString()}] AuthMiddleware: requireAuth error:`, error);
@@ -139,7 +150,9 @@ const requireAuth = async (req, res, next) => {
  * Middleware to check if request has valid API key
  */
 const requireApiKey = async (req, res, next) => {
-  console.log(`🔑 [${new Date().toISOString()}] AuthMiddleware: requireApiKey called for ${req.method} ${req.originalUrl} from ${req.ip}`);
+  console.log(
+    `🔑 [${new Date().toISOString()}] AuthMiddleware: requireApiKey called for ${req.method} ${req.originalUrl} from ${req.ip}`
+  );
   console.time('requireApiKey');
 
   try {
@@ -153,9 +166,7 @@ const requireApiKey = async (req, res, next) => {
     }
 
     // Extract API key from header (with or without 'Bearer ' prefix)
-    const apiKey = authHeader.startsWith('Bearer ')
-      ? authHeader.substring(7)
-      : authHeader;
+    const apiKey = authHeader.startsWith('Bearer ') ? authHeader.substring(7) : authHeader;
 
     console.log(`🔑 [${new Date().toISOString()}] AuthMiddleware: Extracted API key (${apiKey.substring(0, 12)}...)`);
 
@@ -211,7 +222,9 @@ const requireApiKey = async (req, res, next) => {
     });
 
     console.timeEnd('requireApiKey');
-    console.log(`🔑 [${new Date().toISOString()}] AuthMiddleware: requireApiKey completed successfully for ${userData.id}`);
+    console.log(
+      `🔑 [${new Date().toISOString()}] AuthMiddleware: requireApiKey completed successfully for ${userData.id}`
+    );
     next();
   } catch (error) {
     console.error(`🔑 [${new Date().toISOString()}] AuthMiddleware: requireApiKey error:`, error);
@@ -230,7 +243,7 @@ const anyAuth = async (req, res, next) => {
 
   try {
     const existingLock = authCache.get(lockKey);
-    if (existingLock && existingLock.processing && (Date.now() - existingLock.timestamp) < 1000) {
+    if (existingLock && existingLock.processing && Date.now() - existingLock.timestamp < 1000) {
       await new Promise(resolve => setTimeout(resolve, 50));
       const result = authCache.get(lockKey);
       if (result && !result.processing) {
@@ -238,7 +251,9 @@ const anyAuth = async (req, res, next) => {
           return res.status(401).json({ error: result.error });
         }
         req.user = result.user;
-        if (result.apiKey) { req.apiKey = result.apiKey; }
+        if (result.apiKey) {
+          req.apiKey = result.apiKey;
+        }
         return next();
       }
     }
@@ -256,9 +271,7 @@ const anyAuth = async (req, res, next) => {
     const authHeader = req.headers.authorization;
     if (authHeader) {
       try {
-        const apiKey = authHeader.startsWith('Bearer ')
-          ? authHeader.substring(7)
-          : authHeader;
+        const apiKey = authHeader.startsWith('Bearer ') ? authHeader.substring(7) : authHeader;
 
         const ip = req.ip || req.connection.remoteAddress || req.socket.remoteAddress || 'unknown';
         const { userId, userData, keyData, error } = await auth.verifyApiKey(apiKey, ip);
@@ -305,7 +318,9 @@ const anyAuth = async (req, res, next) => {
       });
 
       req.user = authResult.user;
-      if (authResult.apiKey) { req.apiKey = authResult.apiKey; }
+      if (authResult.apiKey) {
+        req.apiKey = authResult.apiKey;
+      }
       return next();
     }
     authCache.set(lockKey, {
@@ -327,7 +342,9 @@ const anyAuth = async (req, res, next) => {
  */
 const withRateLimit = (category = 'api') => {
   return async (req, res, next) => {
-    console.log(`🚦 [${new Date().toISOString()}] AuthMiddleware: withRateLimit called for category '${category}' on ${req.method} ${req.originalUrl} from ${req.ip}`);
+    console.log(
+      `🚦 [${new Date().toISOString()}] AuthMiddleware: withRateLimit called for category '${category}' on ${req.method} ${req.originalUrl} from ${req.ip}`
+    );
     console.time(`rateLimit_${category}`);
 
     const rateLimit = rateLimiters[category] || rateLimiters.api;
@@ -356,7 +373,9 @@ const withRateLimit = (category = 'api') => {
       rateLimitInfo(req, res, () => {});
 
       console.timeEnd(`rateLimit_${category}`);
-      console.log(`🚦 [${new Date().toISOString()}] AuthMiddleware: Rate limiting completed successfully for ${category}`);
+      console.log(
+        `🚦 [${new Date().toISOString()}] AuthMiddleware: Rate limiting completed successfully for ${category}`
+      );
       next();
     } catch (error) {
       console.timeEnd('rateLimitCheck');
@@ -364,7 +383,9 @@ const withRateLimit = (category = 'api') => {
 
       if (error.status === 429 || error.message?.includes('rate limit')) {
         const tier = getUserTier(req.user);
-        console.log(`🚦 [${new Date().toISOString()}] AuthMiddleware: Rate limit exceeded for ${category} from ${req.ip}, tier: ${tier}, retryAfter: ${error.retryAfter || 60}`);
+        console.log(
+          `🚦 [${new Date().toISOString()}] AuthMiddleware: Rate limit exceeded for ${category} from ${req.ip}, tier: ${tier}, retryAfter: ${error.retryAfter || 60}`
+        );
 
         return res.status(429).json({
           error: 'Rate limit exceeded',
@@ -387,7 +408,9 @@ const withRateLimit = (category = 'api') => {
  * based on the request path and method
  */
 const smartRateLimit = (req, res, next) => {
-  console.log(`🚦 [${new Date().toISOString()}] AuthMiddleware: smartRateLimit called for ${req.method} ${req.originalUrl} from ${req.ip}`);
+  console.log(
+    `🚦 [${new Date().toISOString()}] AuthMiddleware: smartRateLimit called for ${req.method} ${req.originalUrl} from ${req.ip}`
+  );
   console.time('smartRateLimit');
 
   let category = 'api'; // default
@@ -398,13 +421,15 @@ const smartRateLimit = (req, res, next) => {
     category = 'auth';
   } else if (req.path.includes('/chat')) {
     category = 'chat';
-  } else if (req.path.includes('/upload') || req.method === 'POST' && req.path.includes('/artifacts')) {
+  } else if (req.path.includes('/upload') || (req.method === 'POST' && req.path.includes('/artifacts'))) {
     category = 'upload';
   } else if (req.path.includes('/export') || req.path.includes('/download')) {
     category = 'export';
   }
 
-  console.log(`🚦 [${new Date().toISOString()}] AuthMiddleware: Selected rate limit category: '${category}' for ${req.path}`);
+  console.log(
+    `🚦 [${new Date().toISOString()}] AuthMiddleware: Selected rate limit category: '${category}' for ${req.path}`
+  );
 
   const middleware = withRateLimit(category);
 
