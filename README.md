@@ -1,3 +1,5 @@
+[![Ask DeepWiki](https://deepwiki.com/badge.svg)](https://deepwiki.com/Dinopit/DinoAirPublic)
+
 # DinoAir 🦕✨
 
 ![Version](https://img.shields.io/badge/version-1.2.0-blue.svg)
@@ -754,6 +756,8 @@ A: Clear browser cache (Ctrl+F5), try incognito mode, check browser console for 
 
 **Q: ComfyUI/Ollama won't start?**  
 A: Check ports 8188/11434 aren't in use, verify system resources, restart services.
+
+> 💡If you made it this far and use runpod.io? Heres a referal link for  $5-500 worth of credits when you add $10 https://runpod.io?ref=xhye3m5r
 
 [📚 **See FAQ.md for 30+ more questions and detailed answers**](FAQ.md)
 
