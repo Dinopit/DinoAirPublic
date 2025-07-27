@@ -93,8 +93,8 @@ export default function KnowledgeBase() {
   };
 
   const extractKnowledge = async () => {
-    if (!extractText.trim() || extractText.length < 10) {
-      setError('Please enter at least 10 characters of text to extract knowledge from.');
+    if (!extractText.trim() || extractText.length < MIN_CHAR_LENGTH) {
+      setError(`Please enter at least ${MIN_CHAR_LENGTH} characters of text to extract knowledge from.`);
       return;
     }
 
