@@ -116,3 +116,24 @@ yarn-error.log*
 # OS
 .DS_Store
 Thumbs.db
+
+# Docker and build artifacts
+docker-compose.test.yml
+security-reports/
+*.sarif
+*_trivy_report.json
+*_scout_report.sarif
+
+# Temporary files
+tmp/
+temp/
+.tmp/
+*.tmp
+*.temp
+
+# Application specific uploads and data
+uploads/
+models/
+output/
+input/
+custom_nodes/

@@ -1,7 +1,7 @@
 import { NextRequest, NextResponse } from 'next/server';
 import getApiSpec from '@/lib/openapi-spec';
 
-export async function GET(request: NextRequest) {
+export async function GET(_request: NextRequest) {
   try {
     // Generate the OpenAPI specification
     const spec = await getApiSpec();
@@ -25,7 +25,7 @@ export async function GET(request: NextRequest) {
   }
 }
 
-export async function OPTIONS(request: NextRequest) {
+export async function OPTIONS(_request: NextRequest) {
   return new NextResponse(null, {
     status: 200,
     headers: {

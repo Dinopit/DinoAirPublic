@@ -1,11 +1,22 @@
 import os
 import sys
 import subprocess
-import json
-from importlib import import_module
 import platform
 import argparse
 import shutil
+import time
+import traceback
+
+# Add current directory to path for telemetry module
+sys.path.insert(0, os.path.dirname(__file__))
+
+# Import telemetry system (with fallback if not available)
+try:
+    from telemetry import create_telemetry_system
+    TELEMETRY_AVAILABLE = True
+except ImportError:
+    TELEMETRY_AVAILABLE = False
+    print("Note: Telemetry system not available. Installation will continue without telemetry.")
 
 def check_python_version():
     """Checks if the Python version is 3.11 or higher."""
@@ -91,38 +102,61 @@ def find_npm_command():
     
     return None
 
-def check_nodejs():
-    """Checks if Node.js and npm are installed."""
+def check_node_installation():
+    """Check if Node.js is installed and return (success, version_info)."""
     try:
-        # Check Node.js
         node_cmd = shutil.which("node") or shutil.which("node.exe")
         if not node_cmd:
             print("Node.js not found in PATH.")
-            return False
+            return False, None
             
         node_result = subprocess.run([node_cmd, "--version"], capture_output=True, text=True)
         if node_result.returncode == 0:
             node_version = node_result.stdout.strip()
             print(f"Node.js {node_version} found.")
+            return True, (node_cmd, node_version)
         else:
-            return False
-        
-        # Find npm
+            return False, None
+    except Exception as e:
+        print(f"Error checking Node.js: {e}")
+        return False, None
+
+def check_npm_installation():
+    """Check if npm is installed and return (success, npm_path, version)."""
+    try:
         npm_cmd = find_npm_command()
         if not npm_cmd:
             print("npm not found. Searched common installation locations.")
             print("Please ensure Node.js and npm are properly installed.")
-            return False, None
+            return False, None, None
             
         # Check npm version
         npm_result = subprocess.run([npm_cmd, "--version"], capture_output=True, text=True)
         if npm_result.returncode == 0:
             npm_version = npm_result.stdout.strip()
             print(f"npm {npm_version} found at: {npm_cmd}")
-            return True, npm_cmd
+            return True, npm_cmd, npm_version
         else:
             print(f"npm found at {npm_cmd} but couldn't get version.")
+            return False, None, None
+    except Exception as e:
+        print(f"Error checking npm: {e}")
+        return False, None, None
+
+def check_nodejs():
+    """Checks if Node.js and npm are installed."""
+    try:
+        # Check Node.js first
+        node_success, node_info = check_node_installation()
+        if not node_success:
+            return False
+        
+        # Check npm
+        npm_success, npm_cmd, npm_version = check_npm_installation()
+        if not npm_success:
             return False, None
+            
+        return True, npm_cmd
             
     except Exception as e:
         print(f"Error checking Node.js/npm: {e}")
@@ -138,62 +172,78 @@ def confirm_installation():
         sys.exit(0)
     return True
 
+def check_comfyui_installation():
+    """Check if ComfyUI is already installed and valid. Returns (exists, valid)."""
+    comfyui_exists = os.path.exists("ComfyUI")
+    comfyui_valid = False
+    
+    if comfyui_exists:
+        # Check for essential files that indicate a proper installation
+        required_files = ["requirements.txt", "main.py", "server.py"]
+        comfyui_valid = all(os.path.exists(os.path.join("ComfyUI", f)) for f in required_files)
+        
+        if not comfyui_valid:
+            print("ComfyUI directory exists but is empty or incomplete. Removing and re-cloning...")
+            shutil.rmtree("ComfyUI", ignore_errors=True)
+            comfyui_exists = False
+    
+    return comfyui_exists, comfyui_valid
+
+def clone_comfyui_repository():
+    """Clone the ComfyUI repository with retry logic."""
+    print("Cloning ComfyUI repository...")
+    max_retries = 3
+    
+    for attempt in range(max_retries):
+        try:
+            subprocess.run(["git", "clone", "https://github.com/comfyanonymous/ComfyUI.git"],
+                         check=True, capture_output=True, text=True)
+            print("ComfyUI cloned successfully.")
+            return True
+        except subprocess.CalledProcessError as clone_error:
+            if attempt < max_retries - 1:
+                print(f"Clone attempt {attempt + 1} failed: {clone_error}")
+                print("Retrying in 5 seconds...")
+                import time
+                time.sleep(5)
+            else:
+                print(f"Failed to clone ComfyUI after {max_retries} attempts.")
+                print("\nError details:")
+                print(f"  {clone_error}")
+                print("\nPossible solutions:")
+                print("  1. Check your internet connection")
+                print("  2. Try again later if GitHub is having issues")
+                print("  3. Manually clone: git clone https://github.com/comfyanonymous/ComfyUI.git")
+                print("  4. Download ComfyUI manually from https://github.com/comfyanonymous/ComfyUI/archive/refs/heads/master.zip")
+                print("     and extract it to a 'ComfyUI' folder")
+                raise clone_error
+    
+    return False
+
+def install_comfyui_dependencies():
+    """Install ComfyUI dependencies if requirements.txt exists."""
+    if os.path.exists("ComfyUI/requirements.txt"):
+        pip_args = [sys.executable, "-m", "pip", "install", "-r", "ComfyUI/requirements.txt"]
+        subprocess.run(pip_args, check=True)
+        print("ComfyUI dependencies installed successfully.")
+    else:
+        print("Warning: ComfyUI/requirements.txt not found. Skipping dependency installation.")
+        print("You may need to install dependencies manually.")
+
 def install_comfyui():
     """Clones ComfyUI and installs its dependencies."""
     print("Installing ComfyUI...")
     try:
-        # Check if ComfyUI directory exists and contains required files
-        comfyui_exists = os.path.exists("ComfyUI")
-        comfyui_valid = False
-        
-        if comfyui_exists:
-            # Check for essential files that indicate a proper installation
-            required_files = ["requirements.txt", "main.py", "server.py"]
-            comfyui_valid = all(os.path.exists(os.path.join("ComfyUI", f)) for f in required_files)
-            
-            if not comfyui_valid:
-                print("ComfyUI directory exists but is empty or incomplete. Removing and re-cloning...")
-                shutil.rmtree("ComfyUI", ignore_errors=True)
-                comfyui_exists = False
+        comfyui_exists, comfyui_valid = check_comfyui_installation()
         
         # Clone if directory doesn't exist or was removed
         if not comfyui_exists:
-            print("Cloning ComfyUI repository...")
-            max_retries = 3
-            for attempt in range(max_retries):
-                try:
-                    subprocess.run(["git", "clone", "https://github.com/comfyanonymous/ComfyUI.git"],
-                                 check=True, capture_output=True, text=True)
-                    print("ComfyUI cloned successfully.")
-                    break
-                except subprocess.CalledProcessError as clone_error:
-                    if attempt < max_retries - 1:
-                        print(f"Clone attempt {attempt + 1} failed: {clone_error}")
-                        print(f"Retrying in 5 seconds...")
-                        import time
-                        time.sleep(5)
-                    else:
-                        print(f"Failed to clone ComfyUI after {max_retries} attempts.")
-                        print("\nError details:")
-                        print(f"  {clone_error}")
-                        print("\nPossible solutions:")
-                        print("  1. Check your internet connection")
-                        print("  2. Try again later if GitHub is having issues")
-                        print("  3. Manually clone: git clone https://github.com/comfyanonymous/ComfyUI.git")
-                        print("  4. Download ComfyUI manually from https://github.com/comfyanonymous/ComfyUI/archive/refs/heads/master.zip")
-                        print("     and extract it to a 'ComfyUI' folder")
-                        raise clone_error
+            clone_comfyui_repository()
         else:
             print("ComfyUI already exists with valid installation.")
         
         # Install dependencies
-        if os.path.exists("ComfyUI/requirements.txt"):
-            pip_args = [sys.executable, "-m", "pip", "install", "-r", "ComfyUI/requirements.txt"]
-            subprocess.run(pip_args, check=True)
-            print("ComfyUI dependencies installed successfully.")
-        else:
-            print("Warning: ComfyUI/requirements.txt not found. Skipping dependency installation.")
-            print("You may need to install dependencies manually.")
+        install_comfyui_dependencies()
         
         print("ComfyUI installation process completed.")
     except (subprocess.CalledProcessError, FileNotFoundError) as e:
@@ -395,64 +445,340 @@ def print_summary(models_downloaded=False, web_gui_installed=False):
     
     print("\nNote: You can easily swap in another SDXL model by placing the model file in the `ComfyUI/models/checkpoints` directory.")
 
-
-def main():
-    """Main function to run the installer."""
-    # Parse command line arguments
+def parse_command_line_args():
+    """Parse and return command line arguments."""
     parser = argparse.ArgumentParser(description="DinoAir Free Tier Installer")
     parser.add_argument("--no-models", action="store_true",
                        help="Skip downloading SDXL and Ollama models")
-    args = parser.parse_args()
-    
+    parser.add_argument("--disable-telemetry", action="store_true",
+                       help="Disable telemetry for this installation")
+    return parser.parse_args()
+
+def print_installation_banner(skip_models=False):
+    """Print the installation banner."""
     print("="*60)
     print("DinoAir Free Tier Installation")
     print("="*60)
     
-    if args.no_models:
+    if skip_models:
         print("\n--no-models flag detected: Will skip model downloads")
 
-    check_python_version()
-    check_pip_version()
+def validate_system_prerequisites(skip_models=False, telemetry_collector=None):
+    """Validate system prerequisites and return True if all checks pass."""
+    # Step 1: Python version check
+    try:
+        if telemetry_collector:
+            telemetry_collector.record_installation_step("python_version_check", "started")
+        check_python_version()
+        if telemetry_collector:
+            telemetry_collector.record_installation_step("python_version_check", "completed")
+    except Exception as e:
+        if telemetry_collector:
+            telemetry_collector.record_installation_step("python_version_check", "failed", {"error": str(e)})
+            telemetry_collector.record_error(e, {"step": "python_version_check"}, "python_version_check")
+        raise
     
-    if not check_ollama():
-        if not args.no_models:
-            print("\nError: Ollama is required when --no-models flag is not used.")
-            sys.exit(1)
+    # Step 2: Pip version check
+    try:
+        if telemetry_collector:
+            telemetry_collector.record_installation_step("pip_version_check", "started")
+        check_pip_version()
+        if telemetry_collector:
+            telemetry_collector.record_installation_step("pip_version_check", "completed")
+    except Exception as e:
+        if telemetry_collector:
+            telemetry_collector.record_installation_step("pip_version_check", "failed", {"error": str(e)})
+            telemetry_collector.record_error(e, {"step": "pip_version_check"}, "pip_version_check")
+        raise
+    
+    # Step 3: Ollama check
+    ollama_available = False
+    try:
+        if telemetry_collector:
+            telemetry_collector.record_installation_step("ollama_check", "started")
+        ollama_available = check_ollama()
+        if ollama_available:
+            if telemetry_collector:
+                telemetry_collector.record_installation_step("ollama_check", "completed")
         else:
-            print("\nWarning: Ollama not found, but skipping due to --no-models flag.")
+            if telemetry_collector:
+                telemetry_collector.record_installation_step("ollama_check", "failed", {"reason": "not_found"})
+            if not skip_models:
+                print("\nError: Ollama is required when --no-models flag is not used.")
+                sys.exit(1)
+            else:
+                print("\nWarning: Ollama not found, but skipping due to --no-models flag.")
+    except Exception as e:
+        if telemetry_collector:
+            telemetry_collector.record_installation_step("ollama_check", "failed", {"error": str(e)})
+            telemetry_collector.record_error(e, {"step": "ollama_check"}, "ollama_check")
+        raise
     
-    nodejs_result = check_nodejs()
-    if isinstance(nodejs_result, tuple):
-        nodejs_available, npm_cmd = nodejs_result
-    else:
-        nodejs_available = nodejs_result
-        npm_cmd = None
-        
-    if not nodejs_available:
-        print("\nWarning: Node.js/npm not found. Web GUI will not be installed.")
-        print("You can install Node.js later and run this installer again.\n")
-        
-    confirm_installation()
+    return ollama_available
 
-    install_comfyui()
-    copy_comfyui_workflows()
+def check_and_setup_nodejs(telemetry_collector=None):
+    """Check Node.js availability and return (available, npm_cmd)."""
+    # Step 4: Node.js check
+    nodejs_available = False
+    npm_cmd = None
+    try:
+        if telemetry_collector:
+            telemetry_collector.record_installation_step("nodejs_check", "started")
+        nodejs_result = check_nodejs()
+        if isinstance(nodejs_result, tuple):
+            nodejs_available, npm_cmd = nodejs_result
+        else:
+            nodejs_available = nodejs_result
+            npm_cmd = None
+        
+        if nodejs_available:
+            if telemetry_collector:
+                telemetry_collector.record_installation_step("nodejs_check", "completed", {"npm_path": "<sanitized>"})
+        else:
+            if telemetry_collector:
+                telemetry_collector.record_installation_step("nodejs_check", "failed", {"reason": "not_found"})
+            print("\nWarning: Node.js/npm not found. Web GUI will not be installed.")
+            print("You can install Node.js later and run this installer again.\n")
+    except Exception as e:
+        if telemetry_collector:
+            telemetry_collector.record_installation_step("nodejs_check", "failed", {"error": str(e)})
+            telemetry_collector.record_error(e, {"step": "nodejs_check"}, "nodejs_check")
+        # Don't raise for Node.js errors, just warn
+        print(f"Warning: Error checking Node.js: {e}")
     
-    # Skip model downloads if --no-models flag is set
+    return nodejs_available, npm_cmd
+
+def get_user_confirmation(telemetry_collector=None):
+    """Get user confirmation for installation."""
+    # User confirmation
+    try:
+        if telemetry_collector:
+            telemetry_collector.record_installation_step("user_confirmation", "started")
+        confirm_installation()
+        if telemetry_collector:
+            telemetry_collector.record_installation_step("user_confirmation", "completed")
+    except SystemExit:
+        if telemetry_collector:
+            telemetry_collector.record_installation_step("user_confirmation", "failed", {"reason": "user_cancelled"})
+        raise
+    except Exception as e:
+        if telemetry_collector:
+            telemetry_collector.record_installation_step("user_confirmation", "failed", {"error": str(e)})
+            telemetry_collector.record_error(e, {"step": "user_confirmation"}, "user_confirmation")
+        raise
+
+def install_core_components(telemetry_collector=None):
+    """Install core DinoAir components."""
+    # Step 5: ComfyUI installation
+    try:
+        if telemetry_collector:
+            telemetry_collector.record_installation_step("comfyui_install", "started")
+        install_comfyui()
+        if telemetry_collector:
+            telemetry_collector.record_installation_step("comfyui_install", "completed")
+    except Exception as e:
+        if telemetry_collector:
+            telemetry_collector.record_installation_step("comfyui_install", "failed", {"error": str(e)})
+            telemetry_collector.record_error(e, {"step": "comfyui_install"}, "comfyui_install")
+        raise
+    
+    # Step 6: Copy workflows
+    try:
+        if telemetry_collector:
+            telemetry_collector.record_installation_step("copy_workflows", "started")
+        copy_comfyui_workflows()
+        if telemetry_collector:
+            telemetry_collector.record_installation_step("copy_workflows", "completed")
+    except Exception as e:
+        if telemetry_collector:
+            telemetry_collector.record_installation_step("copy_workflows", "failed", {"error": str(e)})
+            telemetry_collector.record_error(e, {"step": "copy_workflows"}, "copy_workflows")
+        # Don't fail installation for workflow copy errors
+        print(f"Warning: Error copying workflows: {e}")
+
+def install_models_if_requested(skip_models=False, telemetry_collector=None):
+    """Install models if not skipping them. Returns True if models were downloaded."""
     models_downloaded = False
-    if not args.no_models:
-        pull_ollama_models()
-        models_downloaded = download_sdxl_models()
+    if not skip_models:
+        # Step 7: Pull Ollama models
+        try:
+            if telemetry_collector:
+                telemetry_collector.record_installation_step("ollama_models", "started")
+            pull_ollama_models()
+            if telemetry_collector:
+                telemetry_collector.record_installation_step("ollama_models", "completed")
+        except Exception as e:
+            if telemetry_collector:
+                telemetry_collector.record_installation_step("ollama_models", "failed", {"error": str(e)})
+                telemetry_collector.record_error(e, {"step": "ollama_models"}, "ollama_models")
+            raise
+        
+        # Step 8: Download SDXL models
+        try:
+            if telemetry_collector:
+                telemetry_collector.record_installation_step("sdxl_models", "started")
+            models_downloaded = download_sdxl_models()
+            status = "completed" if models_downloaded else "skipped"
+            if telemetry_collector:
+                telemetry_collector.record_installation_step("sdxl_models", status, {"downloaded": models_downloaded})
+        except Exception as e:
+            if telemetry_collector:
+                telemetry_collector.record_installation_step("sdxl_models", "failed", {"error": str(e)})
+                telemetry_collector.record_error(e, {"step": "sdxl_models"}, "sdxl_models")
+            # Don't fail installation for model download errors
+            print(f"Warning: Error downloading SDXL models: {e}")
     else:
+        if telemetry_collector:
+            telemetry_collector.record_installation_step("ollama_models", "skipped", {"reason": "no_models_flag"})
+            telemetry_collector.record_installation_step("sdxl_models", "skipped", {"reason": "no_models_flag"})
         print("\nSkipping Ollama model pull due to --no-models flag")
         print("Skipping SDXL model download due to --no-models flag")
     
-    # Install Web GUI if Node.js is available
+    return models_downloaded
+
+def install_web_gui_if_available(nodejs_available, npm_cmd, telemetry_collector=None):
+    """Install Web GUI if Node.js is available. Returns True if installed."""
     web_gui_installed = False
     if nodejs_available and npm_cmd:
-        web_gui_installed = install_web_gui(npm_cmd)
+        try:
+            if telemetry_collector:
+                telemetry_collector.record_installation_step("web_gui", "started")
+            web_gui_installed = install_web_gui(npm_cmd)
+            status = "completed" if web_gui_installed else "failed"
+            if telemetry_collector:
+                telemetry_collector.record_installation_step("web_gui", status, {"installed": web_gui_installed})
+        except Exception as e:
+            if telemetry_collector:
+                telemetry_collector.record_installation_step("web_gui", "failed", {"error": str(e)})
+                telemetry_collector.record_error(e, {"step": "web_gui"}, "web_gui")
+            # Don't fail installation for web GUI errors
+            print(f"Warning: Error installing Web GUI: {e}")
+    else:
+        if telemetry_collector:
+            telemetry_collector.record_installation_step("web_gui", "skipped", {"reason": "nodejs_not_available"})
     
-    generate_dependency_log()
+    return web_gui_installed
+
+def finalize_installation(models_downloaded, web_gui_installed, telemetry_collector=None):
+    """Generate logs and print installation summary."""
+    # Step 10: Generate dependency log
+    try:
+        if telemetry_collector:
+            telemetry_collector.record_installation_step("dependency_log", "started")
+        generate_dependency_log()
+        if telemetry_collector:
+            telemetry_collector.record_installation_step("dependency_log", "completed")
+    except Exception as e:
+        if telemetry_collector:
+            telemetry_collector.record_installation_step("dependency_log", "failed", {"error": str(e)})
+            telemetry_collector.record_error(e, {"step": "dependency_log"}, "dependency_log")
+        # Don't fail installation for log generation errors
+        print(f"Warning: Error generating dependency log: {e}")
+    
     print_summary(models_downloaded, web_gui_installed)
+
+def main():
+    """Main function to run the installer."""
+    global TELEMETRY_AVAILABLE
+    start_time = time.time()
+    telemetry_config = None
+    telemetry_collector = None
+    crash_reporter = None
+    
+    # Initialize telemetry system if available
+    if TELEMETRY_AVAILABLE:
+        try:
+            telemetry_config, telemetry_collector, crash_reporter = create_telemetry_system()
+        except Exception as e:
+            print(f"Warning: Could not initialize telemetry system: {e}")
+            TELEMETRY_AVAILABLE = False
+    
+    try:
+        # Parse command line arguments
+        args = parse_command_line_args()
+        
+        # Handle telemetry disable flag
+        if args.disable_telemetry and telemetry_config:
+            telemetry_config.disable_telemetry()
+            print("Telemetry disabled for this installation.")
+        
+        # Get user consent for telemetry if needed and not disabled
+        if TELEMETRY_AVAILABLE and telemetry_config and not args.disable_telemetry:
+            telemetry_config.get_user_consent()
+        
+        # Record installation start
+        if telemetry_collector:
+            telemetry_collector.record_installation_start({
+                "no_models": args.no_models,
+                "disable_telemetry": args.disable_telemetry
+            })
+        
+        print_installation_banner(args.no_models)
+        
+        ollama_available = validate_system_prerequisites(args.no_models, telemetry_collector)
+        
+        nodejs_available, npm_cmd = check_and_setup_nodejs(telemetry_collector)
+        
+        get_user_confirmation(telemetry_collector)
+
+        install_core_components(telemetry_collector)
+        
+        models_downloaded = install_models_if_requested(args.no_models, telemetry_collector)
+        
+        web_gui_installed = install_web_gui_if_available(nodejs_available, npm_cmd, telemetry_collector)
+        
+        # Installation completed successfully
+        duration = time.time() - start_time
+        if telemetry_collector:
+            telemetry_collector.record_installation_complete(True, duration, {
+                "models_downloaded": models_downloaded,
+                "web_gui_installed": web_gui_installed,
+                "ollama_available": ollama_available,
+                "nodejs_available": nodejs_available
+            })
+        
+        finalize_installation(models_downloaded, web_gui_installed, telemetry_collector)
+        
+    except KeyboardInterrupt:
+        # Handle user cancellation
+        if crash_reporter:
+            crash_reporter.report_crash(KeyboardInterrupt("Installation cancelled by user"), {
+                "step": "user_cancellation",
+                "duration": time.time() - start_time
+            })
+        print("\nInstallation cancelled by user.")
+        sys.exit(1)
+    except SystemExit as e:
+        # Handle system exit (from confirm_installation or other places)
+        if e.code != 0 and crash_reporter:
+            crash_reporter.report_crash(e, {
+                "step": "system_exit",
+                "exit_code": e.code,
+                "duration": time.time() - start_time
+            })
+        raise
+    except Exception as e:
+        # Handle unexpected errors
+        duration = time.time() - start_time
+        if crash_reporter:
+            crash_reporter.report_crash(e, {
+                "step": "unexpected_error",
+                "duration": duration
+            })
+        if telemetry_collector:
+            telemetry_collector.record_installation_complete(False, duration, {
+                "error_type": type(e).__name__,
+                "error_message": str(e)
+            })
+        
+        print(f"\nInstallation failed with error: {e}")
+        print("Stack trace:")
+        traceback.print_exc()
+        
+        if telemetry_config and telemetry_config.is_error_reporting_enabled():
+            print("\nError details have been collected for analysis to improve future installations.")
+        
+        sys.exit(1)
 
 if __name__ == "__main__":
     main()

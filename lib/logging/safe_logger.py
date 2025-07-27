@@ -1,6 +1,7 @@
 """
 DinoAir Safe Logging System
 Provides comprehensive logging with rotation, size limits, and safety features
+Enhanced with correlation ID support
 """
 
 import os
@@ -19,6 +20,14 @@ import gzip
 import shutil
 from logging.handlers import RotatingFileHandler, TimedRotatingFileHandler
 import traceback
+
+# Import correlation ID utilities
+try:
+    from .correlation_id import get_current_correlation_id
+except ImportError:
+    # Fallback if correlation_id module not available
+    def get_current_correlation_id() -> str:
+        return f"fallback-{int(time.time())}-{os.getpid()}"
 
 class LogLevel(Enum):
     """Log levels with numeric values"""
@@ -103,6 +112,7 @@ class JsonFormatter(logging.Formatter):
             "level": record.levelname,
             "logger": record.name,
             "message": record.getMessage(),
+            "correlationId": get_current_correlation_id(),
             "module": record.module,
             "function": record.funcName,
             "line": record.lineno,
@@ -322,10 +332,11 @@ class DinoAirLogger:
         self.name = name
     
     def _log_with_context(self, level: int, message: str, **kwargs):
-        """Log with additional context"""
+        """Log with additional context including correlation ID"""
         extra = {
             "component": self.name,
             "timestamp_precise": time.time(),
+            "correlationId": get_current_correlation_id(),
             **kwargs
         }
         self.logger.log(level, message, extra=extra)

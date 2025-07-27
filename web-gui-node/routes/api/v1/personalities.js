@@ -7,7 +7,7 @@ const express = require('express');
 const router = express.Router();
 
 // In-memory personality storage (in production, use database)
-let personalities = [
+const personalities = [
   {
     id: '1',
     name: 'Helpful Assistant',
@@ -135,19 +135,19 @@ let nextId = 6;
 // GET /api/v1/personalities - Get all personalities
 router.get('/', (req, res) => {
   try {
-    const { 
-      category, 
-      active, 
-      search, 
-      sortBy = 'name', 
-      sortOrder = 'asc' 
+    const {
+      category,
+      active,
+      search,
+      sortBy = 'name',
+      sortOrder = 'asc'
     } = req.query;
 
     let filteredPersonalities = [...personalities];
 
     // Filter by category
     if (category) {
-      filteredPersonalities = filteredPersonalities.filter(p => 
+      filteredPersonalities = filteredPersonalities.filter(p =>
         p.category.toLowerCase() === category.toLowerCase()
       );
     }
@@ -162,9 +162,9 @@ router.get('/', (req, res) => {
     if (search) {
       const searchLower = search.toLowerCase();
       filteredPersonalities = filteredPersonalities.filter(p =>
-        p.name.toLowerCase().includes(searchLower) ||
-        p.description.toLowerCase().includes(searchLower) ||
-        p.tags.some(tag => tag.toLowerCase().includes(searchLower))
+        p.name.toLowerCase().includes(searchLower)
+        || p.description.toLowerCase().includes(searchLower)
+        || p.tags.some(tag => tag.toLowerCase().includes(searchLower))
       );
     }
 
@@ -172,17 +172,16 @@ router.get('/', (req, res) => {
     filteredPersonalities.sort((a, b) => {
       let aValue = a[sortBy];
       let bValue = b[sortBy];
-      
+
       if (sortBy === 'createdAt' || sortBy === 'updatedAt' || sortBy === 'lastUsed') {
         aValue = new Date(aValue || 0);
         bValue = new Date(bValue || 0);
       }
-      
+
       if (sortOrder === 'desc') {
         return bValue > aValue ? 1 : -1;
-      } else {
-        return aValue > bValue ? 1 : -1;
       }
+      return aValue > bValue ? 1 : -1;
     });
 
     res.json({
@@ -245,7 +244,7 @@ router.post('/', (req, res) => {
     }
 
     // Check if personality with same name exists
-    const existingPersonality = personalities.find(p => 
+    const existingPersonality = personalities.find(p =>
       p.name.toLowerCase() === name.toLowerCase()
     );
     if (existingPersonality) {
@@ -313,13 +312,13 @@ router.put('/:id', (req, res) => {
     }
 
     const personality = personalities[personalityIndex];
-    
+
     // Update allowed fields
     const allowedFields = [
-      'name', 'description', 'systemPrompt', 'category', 'tags', 
+      'name', 'description', 'systemPrompt', 'category', 'tags',
       'isDefault', 'isActive'
     ];
-    
+
     allowedFields.forEach(field => {
       if (updates[field] !== undefined) {
         personality[field] = updates[field];
@@ -432,7 +431,7 @@ router.post('/:id/duplicate', (req, res) => {
     const duplicateName = name || `${originalPersonality.name} (Copy)`;
 
     // Check if name already exists
-    const existingPersonality = personalities.find(p => 
+    const existingPersonality = personalities.find(p =>
       p.name.toLowerCase() === duplicateName.toLowerCase()
     );
     if (existingPersonality) {
@@ -506,11 +505,11 @@ router.get('/stats', (req, res) => {
   personalities.forEach(personality => {
     // Count by category
     stats.byCategory[personality.category] = (stats.byCategory[personality.category] || 0) + 1;
-    
+
     // Total usage
     const usage = personality.metadata.usageCount || 0;
     stats.totalUsage += usage;
-    
+
     // Most used personality
     if (usage > mostUsedCount) {
       mostUsedCount = usage;
@@ -562,7 +561,7 @@ router.post('/import', (req, res) => {
         }
 
         // Check if personality exists
-        const existingIndex = personalities.findIndex(p => 
+        const existingIndex = personalities.findIndex(p =>
           p.name.toLowerCase() === name.toLowerCase()
         );
 
@@ -645,9 +644,9 @@ router.post('/import', (req, res) => {
 // GET /api/v1/personalities/export - Export personalities as JSON
 router.get('/export', (req, res) => {
   const { ids } = req.query;
-  
+
   let exportPersonalities = personalities;
-  
+
   if (ids) {
     const idArray = ids.split(',');
     exportPersonalities = personalities.filter(p => idArray.includes(p.id));

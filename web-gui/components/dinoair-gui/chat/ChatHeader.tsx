@@ -20,7 +20,7 @@ const ChatHeader: React.FC<ChatHeaderProps> = ({
   selectedModel,
   onModelChange,
   models,
-  showSettings,
+  showSettings: _showSettings,
   onToggleSettings,
   onNewConversation,
   onSaveConversation,

@@ -1,0 +1,53 @@
+#!/usr/bin/env sh
+. "$(dirname -- "$0")/_/husky.sh"
+
+echo "🔍 Running pre-commit checks (lenient mode)..."
+
+# Check for SKIP_HOOKS environment variable
+if [ "$SKIP_HOOKS" = "1" ] || [ "$SKIP_HOOKS" = "true" ]; then
+    echo "⚠️  SKIP_HOOKS is set. Bypassing all pre-commit checks..."
+    echo "⚠️  Remember to run linting manually later!"
+    exit 0
+fi
+
+# Check for STRICT_MODE to run all checks
+if [ "$STRICT_MODE" = "1" ] || [ "$STRICT_MODE" = "true" ]; then
+    echo "🔒 Running in STRICT MODE - all checks will be enforced"
+    . "$(dirname -- "$0")/pre-commit-strict"
+    exit $?
+fi
+
+# Default lenient mode
+echo "💡 Running in lenient mode. Use STRICT_MODE=1 for all checks."
+
+# Only run basic formatting on staged files
+echo "🎨 Running basic formatting on staged files..."
+
+# Run prettier on staged files only (non-blocking)
+if command -v pre-commit >/dev/null 2>&1; then
+    echo "📋 Running basic pre-commit hooks..."
+    pre-commit run trailing-whitespace || true
+    pre-commit run end-of-file-fixer || true
+    pre-commit run check-merge-conflict || {
+        echo "❌ Merge conflict markers detected! Please resolve before committing."
+        exit 1
+    }
+fi
+
+# Run prettier only (not full lint) via lint-staged
+echo "🎨 Running Prettier formatting..."
+cd web-gui-node 2>/dev/null && npx prettier --write $(git diff --cached --name-only --relative | grep -E '\.(js|jsx|json|md|yml|yaml|css|scss)$' | xargs) 2>/dev/null || true
+cd ../web-gui 2>/dev/null && npx prettier --write $(git diff --cached --name-only --relative | grep -E '\.(js|jsx|ts|tsx|json|md|yml|yaml|css|scss)$' | xargs) 2>/dev/null || true
+cd .. 2>/dev/null
+
+# Re-add formatted files
+git add -u
+
+echo "✅ Basic pre-commit checks completed!"
+echo ""
+echo "📝 Commit options:"
+echo "   • Current: Lenient mode (basic formatting only)"
+echo "   • Strict: STRICT_MODE=1 git commit ... (full lint + tests)"
+echo "   • Skip all: SKIP_HOOKS=1 git commit ..."
+echo ""
+echo "💡 Run 'npm run lint:fix' in each directory to fix linting issues"

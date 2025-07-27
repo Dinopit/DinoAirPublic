@@ -55,6 +55,56 @@ const createTablesSQL = {
       metadata JSONB DEFAULT '{}'::jsonb,
       CONSTRAINT chat_metrics_model_check CHECK (char_length(model) > 0)
     );
+  `,
+
+  // Artifacts Table (independent table for artifact storage)
+  artifacts: `
+    CREATE TABLE IF NOT EXISTS artifacts (
+      id UUID PRIMARY KEY DEFAULT gen_random_uuid(),
+      name TEXT NOT NULL,
+      type TEXT NOT NULL,
+      content TEXT NOT NULL,
+      size INTEGER NOT NULL CHECK (size >= 0),
+      user_id TEXT,
+      version INTEGER NOT NULL DEFAULT 1 CHECK (version > 0),
+      parent_id UUID,
+      tags TEXT[] DEFAULT '{}',
+      metadata JSONB DEFAULT '{}'::jsonb,
+      created_at TIMESTAMPTZ DEFAULT NOW(),
+      updated_at TIMESTAMPTZ DEFAULT NOW(),
+      CONSTRAINT artifacts_name_check CHECK (char_length(name) > 0),
+      CONSTRAINT artifacts_type_check CHECK (char_length(type) > 0),
+      CONSTRAINT artifacts_content_check CHECK (char_length(content) > 0)
+    );
+  `,
+
+  // User Sessions Table (for database-backed session storage)
+  user_sessions: `
+    CREATE TABLE IF NOT EXISTS user_sessions (
+      id TEXT PRIMARY KEY,
+      user_id TEXT NOT NULL,
+      data JSONB DEFAULT '{}'::jsonb,
+      expires_at TIMESTAMPTZ NOT NULL,
+      created_at TIMESTAMPTZ DEFAULT NOW(),
+      updated_at TIMESTAMPTZ DEFAULT NOW(),
+      CONSTRAINT user_sessions_user_id_check CHECK (char_length(user_id) > 0),
+      CONSTRAINT user_sessions_id_check CHECK (char_length(id) > 0)
+    );
+  `,
+
+  // JWT Refresh Tokens Table (for token management)
+  refresh_tokens: `
+    CREATE TABLE IF NOT EXISTS refresh_tokens (
+      id UUID PRIMARY KEY DEFAULT gen_random_uuid(),
+      user_id TEXT NOT NULL,
+      token_hash TEXT NOT NULL UNIQUE,
+      expires_at TIMESTAMPTZ NOT NULL,
+      created_at TIMESTAMPTZ DEFAULT NOW(),
+      revoked_at TIMESTAMPTZ,
+      device_info JSONB DEFAULT '{}'::jsonb,
+      CONSTRAINT refresh_tokens_user_id_check CHECK (char_length(user_id) > 0),
+      CONSTRAINT refresh_tokens_token_hash_check CHECK (char_length(token_hash) > 0)
+    );
   `
 };
 
@@ -80,6 +130,30 @@ const createIndexesSQL = {
     CREATE INDEX IF NOT EXISTS idx_chat_metrics_session_id ON chat_metrics(session_id);
     CREATE INDEX IF NOT EXISTS idx_chat_metrics_created_at ON chat_metrics(created_at);
     CREATE INDEX IF NOT EXISTS idx_chat_metrics_model ON chat_metrics(model);
+  `,
+  artifacts: `
+    CREATE INDEX IF NOT EXISTS idx_artifacts_user_id ON artifacts(user_id);
+    CREATE INDEX IF NOT EXISTS idx_artifacts_created_at ON artifacts(created_at);
+    CREATE INDEX IF NOT EXISTS idx_artifacts_updated_at ON artifacts(updated_at);
+    CREATE INDEX IF NOT EXISTS idx_artifacts_type ON artifacts(type);
+    CREATE INDEX IF NOT EXISTS idx_artifacts_name ON artifacts(name);
+    CREATE INDEX IF NOT EXISTS idx_artifacts_parent_id ON artifacts(parent_id);
+    CREATE INDEX IF NOT EXISTS idx_artifacts_version ON artifacts(version);
+    CREATE INDEX IF NOT EXISTS idx_artifacts_tags ON artifacts USING GIN(tags);
+    CREATE INDEX IF NOT EXISTS idx_artifacts_metadata ON artifacts USING GIN(metadata);
+  `,
+  user_sessions: `
+    CREATE INDEX IF NOT EXISTS idx_user_sessions_user_id ON user_sessions(user_id);
+    CREATE INDEX IF NOT EXISTS idx_user_sessions_expires_at ON user_sessions(expires_at);
+    CREATE INDEX IF NOT EXISTS idx_user_sessions_created_at ON user_sessions(created_at);
+    CREATE INDEX IF NOT EXISTS idx_user_sessions_updated_at ON user_sessions(updated_at);
+  `,
+  refresh_tokens: `
+    CREATE INDEX IF NOT EXISTS idx_refresh_tokens_user_id ON refresh_tokens(user_id);
+    CREATE INDEX IF NOT EXISTS idx_refresh_tokens_token_hash ON refresh_tokens(token_hash);
+    CREATE INDEX IF NOT EXISTS idx_refresh_tokens_expires_at ON refresh_tokens(expires_at);
+    CREATE INDEX IF NOT EXISTS idx_refresh_tokens_created_at ON refresh_tokens(created_at);
+    CREATE INDEX IF NOT EXISTS idx_refresh_tokens_revoked_at ON refresh_tokens(revoked_at);
   `
 };
 
@@ -96,6 +170,11 @@ const createConstraintsSQL = {
     ALTER TABLE chat_metrics 
     ADD CONSTRAINT IF NOT EXISTS fk_chat_metrics_session_id 
     FOREIGN KEY (session_id) REFERENCES chat_sessions(id) ON DELETE CASCADE;
+  `,
+  artifacts: `
+    ALTER TABLE artifacts 
+    ADD CONSTRAINT IF NOT EXISTS fk_artifacts_parent_id 
+    FOREIGN KEY (parent_id) REFERENCES artifacts(id) ON DELETE SET NULL;
   `
 };
 
@@ -169,6 +248,58 @@ const createRLSPolicies = {
     -- Policy: Service role can access all metrics
     CREATE POLICY IF NOT EXISTS "Service role can access all metrics" ON chat_metrics
       FOR ALL USING (auth.role() = 'service_role');
+  `,
+
+  artifacts: `
+    -- Enable RLS
+    ALTER TABLE artifacts ENABLE ROW LEVEL SECURITY;
+    
+    -- Policy: Users can access their own artifacts
+    CREATE POLICY IF NOT EXISTS "Users can access own artifacts" ON artifacts
+      FOR ALL USING (
+        user_id IS NULL OR user_id = auth.uid()::text
+      );
+    
+    -- Policy: Anonymous users can access public artifacts (where user_id is NULL)
+    CREATE POLICY IF NOT EXISTS "Anonymous can access public artifacts" ON artifacts
+      FOR SELECT USING (user_id IS NULL);
+    
+    -- Policy: Authenticated users can create artifacts
+    CREATE POLICY IF NOT EXISTS "Authenticated users can create artifacts" ON artifacts
+      FOR INSERT WITH CHECK (
+        auth.role() = 'authenticated' AND 
+        (user_id IS NULL OR user_id = auth.uid()::text)
+      );
+    
+    -- Policy: Service role can access all artifacts
+    CREATE POLICY IF NOT EXISTS "Service role can access all artifacts" ON artifacts
+      FOR ALL USING (auth.role() = 'service_role');
+  `,
+
+  user_sessions: `
+    -- Enable RLS
+    ALTER TABLE user_sessions ENABLE ROW LEVEL SECURITY;
+    
+    -- Policy: Users can access their own sessions
+    CREATE POLICY IF NOT EXISTS "Users can access own sessions" ON user_sessions
+      FOR ALL USING (user_id = auth.uid()::text);
+    
+    -- Policy: Service role can access all sessions
+    CREATE POLICY IF NOT EXISTS "Service role can access all sessions" ON user_sessions
+      FOR ALL USING (auth.role() = 'service_role');
+  `,
+
+  refresh_tokens: `
+    -- Enable RLS
+    ALTER TABLE refresh_tokens ENABLE ROW LEVEL SECURITY;
+    
+    -- Policy: Users can access their own refresh tokens
+    CREATE POLICY IF NOT EXISTS "Users can access own refresh tokens" ON refresh_tokens
+      FOR ALL USING (user_id = auth.uid()::text);
+    
+    -- Policy: Service role can access all refresh tokens
+    CREATE POLICY IF NOT EXISTS "Service role can access all refresh tokens" ON refresh_tokens
+      FOR ALL USING (auth.role() = 'service_role');
   `
 };
 
@@ -180,7 +311,7 @@ const createRLSPolicies = {
 async function executeSQLStatement(sql, description) {
   try {
     console.log(`Executing: ${description}...`);
-    
+
     const { data, error } = await supabaseAdmin.rpc('exec_sql', {
       sql_query: sql
     });
@@ -189,14 +320,14 @@ async function executeSQLStatement(sql, description) {
       // If the RPC function doesn't exist, try direct SQL execution
       if (error.code === '42883') {
         console.log('RPC function not available, trying alternative method...');
-        
+
         // For table creation, we can use the REST API with raw SQL
         const response = await fetch(`${process.env.SUPABASE_URL}/rest/v1/rpc/exec_sql`, {
           method: 'POST',
           headers: {
             'Content-Type': 'application/json',
-            'Authorization': `Bearer ${process.env.SUPABASE_SERVICE_ROLE_KEY}`,
-            'apikey': process.env.SUPABASE_SERVICE_ROLE_KEY
+            Authorization: `Bearer ${process.env.SUPABASE_SERVICE_ROLE_KEY}`,
+            apikey: process.env.SUPABASE_SERVICE_ROLE_KEY
           },
           body: JSON.stringify({ sql_query: sql })
         });
@@ -208,7 +339,7 @@ async function executeSQLStatement(sql, description) {
         console.log(`✅ ${description} completed successfully`);
         return;
       }
-      
+
       throw error;
     }
 
@@ -231,6 +362,9 @@ async function createTables() {
     await executeSQLStatement(createTablesSQL.chat_sessions, 'Create chat_sessions table');
     await executeSQLStatement(createTablesSQL.chat_messages, 'Create chat_messages table');
     await executeSQLStatement(createTablesSQL.chat_metrics, 'Create chat_metrics table');
+    await executeSQLStatement(createTablesSQL.artifacts, 'Create artifacts table');
+    await executeSQLStatement(createTablesSQL.user_sessions, 'Create user_sessions table');
+    await executeSQLStatement(createTablesSQL.refresh_tokens, 'Create refresh_tokens table');
 
     // Step 2: Create indexes for better performance
     console.log('\n🔧 Creating indexes...\n');
@@ -238,11 +372,15 @@ async function createTables() {
     await executeSQLStatement(createIndexesSQL.chat_sessions, 'Create indexes for chat_sessions');
     await executeSQLStatement(createIndexesSQL.chat_messages, 'Create indexes for chat_messages');
     await executeSQLStatement(createIndexesSQL.chat_metrics, 'Create indexes for chat_metrics');
+    await executeSQLStatement(createIndexesSQL.artifacts, 'Create indexes for artifacts');
+    await executeSQLStatement(createIndexesSQL.user_sessions, 'Create indexes for user_sessions');
+    await executeSQLStatement(createIndexesSQL.refresh_tokens, 'Create indexes for refresh_tokens');
 
     // Step 3: Add foreign key constraints
     console.log('\n🔧 Adding foreign key constraints...\n');
     await executeSQLStatement(createConstraintsSQL.chat_messages, 'Add foreign key constraint for chat_messages');
     await executeSQLStatement(createConstraintsSQL.chat_metrics, 'Add foreign key constraint for chat_metrics');
+    await executeSQLStatement(createConstraintsSQL.artifacts, 'Add foreign key constraint for artifacts');
 
     console.log('\n✅ All tables, indexes, and constraints created successfully!');
   } catch (error) {
@@ -258,9 +396,13 @@ async function setupRLS() {
   console.log('\n🔒 Setting up Row Level Security policies...\n');
 
   try {
+    await executeSQLStatement(createRLSPolicies.DinoAI, 'Setup RLS for DinoAI');
     await executeSQLStatement(createRLSPolicies.chat_sessions, 'Setup RLS for chat_sessions');
     await executeSQLStatement(createRLSPolicies.chat_messages, 'Setup RLS for chat_messages');
     await executeSQLStatement(createRLSPolicies.chat_metrics, 'Setup RLS for chat_metrics');
+    await executeSQLStatement(createRLSPolicies.artifacts, 'Setup RLS for artifacts');
+    await executeSQLStatement(createRLSPolicies.user_sessions, 'Setup RLS for user_sessions');
+    await executeSQLStatement(createRLSPolicies.refresh_tokens, 'Setup RLS for refresh_tokens');
 
     console.log('\n✅ Row Level Security policies configured successfully!');
   } catch (error) {
@@ -275,8 +417,8 @@ async function setupRLS() {
 async function verifyTables() {
   console.log('\n🔍 Verifying table creation...\n');
 
-  const tables = ['DinoAI', 'chat_sessions', 'chat_messages', 'chat_metrics'];
-  
+  const tables = ['DinoAI', 'chat_sessions', 'chat_messages', 'chat_metrics', 'artifacts', 'user_sessions', 'refresh_tokens'];
+
   for (const table of tables) {
     try {
       const { data, error } = await supabaseAdmin
@@ -309,11 +451,11 @@ async function setupDatabase() {
     // Test connection first
     console.log('🔗 Testing Supabase connection...');
     const { data, error } = await supabaseAdmin.from('information_schema.tables').select('table_name').limit(1);
-    
+
     if (error) {
       throw new Error(`Connection failed: ${error.message}`);
     }
-    
+
     console.log('✅ Supabase connection successful!\n');
 
     // Create tables
@@ -331,12 +473,11 @@ async function setupDatabase() {
 
     console.log('\n🎉 Database setup completed successfully!');
     console.log('\nYou can now use the DinoAir chat application with Supabase integration.');
-    
   } catch (error) {
     console.error('\n💥 Database setup failed:', error.message);
     console.log('\nPlease check your Supabase configuration and try again.');
     console.log('You may need to create the tables manually in the Supabase SQL editor.');
-    
+
     // Print the SQL statements for manual execution
     console.log('\n📋 SQL statements for manual execution:');
     console.log('\n-- Chat Sessions Table:');
@@ -345,7 +486,7 @@ async function setupDatabase() {
     console.log(createTablesSQL.chat_messages);
     console.log('\n-- Chat Metrics Table:');
     console.log(createTablesSQL.chat_metrics);
-    
+
     process.exit(1);
   }
 }

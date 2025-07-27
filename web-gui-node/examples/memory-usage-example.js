@@ -27,7 +27,7 @@ async function exampleUsage() {
     // Example 2: Retrieve and use the stored data
     console.log('\n📖 Retrieving user preferences...');
     const storedMemory = await getMemory(userId);
-    
+
     if (storedMemory) {
       console.log('✅ Memory retrieved successfully');
       console.log('User ID:', storedMemory.user_id);
@@ -56,7 +56,7 @@ async function exampleUsage() {
     console.log('\n📝 Saving simple text memory...');
     const textUserId = 'text-user-456';
     const simpleText = 'User completed onboarding tutorial';
-    
+
     await saveMemory(textUserId, simpleText);
     console.log('✅ Text memory saved successfully');
 
@@ -66,13 +66,12 @@ async function exampleUsage() {
     // Example 5: Handle non-existent user gracefully
     console.log('\n🔍 Checking non-existent user...');
     const nonExistentMemory = await getMemory('non-existent-user');
-    
+
     if (nonExistentMemory === null) {
       console.log('✅ Correctly handled non-existent user (returned null)');
     }
 
     console.log('\n🎉 All examples completed successfully!');
-
   } catch (error) {
     console.error('❌ Error in example usage:', error.message);
   }

@@ -15,10 +15,9 @@ interface Artifact {
 }
 
 // GET: List all artifacts
-async function listArtifacts(request: NextRequest) {
+async function listArtifacts(_request: NextRequest) {
   try {
     // Get artifacts from localStorage (in production, this would be from a database)
-    const artifactsKey = 'dinoair-artifacts';
     
     // Since this is server-side, we'll return a placeholder response
     // In a real implementation, this would fetch from a database

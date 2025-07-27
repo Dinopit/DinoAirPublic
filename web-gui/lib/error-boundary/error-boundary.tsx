@@ -25,12 +25,12 @@ export interface ErrorContext {
   message: string;
   severity: ErrorSeverity;
   timestamp: string;
-  stackTrace?: string;
-  componentStack?: string;
+  stackTrace?: string | undefined;
+  componentStack?: string | undefined;
   component: string;
-  userId?: string;
-  sessionId?: string;
-  metadata?: Record<string, any>;
+  userId?: string | undefined;
+  sessionId?: string | undefined;
+  metadata?: Record<string, any> | undefined;
   recoveryAttempts: number;
 }
 
@@ -52,10 +52,10 @@ interface ErrorBoundaryState {
 
 interface ErrorBoundaryProps {
   component: string;
-  severity?: ErrorSeverity;
-  recovery?: RecoveryConfig;
-  onError?: (context: ErrorContext) => void;
-  onRecovery?: (context: ErrorContext) => void;
+  severity?: ErrorSeverity | undefined;
+  recovery?: RecoveryConfig | undefined;
+  onError?: ((context: ErrorContext) => void) | undefined;
+  onRecovery?: ((context: ErrorContext) => void) | undefined;
   children: ReactNode;
 }
 
@@ -77,7 +77,7 @@ export class ErrorBoundary extends Component<ErrorBoundaryProps, ErrorBoundarySt
     return { hasError: true, error };
   }
   
-  componentDidCatch(error: Error, errorInfo: ErrorInfo) {
+  override componentDidCatch(error: Error, errorInfo: ErrorInfo) {
     const { component, severity = ErrorSeverity.MEDIUM, onError } = this.props;
     
     // Create error context
@@ -115,7 +115,7 @@ export class ErrorBoundary extends Component<ErrorBoundaryProps, ErrorBoundarySt
     this.attemptRecovery(errorContext);
   }
   
-  componentWillUnmount() {
+  override componentWillUnmount() {
     if (this.retryTimeoutId) {
       clearTimeout(this.retryTimeoutId);
     }
@@ -225,7 +225,7 @@ export class ErrorBoundary extends Component<ErrorBoundaryProps, ErrorBoundarySt
     });
   };
   
-  render() {
+  override render() {
     if (this.state.hasError && this.state.error) {
       const { recovery = { strategy: RecoveryStrategy.FALLBACK } } = this.props;
       
@@ -283,7 +283,7 @@ export class ErrorBoundary extends Component<ErrorBoundaryProps, ErrorBoundarySt
 /**
  * Hook for error handling in functional components
  */
-export function useErrorHandler(component: string) {
+export function useErrorHandler(_component: string) {
   const [error, setError] = React.useState<Error | null>(null);
   
   const resetError = React.useCallback(() => {
@@ -325,7 +325,7 @@ export function useAsyncError() {
  */
 interface ErrorProviderProps {
   children: ReactNode;
-  onError?: (context: ErrorContext) => void;
+  onError?: ((context: ErrorContext) => void) | undefined;
 }
 
 export function ErrorProvider({ children, onError }: ErrorProviderProps) {
@@ -359,7 +359,7 @@ export const ErrorFallback = {
     </div>
   ),
   
-  Minimal: ({ error }: { error: Error }) => (
+  Minimal: ({ error: _error }: { error: Error }) => (
     <div className="text-red-600 text-sm">
       Something went wrong. Please try again.
     </div>

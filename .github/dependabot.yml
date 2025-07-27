@@ -1,0 +1,36 @@
+version: 2
+updates:
+  # JS: Frontend & backend dependencies
+  - package-ecosystem: "npm"
+    directory: "/"  # Adjust if your frontend is in /client or similar
+    schedule:
+      interval: "weekly"
+    open-pull-requests-limit: 10
+    labels:
+      - "dependencies"
+    commit-message:
+      prefix: "chore"
+      include: "scope"
+
+  # Python: Installer, backend tools, agents, etc.
+  - package-ecosystem: "pip"
+    directory: "/"  # Adjust if your Python code is in /server or /api
+    schedule:
+      interval: "weekly"
+    open-pull-requests-limit: 5
+    labels:
+      - "dependencies"
+    commit-message:
+      prefix: "chore"
+      include: "scope"
+
+  # GitHub Actions: Auto-update workflow actions
+  - package-ecosystem: "github-actions"
+    directory: "/"  # GitHub workflows are in .github/workflows/
+    schedule:
+      interval: "weekly"
+    labels:
+      - "dependencies"
+    commit-message:
+      prefix: "ci"
+      include: "scope"

@@ -250,75 +250,98 @@ class PrerequisiteChecker:
         self.results.append(result)
         return result
     
+    def _check_node_availability_and_version(self):
+        """Check if Node.js is available and get its version information."""
+        node_paths = self._find_executable("node")
+        if not node_paths:
+            return None, CheckResult(
+                name="Node.js/npm",
+                status=CheckStatus.FAILED,
+                message="Node.js not found",
+                recovery_action="Install Node.js from https://nodejs.org/"
+            )
+        
+        # Check Node.js version
+        node_version = self._get_version(node_paths[0], "--version")
+        if not node_version:
+            return None, CheckResult(
+                name="Node.js/npm",
+                status=CheckStatus.FAILED,
+                message="Could not determine Node.js version",
+                recovery_action="Verify Node.js installation"
+            )
+        
+        return (node_paths[0], node_version), None
+    
+    def _evaluate_node_version(self, node_version: str):
+        """Evaluate Node.js version against minimum requirements."""
+        version_parts = self._parse_version(node_version.strip('v'))
+        if version_parts and version_parts >= self.MIN_NODE_VERSION:
+            return CheckStatus.PASSED, f"Node.js {node_version}"
+        else:
+            min_version_str = '.'.join(map(str, self.MIN_NODE_VERSION))
+            return CheckStatus.WARNING, f"Node.js {node_version} (minimum recommended: {min_version_str})"
+    
+    def _check_npm_availability_and_version(self, node_msg: str):
+        """Check if npm is available and get its version information."""
+        npm_paths = self._find_npm()
+        if not npm_paths:
+            return None, CheckResult(
+                name="Node.js/npm",
+                status=CheckStatus.FAILED,
+                message=f"{node_msg}, but npm not found",
+                recovery_action="Reinstall Node.js or fix npm installation"
+            )
+        
+        npm_version = self._get_version(npm_paths[0], "--version")
+        return (npm_paths[0], npm_version), None
+    
+    def _create_nodejs_result(self, node_info, npm_info, node_status, node_msg):
+        """Create the final CheckResult for Node.js/npm check."""
+        node_path, node_version = node_info
+        npm_path, npm_version = npm_info
+        
+        if npm_version:
+            return CheckResult(
+                name="Node.js/npm",
+                status=node_status,
+                message=f"{node_msg}, npm {npm_version}",
+                details={
+                    "node_path": node_path,
+                    "node_version": node_version,
+                    "npm_path": npm_path,
+                    "npm_version": npm_version
+                }
+            )
+        else:
+            return CheckResult(
+                name="Node.js/npm",
+                status=CheckStatus.WARNING,
+                message=f"{node_msg}, npm found but version unknown",
+                details={"node_path": node_path, "npm_path": npm_path}
+            )
+
     def check_nodejs_npm(self) -> CheckResult:
         """Enhanced Node.js and npm detection"""
         try:
-            # Find Node.js
-            node_paths = self._find_executable("node")
-            if not node_paths:
-                result = CheckResult(
-                    name="Node.js/npm",
-                    status=CheckStatus.FAILED,
-                    message="Node.js not found",
-                    recovery_action="Install Node.js from https://nodejs.org/"
-                )
-                self.results.append(result)
-                return result
+            # Check Node.js availability and version
+            node_info, error_result = self._check_node_availability_and_version()
+            if error_result:
+                self.results.append(error_result)
+                return error_result
             
-            # Check Node.js version
-            node_version = self._get_version(node_paths[0], "--version")
-            if not node_version:
-                result = CheckResult(
-                    name="Node.js/npm",
-                    status=CheckStatus.FAILED,
-                    message="Could not determine Node.js version",
-                    recovery_action="Verify Node.js installation"
-                )
-                self.results.append(result)
-                return result
+            # Evaluate Node.js version
+            node_path, node_version = node_info
+            node_status, node_msg = self._evaluate_node_version(node_version)
             
-            # Parse version
-            version_parts = self._parse_version(node_version.strip('v'))
-            if version_parts and version_parts >= self.MIN_NODE_VERSION:
-                node_status = CheckStatus.PASSED
-                node_msg = f"Node.js {node_version}"
-            else:
-                node_status = CheckStatus.WARNING
-                node_msg = f"Node.js {node_version} (minimum recommended: {'.'.join(map(str, self.MIN_NODE_VERSION))})"
+            # Check npm availability and version
+            npm_info, error_result = self._check_npm_availability_and_version(node_msg)
+            if error_result:
+                self.results.append(error_result)
+                return error_result
             
-            # Find npm
-            npm_paths = self._find_npm()
-            if not npm_paths:
-                result = CheckResult(
-                    name="Node.js/npm",
-                    status=CheckStatus.FAILED,
-                    message=f"{node_msg}, but npm not found",
-                    recovery_action="Reinstall Node.js or fix npm installation"
-                )
-                self.results.append(result)
-                return result
-            
-            # Check npm version
-            npm_version = self._get_version(npm_paths[0], "--version")
-            if npm_version:
-                result = CheckResult(
-                    name="Node.js/npm",
-                    status=node_status,
-                    message=f"{node_msg}, npm {npm_version}",
-                    details={
-                        "node_path": node_paths[0],
-                        "node_version": node_version,
-                        "npm_path": npm_paths[0],
-                        "npm_version": npm_version
-                    }
-                )
-            else:
-                result = CheckResult(
-                    name="Node.js/npm",
-                    status=CheckStatus.WARNING,
-                    message=f"{node_msg}, npm found but version unknown",
-                    details={"node_path": node_paths[0], "npm_path": npm_paths[0]}
-                )
+            # Create final result
+            result = self._create_nodejs_result(node_info, npm_info, node_status, node_msg)
             
         except Exception as e:
             result = CheckResult(
@@ -497,55 +520,70 @@ class PrerequisiteChecker:
         self.results.append(result)
         return result
     
+    def _get_windows_search_paths(self):
+        """Get Windows-specific search paths for executables."""
+        return [
+            os.environ.get("ProgramFiles", ""),
+            os.environ.get("ProgramFiles(x86)", ""),
+            os.environ.get("LOCALAPPDATA", ""),
+            os.environ.get("APPDATA", ""),
+            "C:\\Program Files",
+            "C:\\Program Files (x86)"
+        ]
+    
+    def _search_windows_paths(self, name: str, paths: List[str]):
+        """Search for executable in Windows-specific paths."""
+        found_paths = []
+        extensions = [".exe", ".cmd", ".bat"]
+        
+        for ext in extensions:
+            exe_name = name if name.endswith(ext) else name + ext
+            for search_path in paths:
+                if search_path:
+                    possible_path = os.path.join(search_path, exe_name)
+                    if os.path.exists(possible_path) and possible_path not in found_paths:
+                        found_paths.append(possible_path)
+        
+        return found_paths
+
     def _find_executable(self, name: str) -> List[str]:
         """Find all paths to an executable"""
         paths = []
         
-        # Check PATH
+        # Check PATH first
         path_exe = shutil.which(name)
         if path_exe:
             paths.append(path_exe)
         
         # Platform-specific searches
         if platform.system() == "Windows":
-            # Windows-specific paths
-            extensions = [".exe", ".cmd", ".bat"]
-            search_paths = [
-                os.environ.get("ProgramFiles", ""),
-                os.environ.get("ProgramFiles(x86)", ""),
-                os.environ.get("LOCALAPPDATA", ""),
-                os.environ.get("APPDATA", ""),
-                "C:\\Program Files",
-                "C:\\Program Files (x86)"
-            ]
-            
-            for ext in extensions:
-                exe_name = name if name.endswith(ext) else name + ext
-                for search_path in search_paths:
-                    if search_path:
-                        possible_path = os.path.join(search_path, exe_name)
-                        if os.path.exists(possible_path) and possible_path not in paths:
-                            paths.append(possible_path)
+            search_paths = self._get_windows_search_paths()
+            windows_paths = self._search_windows_paths(name, search_paths)
+            paths.extend(windows_paths)
         
         return paths
     
-    def _find_npm(self) -> List[str]:
-        """Special handling for finding npm"""
-        npm_paths = self._find_executable("npm")
-        
-        # Additional npm-specific locations
+    def _get_npm_specific_paths(self):
+        """Get npm-specific installation paths based on platform."""
         if platform.system() == "Windows":
-            additional_paths = [
+            return [
                 os.path.join(os.environ.get("APPDATA", ""), "npm", "npm.cmd"),
                 os.path.join(os.environ.get("ProgramFiles", ""), "nodejs", "npm.cmd"),
                 os.path.join(os.environ.get("LOCALAPPDATA", ""), "Programs", "nodejs", "npm.cmd")
             ]
         else:
-            additional_paths = [
+            return [
                 "/usr/local/lib/node_modules/npm/bin/npm-cli.js",
                 os.path.expanduser("~/.npm-global/bin/npm"),
                 "/opt/nodejs/bin/npm"
             ]
+
+    def _find_npm(self) -> List[str]:
+        """Special handling for finding npm"""
+        npm_paths = self._find_executable("npm")
+        
+        # Additional npm-specific locations
+        additional_paths = self._get_npm_specific_paths()
         
         for path in additional_paths:
             if os.path.exists(path) and path not in npm_paths:
@@ -573,8 +611,21 @@ class PrerequisiteChecker:
         try:
             # Remove any prefix like 'v' and split by dots
             version_str = version_str.lstrip('v')
-            parts = version_str.split('.')
-            return tuple(int(p) for p in parts[:3])  # Major, minor, patch
+            # Split by dots and handle version suffixes like '-beta.1'
+            parts = version_str.split('.', 2)  # Get at most 3 parts
+            version_parts = []
+            
+            for i, part in enumerate(parts):
+                # For the last part, remove any suffix after dash or plus
+                if i == len(parts) - 1:
+                    part = part.split('-')[0].split('+')[0]
+                version_parts.append(int(part))
+            
+            # Ensure we have at least 3 parts (pad with zeros if needed)
+            while len(version_parts) < 3:
+                version_parts.append(0)
+            
+            return tuple(version_parts[:3])  # Return only major, minor, patch
         except Exception:
             return None
     

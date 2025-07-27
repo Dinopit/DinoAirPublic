@@ -287,7 +287,53 @@ npm install @sentry/nextjs
 npx @sentry/wizard -i nextjs
 ```
 
-### 4. Metrics Collection
+### 4. Built-in APM Monitoring
+
+DinoAir includes comprehensive APM (Application Performance Monitoring) with OpenTelemetry for production-ready observability:
+
+```typescript
+// Enable APM in production
+import { initializeAPM } from '@/lib/monitoring/apm';
+
+// Initialize APM with custom configuration
+const apm = initializeAPM({
+  serviceName: 'dinoair-web-gui',
+  serviceVersion: process.env.NEXT_PUBLIC_VERSION || '1.0.0',
+  metricsPort: 9090,
+  metricsEndpoint: '/metrics',
+  enableConsoleExporter: false, // Disable in production
+});
+```
+
+**APM Features:**
+- Automatic instrumentation for HTTP requests, database queries, and external API calls
+- Prometheus metrics export for integration with monitoring systems
+- Performance metrics collection (response time, memory, CPU usage)
+- Service health monitoring with dependency tracking
+- Request correlation and distributed tracing
+
+**Monitoring Endpoints:**
+- `/api/v1/monitoring/metrics` - System and performance metrics in JSON format
+- `/api/v1/monitoring/dashboard` - Comprehensive monitoring dashboard data with alerts
+- `http://localhost:9090/metrics` - Prometheus metrics endpoint (production only)
+
+**Environment Variables:**
+```bash
+# Enable APM in production
+DINOAIR_APM_ENABLED=true
+
+# Optional: Custom metrics configuration
+DINOAIR_METRICS_PORT=9090
+DINOAIR_METRICS_ENDPOINT=/metrics
+```
+
+**Production Setup:**
+1. Set `DINOAIR_APM_ENABLED=true` in your production environment
+2. Configure your monitoring system to scrape metrics from port 9090
+3. Set up alerts based on the `/api/v1/monitoring/dashboard` endpoint data
+4. Monitor service health through the comprehensive dashboard interface
+
+### 5. Metrics Collection
 ```typescript
 // Example with Prometheus
 import { register, Counter, Histogram } from 'prom-client';
@@ -309,7 +355,7 @@ const httpRequestDuration = new Histogram({
 - [x] Dependencies regularly updated (Dependabot)
 - [x] Docker image uses non-root user
 - [x] Secrets not committed to repository
-- [ ] SSL/TLS certificate configured
+- [x] SSL/TLS certificate configured
 - [ ] WAF rules configured (if using CDN)
 - [ ] Regular security audits scheduled
 

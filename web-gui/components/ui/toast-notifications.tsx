@@ -1,7 +1,7 @@
 'use client';
 
 import React, { useEffect, useRef } from 'react';
-import { useToastStore, type Toast, ToastType } from '@/lib/stores/toast-store';
+import { useToastStore, type Toast } from '@/lib/stores/toast-store';
 import { X, AlertCircle, CheckCircle, Info, AlertTriangle } from 'lucide-react';
 
 // Toast notification component

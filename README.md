@@ -1,15 +1,17 @@
+[![Ask DeepWiki](https://deepwiki.com/badge.svg)](https://deepwiki.com/Dinopit/DinoAirPublic)
+
 # DinoAir 🦕✨
 
-![Version](https://img.shields.io/badge/version-1.1.0-blue.svg)
+![Version](https://img.shields.io/badge/version-1.2.0-blue.svg)
 ![Build Status](https://img.shields.io/badge/build-passing-brightgreen.svg)
 ![Test Coverage](https://img.shields.io/badge/coverage-85%25-green.svg)
 ![License](https://img.shields.io/badge/license-MIT-orange.svg)
 
 > A powerful, self-contained AI platform combining local language models with image generation capabilities. Built with modern web technologies and enterprise-grade features.
 
-## 🔒 SECURITY UPDATE v1.1.0 🔒
+## 🔒 STABILITY RELEASE v1.2.0 🔒
 
-**Major stability and security improvements have been implemented:**
+**Major stability and reliability improvements have been implemented:**
 
 ### ✅ Installation & Reliability
 - **Fixed**: Node.js/npm detection issues on Windows systems
@@ -21,13 +23,28 @@
 - **Rate Limiting**: Configurable request throttling to prevent abuse
 - **Input Validation**: Request sanitization and validation middleware
 - **Process Isolation**: Each service runs with configurable resource limits
+- **CSP Consolidation**: Unified Content Security Policy configuration eliminates duplicate policies and prevents conflicts between server.js and validation.js middleware
 
-### 💪 Stability Features
+### 💪 Stability Features (v1.2.0)
+- **Circuit Breaker Protection**: Comprehensive circuit breaker implementation for all external service calls (Ollama, ComfyUI)
+  - Configurable failure thresholds and automatic recovery
+  - Real-time statistics and monitoring at `/api/system/circuit-breakers`
+  - Prevents cascading failures when services are unavailable
+- **Enhanced Input Validation**: Rate limiting added to all previously unprotected API routes
+  - Health endpoints (`/api/health/*`)
+  - System endpoints (`/api/system/*`) 
+  - User management endpoints (`/users/*`)
+- **Error Recovery & Retry Logic**: Intelligent retry mechanism with exponential backoff and jitter
+  - Smart error categorization (network errors, timeouts, 5xx responses)
+  - Integration with circuit breaker for comprehensive fault tolerance
+  - Prevents thundering herd problems
+- **Centralized Error Handling**: Structured error responses and proper HTTP status codes
+- **Model Download Integrity**: Enhanced download process with checksum verification and resume capability
 - **Memory Management**: Automatic model unloading to prevent crashes
-- **Circuit Breakers**: Prevents cascading failures in external services
-- **Health Monitoring**: Automatic service restart on failure
-- **Error Recovery**: Multiple recovery strategies with automatic retry
+- **Health Monitoring**: Automatic service restart on failure with circuit breaker integration
 - **Graceful Shutdown**: Proper cleanup and state preservation
+- **Artifact Storage Limits**: Enforced limits of 1000 artifacts and 100MB total storage with automatic LRU cleanup to prevent memory exhaustion
+- **Authentication Race Conditions**: Request-level caching and locking mechanisms prevent concurrent authentication issues
 
 ### 📊 Operations & Monitoring
 - **Resource Monitoring**: Real-time tracking of CPU, memory, disk usage
@@ -43,16 +60,15 @@ See [CHANGELOG.md](CHANGELOG.md) for complete details.
 
 ## ⚠️ IMPORTANT STABILITY WARNING ⚠️
 
-**This is Version 1.1.0 - EXPERIMENTAL SOFTWARE**
+**This is Version 1.2.0 - STABLE RELEASE**
 
-While DinoAir has received significant stability improvements, users should still be aware:
+DinoAir v1.2.0 includes major stability improvements, but users should still be aware:
 
-- 🚨 **Experimental Features**: Some features are still in active development
 - 💻 **Resource Intensive**: May consume significant CPU/GPU resources
 - 💾 **Data Safety**: Always backup important data before use
 - 🛡️ **Test Environment Recommended**: Consider testing in a safe environment first
 
-**The v1.1.0 update addresses many stability issues**, but we still recommend caution in production environments. We appreciate your patience and feedback!
+**The v1.2.0 update addresses many stability issues** and is much more reliable than previous versions. We appreciate your feedback!
 
 ## 📋 Table of Contents
 
@@ -69,6 +85,7 @@ While DinoAir has received significant stability improvements, users should stil
 - [Architecture](#-architecture)
 - [Contributing](#-contributing)
 - [Troubleshooting](#-troubleshooting)
+- [FAQ](#-faq)
 - [License](#-license)
 
 ## ✨ Features
@@ -79,7 +96,7 @@ While DinoAir has received significant stability improvements, users should stil
 - 💾 **Artifact Management** - Store, organize, and manage generated content
 - 🎭 **Multiple Personalities** - Customizable AI personalities for different use cases
 
-### Recent Enhancements (v1.1.0)
+### Recent Enhancements (v1.2.0)
 - 🔒 **Enhanced Security**
   - JWT and API key authentication for all endpoints
   - Advanced rate limiting with multiple strategies
@@ -90,6 +107,11 @@ While DinoAir has received significant stability improvements, users should stil
   - Circuit breakers for external services
   - Health checks with auto-restart
   - Error boundaries and recovery mechanisms
+- 🧪 **Testing & Quality Assurance**
+  - Contract testing with Pact for API compatibility
+  - Consumer-driven contract tests for frontend-backend integration
+  - Automated contract verification in CI/CD pipeline
+  - Comprehensive API contract documentation
 - 📈 **Operational Excellence**
   - Comprehensive logging with rotation
   - Resource usage monitoring
@@ -130,8 +152,8 @@ While DinoAir has received significant stability improvements, users should stil
 
 ```bash
 # Clone the repository
-git clone https://github.com/yourusername/DinoAir.git
-cd DinoAir
+git clone https://github.com/Dinopit/DinoAirPublic.git
+cd DinoAirPublic
 
 # Use the new safe installer (recommended)
 python install_safe.py
@@ -170,19 +192,19 @@ DinoAir now features automatic hardware detection and adaptive configuration! Th
 
 ### Recommended Requirements (Standard Mode)
 - **OS**: Windows 10/11, Ubuntu 20.04+, macOS 11+
-- **CPU**: 6-core processor
-- **RAM**: 8-16GB
-- **Storage**: 25GB free space
-- **GPU**: Integrated graphics or better
-- **Models**: Qwen 3B, most features
+- **CPU**: 8-core processor
+- **RAM**: 16GB
+- **Storage**: 30GB free space
+- **GPU**: Dedicated GPU (4GB+ VRAM)
+- **Models**: Qwen 7B, most features
 
-### Optimal Requirements (Pro Mode)
+### Optimal Requirements (Pro Mode - For Developers)
 - **OS**: Windows 10/11, Ubuntu 20.04+, macOS 11+
-- **CPU**: 8+ core processor
-- **RAM**: 16GB+
-- **Storage**: 50GB free space
-- **GPU**: NVIDIA GPU with 8GB+ VRAM
-- **Models**: Qwen 7B+, all features including image generation
+- **CPU**: 12+ core processor
+- **RAM**: 32GB+
+- **Storage**: 100GB free space
+- **GPU**: High-end GPU (24GB+ VRAM)
+- **Models**: Qwen 14B+, all features including image generation
 
 **Note**: The hardware detection system will automatically configure DinoAir to run optimally on your system, selecting appropriate models and features based on available resources.
 
@@ -371,9 +393,13 @@ Access the Swagger UI at `http://localhost:3000/api-docs` for:
 | `/api/chat` | POST | Send chat messages |
 | `/api/generate-image` | POST | Generate images |
 | `/api/artifacts` | GET/POST | Manage artifacts |
+| `/api/v1/artifacts/stats` | GET | Storage monitoring and utilization statistics |
 | `/api/health` | GET | Health check |
 | `/api/health/comfyui` | GET | ComfyUI status |
 | `/api/health/ollama` | GET | Ollama status |
+| `/api/alerts/status` | GET | Alerting system status |
+| `/api/alerts/test` | POST | Send test alert |
+| `/api/alerts/config` | GET | Alerting configuration |
 
 ### Authentication
 
@@ -385,13 +411,105 @@ curl -H "X-API-Key: your-api-key" http://localhost:3000/api/health
 
 ## 🧪 Testing
 
-### Run All Tests
+DinoAir includes comprehensive testing capabilities:
+
+### Accessibility Testing
+```bash
+# Run accessibility tests
+cd web-gui
+npx playwright test e2e/accessibility*.spec.ts
+
+# Run with specific browser
+npx playwright test e2e/accessibility*.spec.ts --project=chromium
+```
+
+### Load Testing
+```bash
+# Quick load test
+cd web-gui-node
+npm run load-test:quick
+
+# Full load test suite
+npm run load-test:all
+
+# Specific endpoint tests
+npm run load-test:health
+npm run load-test:chat
+npm run load-test:auth
+npm run load-test:system
+```
+
+### Alerting System Testing
+```bash
+# Test alerting configuration
+curl -X POST http://localhost:3000/api/alerts/test \
+  -H "Content-Type: application/json" \
+  -d '{"severity": "warning", "message": "Test alert"}'
+
+# Check alerting status
+curl http://localhost:3000/api/alerts/status
+```
+
+### Unit and Integration Tests
 
 ```bash
 cd web-gui
 npm test                  # Unit tests
 npm run test:e2e         # E2E tests
 npm run test:coverage    # Coverage report
+```
+
+### Contract Testing
+
+DinoAir implements comprehensive contract testing to ensure API compatibility between frontend and backend:
+
+```bash
+# Quick setup (installs dependencies and starts Pact Broker)
+cd contracts
+./setup-contracts.sh setup
+
+# Run consumer tests (frontend expectations)
+./setup-contracts.sh consumer
+
+# Run provider verification (backend compliance)
+./setup-contracts.sh provider
+
+# Run full contract testing workflow
+./setup-contracts.sh full
+```
+
+**Contract Testing Features:**
+- Consumer-driven contract tests for all API endpoints
+- Automated provider verification
+- Pact Broker for contract management
+- CI/CD integration with automated verification
+- Comprehensive documentation and examples
+
+For detailed contract testing information, see: [`contracts/CONTRACT_TESTING_GUIDE.md`](contracts/CONTRACT_TESTING_GUIDE.md)
+
+### Stability Testing
+
+Test the implemented stability fixes:
+
+```bash
+# Start DinoAir locally
+python start.py
+
+# Test concurrent authentication (in separate terminal)
+for i in {1..20}; do
+  curl -H "X-API-Key: your-api-key" http://localhost:3000/api/health &
+done
+wait
+
+# Test artifact storage limits
+for i in {1..1005}; do
+  curl -X POST -H "Content-Type: application/json" \
+    -d '{"name":"test'$i'","type":"text","content":"test content"}' \
+    http://localhost:3000/api/v1/artifacts
+done
+
+# Monitor storage statistics
+curl http://localhost:3000/api/v1/artifacts/stats
 ```
 
 ### Test Structure
@@ -448,7 +566,7 @@ cd web-gui && vercel
 - [ ] Set secure API keys and secrets
 - [ ] Enable HTTPS
 - [ ] Configure rate limiting
-- [ ] Set up monitoring alerts
+- [x] Set up monitoring alerts
 - [ ] Enable error tracking
 - [ ] Configure automated backups
 - [ ] Test rollback procedures
@@ -456,65 +574,29 @@ cd web-gui && vercel
 
 ## 🛠️ Development
 
-### Project Structure
+> **📖 For comprehensive development documentation, see [DEVELOPMENT.md](DEVELOPMENT.md)**
 
-```
-DinoAir/
-├── web-gui/                 # Next.js frontend
-│   ├── app/                 # App router pages
-│   ├── components/          # React components
-│   ├── hooks/              # Custom React hooks
-│   ├── lib/                # Utilities & helpers
-│   │   ├── middleware/     # Auth, rate limit, validation
-│   │   ├── monitoring/     # Health & performance
-│   │   └── security/       # Security utilities
-│   └── public/             # Static assets
-├── lib/                    # Python safety modules
-│   ├── backup/            # Backup system
-│   ├── circuit_breaker/   # Fault tolerance
-│   ├── config/            # Configuration validation
-│   ├── health_monitor/    # Service monitoring
-│   ├── logging/           # Structured logging
-│   ├── monitoring/        # Resource monitoring
-│   ├── process_manager/   # Process isolation
-│   ├── rollback/          # Rollback system
-│   ├── sandbox/           # Code sandboxing
-│   └── shutdown/          # Graceful shutdown
-├── ComfyUI/                # Image generation backend
-│   ├── models/             # AI models
-│   └── workflows/          # Generation workflows
-├── personalities/          # AI personality configs
-├── docs/                   # Documentation
-└── scripts/               # Utility scripts
+### Quick Development Setup
+
+```bash
+# Clone and setup
+git clone https://github.com/Dinopit/DinoAirPublic.git
+cd DinoAirPublic
+
+# Install dependencies
+pip install -r requirements.txt
+cd web-gui && npm install
+
+# Start development
+python start.py
 ```
 
-### Development Workflow
+### Development Resources
 
-1. **Create a feature branch**
-   ```bash
-   git checkout -b feature/your-feature
-   ```
-
-2. **Make changes and test**
-   ```bash
-   npm run dev
-   npm test
-   ```
-
-3. **Build and verify**
-   ```bash
-   npm run build
-   npm run start
-   ```
-
-4. **Submit a pull request**
-
-### Code Style
-
-- TypeScript for type safety
-- ESLint for code quality
-- Prettier for formatting
-- Conventional commits
+- **[Development Guide](DEVELOPMENT.md)** - Complete development documentation
+- **[Technical Details](docs/development/)** - Implementation details and analysis
+- **[Testing Guide](DEVELOPMENT.md#testing)** - Test setup and execution
+- **[Contributing Guidelines](DEVELOPMENT.md#contributing)** - How to contribute
 
 ## 🏗️ Architecture
 
@@ -552,53 +634,82 @@ DinoAir/
 
 ## 🤝 Contributing
 
-We welcome contributions! Please see our [Contributing Guidelines](CONTRIBUTING.md) for details.
+> **📖 For detailed contributing guidelines, see [DEVELOPMENT.md](DEVELOPMENT.md#contributing)**
 
-### How to Contribute
+We welcome contributions! Quick steps:
 
 1. Fork the repository
-2. Create your feature branch
-3. Commit your changes
-4. Push to the branch
+2. Create your feature branch (`git checkout -b feature/amazing-feature`)
+3. Commit your changes (`git commit -m 'Add amazing feature'`)
+4. Push to the branch (`git push origin feature/amazing-feature`)
 5. Open a pull request
 
-### Areas for Contribution
-
-- 🐛 Bug fixes
-- ✨ New features
-- 📚 Documentation
-- 🧪 Tests
+**What we need help with:**
+- 🐛 Bug fixes and stability improvements
+- ✨ New features and enhancements
+- 📚 Documentation improvements
+- 🧪 Test coverage and quality assurance
 - 🎨 UI/UX improvements
 
 ## 🔧 Troubleshooting
 
-### Common Issues
+> **📖 For comprehensive troubleshooting, see [TROUBLESHOOTING.md](TROUBLESHOOTING.md)**
 
-**Port Already in Use**
+### Quick Fixes for Common Issues
+
+**🚨 Emergency Commands**
 ```bash
-# Kill processes on specific ports
-# Windows
-netstat -ano | findstr :3000
-taskkill /PID <PID> /F
+# Stop all DinoAir services
+python stop.py
 
-# Linux/Mac
-lsof -ti:3000 | xargs kill
+# Kill stuck processes
+lsof -ti:3000,8188,11434 | xargs kill  # Linux/Mac
+netstat -ano | findstr ":3000 :8188 :11434" | findstr LISTENING  # Windows
 ```
 
-**Model Download Failures**
-- Check disk space (need ~8GB free)
-- Verify internet connection
-- Use `download_models.py --resume` to continue
+**🔍 Health Check**
+```bash
+# Verify all services are running
+curl http://localhost:3000/api/health      # Web GUI
+curl http://localhost:8188/system_stats    # ComfyUI  
+curl http://localhost:11434/api/tags       # Ollama
+```
 
-**API Authentication Errors**
-- Verify API key in `.env.local`
-- Check rate limit hasn't been exceeded
-- Ensure CORS is properly configured
+**⚡ Common Quick Fixes**
 
-**ComfyUI Connection Issues**
-- Confirm ComfyUI is running on port 8188
-- Check firewall settings
-- Verify workflow files are present
+| Issue | Quick Solution |
+|-------|---------------|
+| **Port conflicts** | `python stop.py && python start.py` |
+| **Web UI blank/broken** | Clear browser cache, try incognito mode |
+| **Model download fails** | Check disk space (need 8GB+), `python download_models.py --resume` |
+| **Authentication hangs** | Wait 60 seconds (rate limiting), restart services |
+| **ComfyUI not loading** | Check port 8188 is free, verify GPU/CPU resources |
+| **Ollama chat fails** | `ollama list` to verify models, `ollama serve` to restart |
+| **High memory usage** | Restart services, use smaller models |
+
+**📊 System Requirements Check**
+```bash
+# Verify your system meets minimum requirements
+python -c "
+import psutil, shutil
+print(f'Memory: {psutil.virtual_memory().total // 1024**3}GB (need 8GB+)')
+print(f'CPU cores: {psutil.cpu_count()} (need 4+)')  
+print(f'Free disk: {shutil.disk_usage(\".\")[2] // 1024**3}GB (need 20GB+)')
+"
+```
+
+### 📚 Detailed Troubleshooting Guides
+
+For comprehensive troubleshooting by component:
+
+- **🚀 [Installation Issues](TROUBLESHOOTING.md#-installation--setup-issues)** - Prerequisites, permissions, disk space
+- **🎨 [ComfyUI Problems](TROUBLESHOOTING.md#-comfyui-troubleshooting)** - Image generation, model loading, workflows  
+- **🤖 [Ollama Issues](TROUBLESHOOTING.md#-ollama-troubleshooting)** - Chat functionality, model downloads, API connectivity
+- **🌐 [Web GUI Problems](TROUBLESHOOTING.md#-web-gui-troubleshooting)** - UI loading, authentication, PrismJS errors
+- **🖥️ [Performance Issues](TROUBLESHOOTING.md#-system-resources--performance)** - Memory, CPU, disk optimization
+- **🔍 [Diagnostic Tools](TROUBLESHOOTING.md#-diagnostic-tools--commands)** - System monitoring, log analysis
+- **❓ [FAQ](FAQ.md)** - Quick answers to common questions
+- **❓ [Detailed FAQ](TROUBLESHOOTING.md#-frequently-asked-questions-faq)** - Technical Q&A in troubleshooting guide
 
 ### Debug Mode
 
@@ -619,6 +730,37 @@ DEBUG=dinoair:*
 - 💬 Join our the discord! https://discord.gg/GVd4jSh3
 - 📧 Contact support: Admin@dinopitstudios-llc.com 
 
+## ❓ FAQ
+
+> **📖 For complete FAQ, see [FAQ.md](FAQ.md)**
+
+### Quick Answers
+
+**Q: What are the minimum requirements?**  
+A: 8GB RAM, 4 CPU cores, 20GB disk space, Python 3.10+, Node.js 18+
+
+**Q: Can I run this without internet?**  
+A: Yes, after initial setup. Chat and image generation work offline.
+
+**Q: Do I need a GPU?**  
+A: Not required, but highly recommended for fast image generation (10-100x speedup).
+
+**Q: Why is it using so much memory?**  
+A: Language models (4-8GB) + image models (2-4GB) + web services (1-2GB). This is normal.
+
+**Q: Installation failed - what now?**  
+A: Try `python install_safe.py`, check Python 3.10+/Node.js 18+, ensure 20GB+ disk space.
+
+**Q: Web page is blank/broken?**  
+A: Clear browser cache (Ctrl+F5), try incognito mode, check browser console for errors.
+
+**Q: ComfyUI/Ollama won't start?**  
+A: Check ports 8188/11434 aren't in use, verify system resources, restart services.
+
+> 💡If you made it this far and use runpod.io? Heres a referal link for  $5-500 worth of credits when you add $10 https://runpod.io?ref=xhye3m5r
+
+[📚 **See FAQ.md for 30+ more questions and detailed answers**](FAQ.md)
+
 ## 📄 License
 
 This project is licensed under the MIT License - see the [LICENSE](LICENSE) file for details.
@@ -627,8 +769,8 @@ This project is licensed under the MIT License - see the [LICENSE](LICENSE) file
 
 <div align="center">
 
-**DinoAir v1.1.0** - Built with ❤️ by the DinoAir Team
+**DinoAir v1.2.0** - Built with ❤️ by the DinoAir Team
 
-[Documentation](docs/) • [Issues](https://github.com/yourusername/DinoAir/issues) • [Discord](https://discord.gg/dinoair)
+[Documentation](docs/) • [Development](DEVELOPMENT.md) • [Issues](https://github.com/Dinopit/DinoAirPublic/issues) • [Discord](https://discord.gg/GVd4jSh3)
 
 </div>

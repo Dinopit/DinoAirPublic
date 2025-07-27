@@ -1,5 +1,5 @@
 import { NextRequest, NextResponse } from 'next/server';
-import { recordChatResponseTime, recordTokenUsage } from '@/app/api/v1/system/stats/route';
+import { recordChatResponseTime, recordTokenUsage } from '@/lib/utils/performance-metrics';
 
 export async function POST(request: NextRequest) {
   const startTime = Date.now();
@@ -38,8 +38,8 @@ export async function POST(request: NextRequest) {
     const stream = new ReadableStream({
       async start(controller) {
         try {
-          // Track API response time
-          const apiStartTime = Date.now();
+          // Track API response time (for future metrics)
+          // const apiStartTime = Date.now();
           
           // Call Ollama API
           const response = await fetch('http://localhost:11434/api/generate', {

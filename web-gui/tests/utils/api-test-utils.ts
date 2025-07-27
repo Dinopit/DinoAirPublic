@@ -20,7 +20,7 @@ export function createMockRequest(options: {
       'Content-Type': 'application/json',
       ...headers
     }),
-    body: body ? JSON.stringify(body) : undefined
+    body: body ? JSON.stringify(body) : null
   });
 
   return request;
@@ -38,7 +38,7 @@ export function createMockMiddlewareResult(overrides: any = {}) {
 }
 
 // Mock cache functions
-export const mockWithCache = jest.fn(async (key: string, fn: () => Promise<any>, ttl?: number) => {
+export const mockWithCache = jest.fn(async (_key: string, fn: () => Promise<any>, _ttl?: number) => {
   return await fn();
 });
 

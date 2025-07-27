@@ -4,61 +4,8 @@ import React, { useState, useEffect, useMemo } from 'react';
 import { versionControl } from '@/lib/utils/artifact-version-control';
 import { ArtifactExporter } from '@/lib/utils/artifact-export';
 import { SkeletonCard } from '../ui/skeleton';
-
-// Dynamically import PrismJS to avoid SSR issues
-let Prism: any = null;
-
-// Initialize PrismJS safely
-const initializePrism = async () => {
-  try {
-    if (typeof window !== 'undefined' && !Prism) {
-      // Import core PrismJS
-      const prismModule = await import('prismjs');
-      Prism = prismModule.default;
-      
-      // Make Prism available globally for components that expect it
-      (window as any).Prism = Prism;
-      
-      // Import theme with type assertion to avoid TS error
-      await import('prismjs/themes/prism-tomorrow.css' as any);
-      
-      // Import language components with error handling
-      const languageImports = [
-        import('prismjs/components/prism-javascript' as any),
-        import('prismjs/components/prism-typescript' as any),
-        import('prismjs/components/prism-jsx' as any),
-        import('prismjs/components/prism-tsx' as any),
-        import('prismjs/components/prism-python' as any),
-        import('prismjs/components/prism-java' as any),
-        import('prismjs/components/prism-cpp' as any),
-        import('prismjs/components/prism-csharp' as any),
-        import('prismjs/components/prism-css' as any),
-        import('prismjs/components/prism-json' as any),
-        import('prismjs/components/prism-yaml' as any),
-        import('prismjs/components/prism-markdown' as any),
-        import('prismjs/components/prism-sql' as any),
-        import('prismjs/components/prism-bash' as any),
-        import('prismjs/components/prism-rust' as any),
-        import('prismjs/components/prism-go' as any),
-        import('prismjs/components/prism-php' as any)
-      ];
-      
-      // Load all languages, catching any errors
-      const results = await Promise.allSettled(languageImports);
-      
-      // Log any failed imports for debugging
-      results.forEach((result, index) => {
-        if (result.status === 'rejected') {
-          console.warn(`Failed to load PrismJS language component ${index}:`, result.reason);
-        }
-      });
-    }
-    return Prism;
-  } catch (error) {
-    console.error('Failed to initialize PrismJS:', error);
-    return null;
-  }
-};
+import { initializePrism } from '@/lib/utils/prism-initializer';
+import { getFileTypeIcon } from '@/lib/utils/file-type-utils';
 
 interface Artifact {
   id: string;
@@ -90,39 +37,9 @@ const LocalArtifactsView = () => {
   const [selectedArtifacts, setSelectedArtifacts] = useState<Set<string>>(new Set());
   const [viewingVersions, setViewingVersions] = useState<Artifact | null>(null);
   const [versionHistory, setVersionHistory] = useState<ArtifactVersion[]>([]);
-  const [comparingVersions, setComparingVersions] = useState<{artifact: Artifact, v1: number, v2: number} | null>(null);
   const [copiedArtifactId, setCopiedArtifactId] = useState<string | null>(null);
   const [isLoading, setIsLoading] = useState<boolean>(true);
 
-  // Get file type icon
-  const getFileTypeIcon = (type: string): string => {
-    const iconMap: Record<string, string> = {
-      'javascript': '🟨',
-      'typescript': '🔷',
-      'typescriptreact': '⚛️',
-      'javascriptreact': '⚛️',
-      'python': '🐍',
-      'java': '☕',
-      'cpp': '🔧',
-      'c': '🔧',
-      'csharp': '🟦',
-      'html': '🌐',
-      'css': '🎨',
-      'json': '📋',
-      'yaml': '📝',
-      'yml': '📝',
-      'markdown': '📄',
-      'md': '📄',
-      'text': '📝',
-      'sql': '🗃️',
-      'shell': '🖥️',
-      'bash': '🖥️',
-      'rust': '🦀',
-      'go': '🐹',
-      'php': '🐘'
-    };
-    return iconMap[type.toLowerCase()] || '📄';
-  };
 
   // Get Prism language for syntax highlighting
   const getPrismLanguage = (type: string): string => {

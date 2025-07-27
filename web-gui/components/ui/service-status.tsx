@@ -2,6 +2,7 @@
 
 import React, { useState, useEffect } from 'react';
 import { Server, CheckCircle, XCircle, AlertCircle, RefreshCw, Terminal, FileText, X } from 'lucide-react';
+import { ConnectionStatusBadge } from './offline-indicator';
 
 interface ServiceHealth {
   status: 'healthy' | 'unhealthy' | 'unknown';
@@ -93,6 +94,7 @@ export default function ServiceStatus() {
       const interval = setInterval(fetchHealth, 10000); // Refresh every 10 seconds
       return () => clearInterval(interval);
     }
+    return undefined;
   }, [autoRefresh]);
 
   const getStatusIcon = (status: ServiceHealth['status']) => {
@@ -138,7 +140,7 @@ export default function ServiceStatus() {
     const command = serviceInfo[service]?.restartCommand;
     if (!command) return;
 
-    if (confirm(`Are you sure you want to restart ${serviceInfo[service].name}?`)) {
+    if (confirm(`Are you sure you want to restart ${serviceInfo[service]?.name}?`)) {
       // In a real implementation, this would call an API endpoint to restart the service
       alert(`Restart command: ${command}\n\nNote: Service restart is not implemented in the free tier. Please restart manually.`);
     }
@@ -149,7 +151,7 @@ export default function ServiceStatus() {
     const now = new Date();
     return [
       `[${now.toISOString()}] Service ${service} started`,
-      `[${now.toISOString()}] Listening on port ${serviceInfo[service].port}`,
+      `[${now.toISOString()}] Listening on port ${serviceInfo[service]?.port}`,
       `[${now.toISOString()}] Health check endpoint available`,
       `[${now.toISOString()}] Ready to accept connections`,
     ];
@@ -182,9 +184,12 @@ export default function ServiceStatus() {
       <div className="flex items-center justify-between">
         <div>
           <h2 className="text-2xl font-bold">Service Status</h2>
-          <p className={`text-lg ${getOverallStatusColor(health.status)}`}>
-            System: {health.status.charAt(0).toUpperCase() + health.status.slice(1)}
-          </p>
+          <div className="flex items-center gap-3">
+            <p className={`text-lg ${getOverallStatusColor(health.status)}`}>
+              System: {health.status.charAt(0).toUpperCase() + health.status.slice(1)}
+            </p>
+            <ConnectionStatusBadge />
+          </div>
         </div>
         <div className="flex items-center gap-3">
           <label className="flex items-center gap-2">

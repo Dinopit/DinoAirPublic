@@ -81,7 +81,7 @@ async function checkComfyUIHealth(): Promise<ServiceHealth> {
   }
 }
 
-async function getSystemHealth(request: NextRequest) {
+async function getSystemHealth(_request: NextRequest) {
   try {
     // Check all services in parallel
     const [ollamaHealth, comfyuiHealth] = await Promise.all([

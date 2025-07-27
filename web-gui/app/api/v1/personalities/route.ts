@@ -145,7 +145,7 @@ async function listPersonalities(request: NextRequest) {
  *       200:
  *         description: CORS headers returned
  */
-export async function OPTIONS(request: NextRequest) {
+export async function OPTIONS(_request: NextRequest) {
   return handleOptionsRequest();
 }
 

@@ -17,6 +17,18 @@ import json
 import threading
 from pathlib import Path
 
+# Initialize Sentry error tracking
+try:
+    from ...sentry_config import capture_exception, capture_message
+except (ImportError, ModuleNotFoundError):
+    try:
+        from sentry_config import capture_exception, capture_message
+    except ImportError:
+        def capture_exception(error, extra_data=None):
+            pass
+        def capture_message(message, level='info', extra_data=None):
+            pass
+
 class ErrorSeverity(Enum):
     """Error severity levels"""
     LOW = "low"          # Can be ignored
@@ -265,18 +277,33 @@ class ErrorBoundary:
             f"after {context.recovery_attempts} attempts"
         )
         
+        # Send recovery failure to Sentry
+        capture_message(
+            f"Recovery failed: {context.error_type} in {self.component_name}",
+            'error',
+            {
+                "component": self.component_name,
+                "error_type": context.error_type,
+                "recovery_attempts": context.recovery_attempts,
+                "recovery_strategy": config.strategy.value if config else "unknown",
+                "metadata": context.metadata
+            }
+        )
+        
         # Trigger callbacks
         for callback in self.on_recovery_failure:
             try:
                 callback(context)
             except Exception as e:
                 self.logger.error(f"Error in recovery failure callback: {e}")
+                capture_exception(e, {"callback_error": True, "original_context": context.error_type})
         
         if config.on_recovery_failure:
             try:
                 config.on_recovery_failure(context)
             except Exception as e:
                 self.logger.error(f"Error in custom recovery failure handler: {e}")
+                capture_exception(e, {"custom_recovery_handler_error": True, "original_context": context.error_type})
     
     def _log_error(self, context: ErrorContext):
         """Log error based on severity"""
@@ -286,14 +313,27 @@ class ErrorBoundary:
             f"Stack trace:\n{context.stack_trace}"
         )
         
+        # Send to Sentry with appropriate level
+        sentry_extra = {
+            "component": context.component,
+            "error_type": context.error_type,
+            "severity": context.severity.value,
+            "recovery_attempts": context.recovery_attempts,
+            "metadata": context.metadata
+        }
+        
         if context.severity == ErrorSeverity.CRITICAL:
             self.logger.critical(message)
+            capture_message(message, 'fatal', sentry_extra)
         elif context.severity == ErrorSeverity.HIGH:
             self.logger.error(message)
+            capture_message(message, 'error', sentry_extra)
         elif context.severity == ErrorSeverity.MEDIUM:
             self.logger.warning(message)
+            capture_message(message, 'warning', sentry_extra)
         else:
             self.logger.info(message)
+            capture_message(message, 'info', sentry_extra)
     
     def _shutdown_component(self):
         """Shutdown component on critical error"""

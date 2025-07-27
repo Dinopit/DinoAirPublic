@@ -32,11 +32,6 @@ export interface ValidationError {
 
 // Constants
 const MAX_BODY_SIZE = 10 * 1024 * 1024; // 10MB default
-const DEFAULT_ALLOWED_CONTENT_TYPES = [
-  'application/json',
-  'application/x-www-form-urlencoded',
-  'multipart/form-data'
-];
 
 // Common validation schemas
 export const commonSchemas = {

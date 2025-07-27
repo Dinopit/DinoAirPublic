@@ -7,7 +7,7 @@ const fetch = require('node-fetch');
 
 // Configuration
 const BASE_URL = 'http://localhost:3000/api/chat';
-const TEST_USER_ID = 'test-user-' + Date.now();
+const TEST_USER_ID = `test-user-${Date.now()}`;
 
 /**
  * Helper function to make HTTP requests
@@ -23,11 +23,11 @@ async function makeRequest(url, options = {}) {
     });
 
     const data = await response.json();
-    
+
     return {
       success: response.ok,
       status: response.status,
-      data: data
+      data
     };
   } catch (error) {
     return {
@@ -42,7 +42,7 @@ async function makeRequest(url, options = {}) {
  */
 async function testCreateSession() {
   console.log('🧪 Testing session creation...');
-  
+
   const result = await makeRequest(`${BASE_URL}/sessions`, {
     method: 'POST',
     body: JSON.stringify({
@@ -58,10 +58,9 @@ async function testCreateSession() {
     console.log('   ✅ Session created successfully');
     console.log('   📋 Session ID:', result.data.id);
     return result.data;
-  } else {
-    console.log('   ❌ Failed to create session:', result.error || result.data?.error);
-    return null;
   }
+  console.log('   ❌ Failed to create session:', result.error || result.data?.error);
+  return null;
 }
 
 /**
@@ -69,17 +68,16 @@ async function testCreateSession() {
  */
 async function testGetSessions() {
   console.log('🧪 Testing get user sessions...');
-  
+
   const result = await makeRequest(`${BASE_URL}/sessions?userId=${TEST_USER_ID}&limit=10`);
 
   if (result.success) {
     console.log('   ✅ Sessions retrieved successfully');
     console.log('   📊 Session count:', result.data.count);
     return result.data.sessions;
-  } else {
-    console.log('   ❌ Failed to get sessions:', result.error || result.data?.error);
-    return [];
   }
+  console.log('   ❌ Failed to get sessions:', result.error || result.data?.error);
+  return [];
 }
 
 /**
@@ -87,17 +85,16 @@ async function testGetSessions() {
  */
 async function testGetSession(sessionId) {
   console.log('🧪 Testing get specific session...');
-  
+
   const result = await makeRequest(`${BASE_URL}/sessions/${sessionId}`);
 
   if (result.success) {
     console.log('   ✅ Session details retrieved successfully');
     console.log('   📋 Session user:', result.data.user_id);
     return result.data;
-  } else {
-    console.log('   ❌ Failed to get session:', result.error || result.data?.error);
-    return null;
   }
+  console.log('   ❌ Failed to get session:', result.error || result.data?.error);
+  return null;
 }
 
 /**
@@ -105,7 +102,7 @@ async function testGetSession(sessionId) {
  */
 async function testSendMessage(sessionId) {
   console.log('🧪 Testing chat message sending...');
-  
+
   const result = await makeRequest(`${BASE_URL}`, {
     method: 'POST',
     body: JSON.stringify({
@@ -113,7 +110,7 @@ async function testSendMessage(sessionId) {
         { role: 'user', content: 'Hello, this is a test message from the CRUD test script.' }
       ],
       model: 'qwen:7b-chat-v1.5-q4_K_M',
-      sessionId: sessionId,
+      sessionId,
       userId: TEST_USER_ID,
       systemPrompt: 'You are a helpful assistant. Please respond briefly to test messages.'
     })
@@ -122,10 +119,9 @@ async function testSendMessage(sessionId) {
   if (result.success) {
     console.log('   ✅ Chat message sent successfully');
     return true;
-  } else {
-    console.log('   ❌ Failed to send chat message:', result.error || result.data?.error);
-    return false;
   }
+  console.log('   ❌ Failed to send chat message:', result.error || result.data?.error);
+  return false;
 }
 
 /**
@@ -133,25 +129,24 @@ async function testSendMessage(sessionId) {
  */
 async function testGetSessionMessages(sessionId) {
   console.log('🧪 Testing get session messages...');
-  
+
   // Wait a bit for messages to be stored
   await new Promise(resolve => setTimeout(resolve, 2000));
-  
+
   const result = await makeRequest(`${BASE_URL}/sessions/${sessionId}/messages`);
 
   if (result.success) {
     console.log('   ✅ Session messages retrieved successfully');
     console.log('   📊 Message count:', result.data.count);
-    
+
     if (result.data.messages.length > 0) {
       console.log('   📝 Sample message roles:', result.data.messages.map(m => m.role).join(', '));
     }
-    
+
     return result.data.messages;
-  } else {
-    console.log('   ❌ Failed to get session messages:', result.error || result.data?.error);
-    return [];
   }
+  console.log('   ❌ Failed to get session messages:', result.error || result.data?.error);
+  return [];
 }
 
 /**
@@ -159,20 +154,19 @@ async function testGetSessionMessages(sessionId) {
  */
 async function testGetMetrics() {
   console.log('🧪 Testing metrics retrieval...');
-  
+
   const result = await makeRequest(`${BASE_URL}/metrics?timeframe=day`);
 
   if (result.success) {
     console.log('   ✅ Metrics retrieved successfully');
     console.log('   📊 Total requests:', result.data.totalRequests);
-    console.log('   ⏱️  Average response time:', result.data.averageResponseTime + 'ms');
+    console.log('   ⏱️  Average response time:', `${result.data.averageResponseTime}ms`);
     console.log('   🎯 Total tokens:', result.data.totalTokens);
     console.log('   📡 Data source:', result.data.source);
     return result.data;
-  } else {
-    console.log('   ❌ Failed to get metrics:', result.error || result.data?.error);
-    return null;
   }
+  console.log('   ❌ Failed to get metrics:', result.error || result.data?.error);
+  return null;
 }
 
 /**
@@ -180,7 +174,7 @@ async function testGetMetrics() {
  */
 async function testDeleteSession(sessionId) {
   console.log('🧪 Testing session deletion...');
-  
+
   const result = await makeRequest(`${BASE_URL}/sessions/${sessionId}`, {
     method: 'DELETE'
   });
@@ -188,10 +182,9 @@ async function testDeleteSession(sessionId) {
   if (result.success) {
     console.log('   ✅ Session deleted successfully');
     return true;
-  } else {
-    console.log('   ❌ Failed to delete session:', result.error || result.data?.error);
-    return false;
   }
+  console.log('   ❌ Failed to delete session:', result.error || result.data?.error);
+  return false;
 }
 
 /**
@@ -199,16 +192,15 @@ async function testDeleteSession(sessionId) {
  */
 async function testServerAvailability() {
   console.log('🧪 Testing server availability...');
-  
+
   try {
     const response = await fetch('http://localhost:3000/api/health');
     if (response.ok) {
       console.log('   ✅ Server is running and accessible');
       return true;
-    } else {
-      console.log('   ❌ Server responded with error:', response.status);
-      return false;
     }
+    console.log('   ❌ Server responded with error:', response.status);
+    return false;
   } catch (error) {
     console.log('   ❌ Server is not accessible:', error.message);
     console.log('   💡 Make sure to start the server with: npm start');
@@ -226,7 +218,7 @@ async function runCRUDTests() {
   console.log('   Test User ID:', TEST_USER_ID);
   console.log('');
 
-  let testResults = {
+  const testResults = {
     passed: 0,
     failed: 0,
     total: 0
@@ -339,10 +331,10 @@ async function runCRUDTests() {
 // Run tests if this script is executed directly
 if (require.main === module) {
   runCRUDTests()
-    .then((results) => {
+    .then(results => {
       process.exit(results.failed === 0 ? 0 : 1);
     })
-    .catch((error) => {
+    .catch(error => {
       console.error('Test script error:', error);
       process.exit(1);
     });
