@@ -16,29 +16,21 @@ if (!process.env.SUPABASE_ANON_KEY) {
 }
 
 // Create Supabase client with anonymous key (for public operations)
-const supabase = createClient(
-  process.env.SUPABASE_URL,
-  process.env.SUPABASE_ANON_KEY,
-  {
-    auth: {
-      autoRefreshToken: true,
-      persistSession: true,
-      detectSessionInUrl: false
-    }
+const supabase = createClient(process.env.SUPABASE_URL, process.env.SUPABASE_ANON_KEY, {
+  auth: {
+    autoRefreshToken: true,
+    persistSession: true,
+    detectSessionInUrl: false
   }
-);
+});
 
 // Create Supabase client with service role key (for admin operations)
-const supabaseAdmin = createClient(
-  process.env.SUPABASE_URL,
-  process.env.SUPABASE_SERVICE_ROLE_KEY,
-  {
-    auth: {
-      autoRefreshToken: false,
-      persistSession: false
-    }
+const supabaseAdmin = createClient(process.env.SUPABASE_URL, process.env.SUPABASE_SERVICE_ROLE_KEY, {
+  auth: {
+    autoRefreshToken: false,
+    persistSession: false
   }
-);
+});
 
 /**
  * Test database connectivity
@@ -46,11 +38,10 @@ const supabaseAdmin = createClient(
  */
 async function testConnection() {
   try {
-    const { data, error } = await supabase
-      .from('chat_sessions')
-      .select('count', { count: 'exact', head: true });
+    const { data, error } = await supabase.from('chat_sessions').select('count', { count: 'exact', head: true });
 
-    if (error && error.code !== 'PGRST116') { // PGRST116 = table doesn't exist
+    if (error && error.code !== 'PGRST116') {
+      // PGRST116 = table doesn't exist
       console.error('Supabase connection test failed:', error);
       return false;
     }
@@ -70,25 +61,14 @@ async function testConnection() {
 async function initializeTables() {
   try {
     // Check if tables exist by trying to query them
-    const { error: sessionsError } = await supabaseAdmin
-      .from('chat_sessions')
-      .select('id')
-      .limit(1);
+    const { error: sessionsError } = await supabaseAdmin.from('chat_sessions').select('id').limit(1);
 
-    const { error: messagesError } = await supabaseAdmin
-      .from('chat_messages')
-      .select('id')
-      .limit(1);
+    const { error: messagesError } = await supabaseAdmin.from('chat_messages').select('id').limit(1);
 
-    const { error: metricsError } = await supabaseAdmin
-      .from('chat_metrics')
-      .select('id')
-      .limit(1);
+    const { error: metricsError } = await supabaseAdmin.from('chat_metrics').select('id').limit(1);
 
     // If any table doesn't exist, we need to create them
-    if (sessionsError?.code === 'PGRST116'
-        || messagesError?.code === 'PGRST116'
-        || metricsError?.code === 'PGRST116') {
+    if (sessionsError?.code === 'PGRST116' || messagesError?.code === 'PGRST116' || metricsError?.code === 'PGRST116') {
       console.log('Some tables are missing. Please run the database setup script.');
       console.log('Run: npm run db:setup');
       return false;
@@ -139,11 +119,7 @@ const chatSessions = {
    * @returns {Promise<Object|null>} Session data or null if not found
    */
   async getById(sessionId) {
-    const { data, error } = await supabase
-      .from('chat_sessions')
-      .select('*')
-      .eq('id', sessionId)
-      .single();
+    const { data, error } = await supabase.from('chat_sessions').select('*').eq('id', sessionId).single();
 
     if (error && error.code !== 'PGRST116') {
       throw new Error(`Failed to get chat session: ${error.message}`);
@@ -257,10 +233,7 @@ const chatMessages = {
    * @returns {Promise<boolean>} True if successful
    */
   async deleteBySessionId(sessionId) {
-    const { error } = await supabase
-      .from('chat_messages')
-      .delete()
-      .eq('session_id', sessionId);
+    const { error } = await supabase.from('chat_messages').delete().eq('session_id', sessionId);
 
     if (error) {
       throw new Error(`Failed to delete chat messages: ${error.message}`);
@@ -328,7 +301,19 @@ const chatMetrics = {
     const { data, error } = await supabase
       .from('chat_metrics')
       .select('*')
-      .gte('created_at', new Date(Date.now() - (timeframe === 'hour' ? 3600000 : timeframe === 'week' ? 604800000 : timeframe === 'month' ? 2592000000 : 86400000)).toISOString());
+      .gte(
+        'created_at',
+        new Date(
+          Date.now() -
+            (timeframe === 'hour'
+              ? 3600000
+              : timeframe === 'week'
+                ? 604800000
+                : timeframe === 'month'
+                  ? 2592000000
+                  : 86400000)
+        ).toISOString()
+      );
 
     if (error) {
       throw new Error(`Failed to get aggregated metrics: ${error.message}`);
@@ -337,9 +322,8 @@ const chatMetrics = {
     // Calculate aggregations
     const metrics = data || [];
     const totalRequests = metrics.length;
-    const avgResponseTime = totalRequests > 0
-      ? Math.round(metrics.reduce((sum, m) => sum + m.response_time_ms, 0) / totalRequests)
-      : 0;
+    const avgResponseTime =
+      totalRequests > 0 ? Math.round(metrics.reduce((sum, m) => sum + m.response_time_ms, 0) / totalRequests) : 0;
     const totalTokens = metrics.reduce((sum, m) => sum + m.token_count, 0);
 
     return {
@@ -348,6 +332,202 @@ const chatMetrics = {
       totalTokens,
       timeframe
     };
+  },
+
+  /**
+   * Get advanced chat analytics with detailed metrics
+   * @param {string} timeframe - Timeframe for analytics (1h, 24h, 7d, 30d, 90d)
+   * @param {string} granularity - Data granularity (hour, day, week, month)
+   * @returns {Promise<Object>} Advanced analytics data
+   */
+  async getAdvancedAnalytics(timeframe = '7d', granularity = 'hour') {
+    try {
+      const timeMap = {
+        '1h': 3600000,
+        '24h': 86400000,
+        '7d': 604800000,
+        '30d': 2592000000,
+        '90d': 7776000000
+      };
+
+      const timeOffset = timeMap[timeframe] || 604800000;
+
+      const { data, error } = await supabase
+        .from('chat_metrics')
+        .select('*')
+        .gte('created_at', new Date(Date.now() - timeOffset).toISOString())
+        .order('created_at', { ascending: true });
+
+      if (error) {
+        throw new Error(`Failed to get advanced chat analytics: ${error.message}`);
+      }
+
+      const metrics = data || [];
+      const responseTimes = metrics.map(m => m.response_time_ms || 0).filter(rt => rt > 0);
+      const sortedResponseTimes = responseTimes.sort((a, b) => a - b);
+
+      const uniqueSessions = [...new Set(metrics.map(m => m.session_id))];
+
+      const analytics = {
+        totalSessions: uniqueSessions.length,
+        totalMessages: metrics.length,
+        averageSessionDuration: 0, // Would need session start/end times
+        averageMessagesPerSession: metrics.length / uniqueSessions.length || 0,
+        responseTimeMetrics: {
+          avg: responseTimes.reduce((sum, rt) => sum + rt, 0) / responseTimes.length || 0,
+          min: Math.min(...responseTimes) || 0,
+          max: Math.max(...responseTimes) || 0,
+          p50: sortedResponseTimes[Math.floor(sortedResponseTimes.length * 0.5)] || 0,
+          p95: sortedResponseTimes[Math.floor(sortedResponseTimes.length * 0.95)] || 0,
+          p99: sortedResponseTimes[Math.floor(sortedResponseTimes.length * 0.99)] || 0
+        },
+        popularModels: Object.entries(
+          metrics.reduce((acc, m) => {
+            const model = m.model || 'unknown';
+            acc[model] = (acc[model] || 0) + 1;
+            return acc;
+          }, {})
+        )
+          .map(([model, usage]) => ({
+            model,
+            usage,
+            percentage: (usage / metrics.length) * 100
+          }))
+          .sort((a, b) => b.usage - a.usage),
+        hourlyActivity: this.getTimeSeriesData(metrics, 'hour'),
+        dailyActivity: this.getTimeSeriesData(metrics, 'day'),
+        weeklyActivity: this.getTimeSeriesData(metrics, 'week'),
+        monthlyActivity: this.getTimeSeriesData(metrics, 'month'),
+        errorRate: 0, // Would need success/error tracking
+        successRate: 100 // Would need success/error tracking
+      };
+
+      return analytics;
+    } catch (error) {
+      throw new Error(`Failed to get advanced chat analytics: ${error.message}`);
+    }
+  },
+
+  /**
+   * Get time series data for charts
+   * @param {Array} data - Raw metrics data
+   * @param {string} granularity - Time granularity (hour, day, week, month)
+   * @returns {Array} Time series data points
+   */
+  getTimeSeriesData(data, granularity) {
+    const groupBy = {
+      hour: date => date.toISOString().slice(0, 13) + ':00:00.000Z',
+      day: date => date.toISOString().slice(0, 10) + 'T00:00:00.000Z',
+      week: date => {
+        const d = new Date(date);
+        d.setDate(d.getDate() - d.getDay());
+        return d.toISOString().slice(0, 10) + 'T00:00:00.000Z';
+      },
+      month: date => date.toISOString().slice(0, 7) + '-01T00:00:00.000Z'
+    };
+
+    const grouped = data.reduce((acc, item) => {
+      const key = groupBy[granularity](new Date(item.created_at));
+      if (!acc[key]) {
+        acc[key] = [];
+      }
+      acc[key].push(item);
+      return acc;
+    }, {});
+
+    return Object.entries(grouped)
+      .map(([timestamp, items]) => ({
+        timestamp,
+        value: items.length,
+        label: new Date(timestamp).toLocaleDateString()
+      }))
+      .sort((a, b) => new Date(a.timestamp) - new Date(b.timestamp));
+  },
+
+  /**
+   * Get user behavior analytics
+   * @param {string} timeframe - Timeframe for analytics
+   * @returns {Promise<Object>} User behavior analytics
+   */
+  async getUserBehaviorAnalytics(timeframe = '30d') {
+    try {
+      const timeMap = {
+        '7d': 604800000,
+        '30d': 2592000000,
+        '90d': 7776000000
+      };
+
+      const timeOffset = timeMap[timeframe] || 2592000000;
+
+      const { data: sessions, error: sessionsError } = await supabase
+        .from('chat_sessions')
+        .select('*')
+        .gte('created_at', new Date(Date.now() - timeOffset).toISOString());
+
+      const { data: messages, error: messagesError } = await supabase
+        .from('chat_messages')
+        .select('*')
+        .gte('created_at', new Date(Date.now() - timeOffset).toISOString());
+
+      if (sessionsError || messagesError) {
+        throw new Error(`Failed to get user behavior analytics: ${sessionsError?.message || messagesError?.message}`);
+      }
+
+      const sessionsData = sessions || [];
+      const messagesData = messages || [];
+      const uniqueUsers = new Set(sessionsData.map(s => s.user_id)).size;
+      const totalSessions = sessionsData.length;
+      const totalMessages = messagesData.length;
+
+      const hourlyActivity = Array.from({ length: 24 }, (_, hour) => {
+        const hourMessages = messagesData.filter(m => new Date(m.created_at).getHours() === hour);
+        return {
+          hour,
+          activity: hourMessages.length
+        };
+      });
+
+      const dailyActivity = ['Sunday', 'Monday', 'Tuesday', 'Wednesday', 'Thursday', 'Friday', 'Saturday'].map(
+        (day, index) => {
+          const dayMessages = messagesData.filter(m => new Date(m.created_at).getDay() === index);
+          return {
+            day,
+            activity: dayMessages.length
+          };
+        }
+      );
+
+      const analytics = {
+        totalUsers: uniqueUsers,
+        activeUsers: {
+          daily: uniqueUsers, // Simplified - would need daily tracking
+          weekly: uniqueUsers,
+          monthly: uniqueUsers
+        },
+        userEngagement: {
+          averageSessionsPerUser: totalSessions / uniqueUsers || 0,
+          averageSessionDuration: 0, // Would need session duration tracking
+          retentionRate: {
+            day1: 0.8, // Placeholder - would need retention tracking
+            day7: 0.6,
+            day30: 0.4
+          }
+        },
+        userBehavior: {
+          mostActiveHours: hourlyActivity.sort((a, b) => b.activity - a.activity),
+          mostActiveDays: dailyActivity.sort((a, b) => b.activity - a.activity),
+          featureUsage: [
+            { feature: 'Chat', usage: totalMessages, percentage: 100 },
+            { feature: 'Image Generation', usage: 0, percentage: 0 }
+          ]
+        },
+        geographicDistribution: [{ region: 'Unknown', users: uniqueUsers, percentage: 100 }]
+      };
+
+      return analytics;
+    } catch (error) {
+      throw new Error(`Failed to get user behavior analytics: ${error.message}`);
+    }
   }
 };
 
@@ -398,11 +578,7 @@ const artifacts = {
    * @returns {Promise<Object|null>} Artifact data or null if not found
    */
   async getById(id) {
-    const { data, error } = await supabase
-      .from('artifacts')
-      .select('*')
-      .eq('id', id)
-      .single();
+    const { data, error } = await supabase.from('artifacts').select('*').eq('id', id).single();
 
     if (error) {
       if (error.code === 'PGRST116') {
@@ -426,9 +602,7 @@ const artifacts = {
    * @returns {Promise<Array>} Array of artifacts
    */
   async getAll(options = {}) {
-    let query = supabase
-      .from('artifacts')
-      .select('*');
+    let query = supabase.from('artifacts').select('*');
 
     // Apply filters
     if (options.user_id !== undefined) {
@@ -489,12 +663,7 @@ const artifacts = {
       updateData.size = Buffer.byteLength(updates.content, 'utf8');
     }
 
-    const { data, error } = await supabase
-      .from('artifacts')
-      .update(updateData)
-      .eq('id', id)
-      .select()
-      .single();
+    const { data, error } = await supabase.from('artifacts').update(updateData).eq('id', id).select().single();
 
     if (error) {
       throw new Error(`Failed to update artifact: ${error.message}`);
@@ -579,10 +748,7 @@ const artifacts = {
    * @returns {Promise<boolean>} True if successful
    */
   async delete(id) {
-    const { error } = await supabase
-      .from('artifacts')
-      .delete()
-      .eq('id', id);
+    const { error } = await supabase.from('artifacts').delete().eq('id', id);
 
     if (error) {
       throw new Error(`Failed to delete artifact: ${error.message}`);
@@ -597,9 +763,7 @@ const artifacts = {
    * @returns {Promise<Object>} Count and size statistics
    */
   async getStats(userId = null) {
-    let query = supabase
-      .from('artifacts')
-      .select('size');
+    let query = supabase.from('artifacts').select('size');
 
     if (userId === null) {
       query = query.is('user_id', null);

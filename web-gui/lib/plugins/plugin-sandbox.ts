@@ -382,11 +382,9 @@ class PluginSandboxWorker {
       },
       chat: {
         onMessage: (callback) => {
-          // Store callback for later use
           this.chatMessageCallback = callback;
         },
         onResponse: (callback) => {
-          // Store callback for later use
           this.chatResponseCallback = callback;
         },
         sendMessage: (message) => makeAPICall('chat.sendMessage', message)
@@ -413,7 +411,6 @@ class PluginSandboxWorker {
     try {
       const { code, permissions, pluginId } = message.payload;
       
-      // Create secure execution context
       const context = {
         api: this.api,
         console: {
@@ -421,8 +418,8 @@ class PluginSandboxWorker {
           error: (...args) => this.api.logger.error(...args),
           warn: (...args) => this.api.logger.warn(...args)
         },
-        setTimeout: (fn, ms) => setTimeout(fn, Math.min(ms, 10000)), // Max 10s
-        setInterval: (fn, ms) => setInterval(fn, Math.max(ms, 100)), // Min 100ms
+        setTimeout: (fn, ms) => setTimeout(fn, Math.min(ms, 10000)),
+        setInterval: (fn, ms) => setInterval(fn, Math.max(ms, 100)),
         clearTimeout,
         clearInterval,
         Promise,
@@ -446,35 +443,25 @@ class PluginSandboxWorker {
         atob
       };
 
-      // Remove dangerous globals
       const dangerousGlobals = [
         'window', 'document', 'eval', 'Function', 'XMLHttpRequest',
         'fetch', 'localStorage', 'sessionStorage', 'indexedDB',
         'importScripts', 'postMessage', 'close', 'self', 'global'
       ];
 
-      // Execute plugin code in restricted context
-      const wrappedCode = \`
-        (function(${Object.keys(context).join(', ')}) {
-          "use strict";
-          ${dangerousGlobals.map(g => \`var ${g} = undefined;\`).join('')}
-          
-          class PluginInstance {
-            constructor() {
-              this.api = api;
-            }
-            
-            ${code}
-          }
-          
-          return new PluginInstance();
-        })
-      \`;
+      const wrappedCode = '(function(' + Object.keys(context).join(', ') + ') {' +
+        '"use strict";' +
+        dangerousGlobals.map(g => 'var ' + g + ' = undefined;').join('') +
+        'class PluginInstance {' +
+        'constructor() { this.api = api; }' +
+        code +
+        '}' +
+        'return new PluginInstance();' +
+        '})';
 
       const pluginFactory = eval(wrappedCode);
       const plugin = pluginFactory(...Object.values(context));
 
-      // Initialize plugin
       if (typeof plugin.onLoad === 'function') {
         await plugin.onLoad(this.api);
       }
@@ -486,7 +473,6 @@ class PluginSandboxWorker {
         timestamp: Date.now()
       });
 
-      // Store plugin instance for later use
       this.pluginInstance = plugin;
 
     } catch (error) {
@@ -500,7 +486,7 @@ class PluginSandboxWorker {
   }
 
   generateMessageId() {
-    return \`\${Date.now()}-\${Math.random().toString(36).substr(2, 9)}\`;
+    return Date.now() + '-' + Math.random().toString(36).substr(2, 9);
   }
 }
 
