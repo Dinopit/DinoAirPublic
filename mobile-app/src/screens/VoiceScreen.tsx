@@ -9,7 +9,7 @@ import {
 } from 'react-native';
 import Icon from 'react-native-vector-icons/MaterialIcons';
 import Voice from '@react-native-community/voice';
-import Tts from 'react-native-tts';
+import Tts from 'react-native-text-to-speech';
 import {VoiceRecording} from '../types';
 import {v4 as uuidv4} from 'uuid';
 
