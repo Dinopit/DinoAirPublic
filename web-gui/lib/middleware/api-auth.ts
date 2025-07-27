@@ -1,5 +1,7 @@
 import { NextRequest, NextResponse } from 'next/server';
 
+declare const process: any;
+
 export interface ApiKeyConfig {
   key: string;
   name: string;
@@ -45,7 +47,7 @@ export async function apiAuthMiddleware(request: NextRequest) {
 
   // For server-side validation, we'll check against a temporary in-memory store
   // In production, this would be checked against a database
-  const validKeys = process.env.DINOAIR_API_KEYS?.split(',') || ['dinoair_development_key'];
+  const validKeys = process?.env?.DINOAIR_API_KEYS?.split(',') || ['dinoair_development_key'];
   
   if (!validKeys.includes(apiKey)) {
     return NextResponse.json(

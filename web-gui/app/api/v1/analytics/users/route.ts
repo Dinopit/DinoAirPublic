@@ -1,5 +1,5 @@
 import { NextRequest, NextResponse } from 'next/server';
-import { withApiAuth } from '@/lib/middleware/api-auth';
+import { withAnalyticsAuth } from '@/lib/middleware/analytics-auth';
 import { analyticsClient } from '@/lib/analytics/analytics-client';
 
 async function getUserAnalytics(request: NextRequest) {
@@ -154,4 +154,4 @@ function generateUserRecommendations(userData: any) {
   return recommendations;
 }
 
-export const GET = withApiAuth(getUserAnalytics);
+export const GET = withAnalyticsAuth(getUserAnalytics);

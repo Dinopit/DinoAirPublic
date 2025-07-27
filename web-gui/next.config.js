@@ -227,6 +227,14 @@ const nextConfig = {
               chunks: 'all',
               priority: 25,
             },
+            // Chart.js libraries
+            charts: {
+              test: /[\\/]node_modules[\\/](chart\.js|react-chartjs-2)[\\/]/,
+              name: 'charts',
+              chunks: 'all',
+              priority: 30,
+              reuseExistingChunk: true,
+            },
           },
         },
         // Use deterministic module ids for long term caching
@@ -272,6 +280,8 @@ const nextConfig = {
       '@radix-ui/react-select',
       '@radix-ui/react-toast',
       'date-fns',
+      'chart.js',
+      'react-chartjs-2',
     ],
     // Reduce server memory usage
     serverComponentsExternalPackages: ['swagger-ui-react', 'prismjs'],

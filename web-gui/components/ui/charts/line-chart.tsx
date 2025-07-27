@@ -66,6 +66,8 @@ export function LineChart({
     ],
   };
 
+  const isMobile = typeof window !== 'undefined' && window.innerWidth < 768;
+  
   const options = {
     responsive: true,
     maintainAspectRatio: false,
@@ -73,12 +75,18 @@ export function LineChart({
       legend: {
         display: showLegend,
         position: 'top' as const,
+        labels: {
+          boxWidth: isMobile ? 12 : 16,
+          font: {
+            size: isMobile ? 10 : 12,
+          },
+        },
       },
       title: {
         display: !!title,
         text: title,
         font: {
-          size: 16,
+          size: isMobile ? 14 : 16,
           weight: 'bold' as const,
         },
       },
@@ -90,6 +98,12 @@ export function LineChart({
         bodyColor: 'white',
         borderColor: color,
         borderWidth: 1,
+        titleFont: {
+          size: isMobile ? 12 : 14,
+        },
+        bodyFont: {
+          size: isMobile ? 11 : 13,
+        },
       },
     },
     scales: {
@@ -98,10 +112,19 @@ export function LineChart({
         title: {
           display: !!xAxisLabel,
           text: xAxisLabel,
+          font: {
+            size: isMobile ? 10 : 12,
+          },
         },
         grid: {
           display: showGrid,
           color: 'rgba(0, 0, 0, 0.1)',
+        },
+        ticks: {
+          font: {
+            size: isMobile ? 9 : 11,
+          },
+          maxRotation: isMobile ? 45 : 0,
         },
       },
       y: {
@@ -109,10 +132,18 @@ export function LineChart({
         title: {
           display: !!yAxisLabel,
           text: yAxisLabel,
+          font: {
+            size: isMobile ? 10 : 12,
+          },
         },
         grid: {
           display: showGrid,
           color: 'rgba(0, 0, 0, 0.1)',
+        },
+        ticks: {
+          font: {
+            size: isMobile ? 9 : 11,
+          },
         },
         beginAtZero: true,
       },
@@ -125,7 +156,10 @@ export function LineChart({
   };
 
   return (
-    <div style={{ height: `${height}px` }}>
+    <div 
+      style={{ height: `${height}px` }}
+      className="w-full"
+    >
       <Line data={chartData} options={options} />
     </div>
   );

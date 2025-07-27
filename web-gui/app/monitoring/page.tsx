@@ -6,7 +6,7 @@
 
 'use client';
 
-import { useState, useEffect } from 'react';
+import React, { useState, useEffect } from 'react';
 import { Card, CardContent, CardHeader, CardTitle } from '@/components/ui/card';
 import { Badge } from '@/components/ui/badge';
 import { Button } from '@/components/ui/button';
@@ -18,9 +18,9 @@ import {
   SelectValue,
 } from '@/components/ui/select';
 import { Tabs, TabsContent, TabsList, TabsTrigger } from '@/components/ui/tabs';
-import { LineChart } from '@/components/ui/charts/line-chart';
-import { BarChart as CustomBarChart } from '@/components/ui/charts/bar-chart';
-import { PieChart } from '@/components/ui/charts/pie-chart';
+import { LazyLineChart, LazyBarChart, LazyPieChart } from '@/components/ui/charts/lazy-chart-loader';
+import { AccessibleChartWrapper } from '@/components/ui/charts/accessible-chart-wrapper';
+import { ChartErrorBoundary } from '@/components/ui/charts/chart-error-boundary';
 import { AnalyticsData } from '@/types/analytics';
 import {
   Activity,
@@ -517,11 +517,23 @@ export default function MonitoringDashboard() {
                     <CardTitle>Chat Activity Trends</CardTitle>
                   </CardHeader>
                   <CardContent>
-                    <LineChart
-                      data={analyticsData.metrics.chat.dailyActivity}
-                      title="Messages Over Time"
-                      color="#3b82f6"
-                    />
+                    <ChartErrorBoundary>
+                      <AccessibleChartWrapper
+                        data={analyticsData.metrics.chat.dailyActivity}
+                        title="Messages Over Time"
+                        description="Daily chat message volume showing user engagement patterns"
+                        chartType="line"
+                      >
+                        <LazyLineChart
+                          data={analyticsData.metrics.chat.dailyActivity}
+                          title="Messages Over Time"
+                          color="#3b82f6"
+                          height={250}
+                          yAxisLabel="Messages"
+                          xAxisLabel="Date"
+                        />
+                      </AccessibleChartWrapper>
+                    </ChartErrorBoundary>
                   </CardContent>
                 </Card>
 
@@ -530,14 +542,29 @@ export default function MonitoringDashboard() {
                     <CardTitle>User Engagement</CardTitle>
                   </CardHeader>
                   <CardContent>
-                    <CustomBarChart
-                      data={analyticsData.metrics.user.userBehavior.mostActiveHours.map((item) => ({
-                        label: `${item.hour}:00`,
-                        value: item.activity,
-                      }))}
-                      title="Activity by Hour"
-                      color="#10b981"
-                    />
+                    <ChartErrorBoundary>
+                      <AccessibleChartWrapper
+                        data={analyticsData.metrics.user.userBehavior.mostActiveHours.map((item) => ({
+                          label: `${item.hour}:00`,
+                          value: item.activity,
+                        }))}
+                        title="Activity by Hour"
+                        description="Hourly user activity patterns showing peak usage times"
+                        chartType="bar"
+                      >
+                        <LazyBarChart
+                          data={analyticsData.metrics.user.userBehavior.mostActiveHours.map((item) => ({
+                            label: `${item.hour}:00`,
+                            value: item.activity,
+                          }))}
+                          title="Activity by Hour"
+                          color="#10b981"
+                          height={250}
+                          yAxisLabel="Activity"
+                          xAxisLabel="Hour"
+                        />
+                      </AccessibleChartWrapper>
+                    </ChartErrorBoundary>
                   </CardContent>
                 </Card>
 
@@ -546,14 +573,30 @@ export default function MonitoringDashboard() {
                     <CardTitle>Response Time Distribution</CardTitle>
                   </CardHeader>
                   <CardContent>
-                    <PieChart
-                      data={[
-                        { label: 'Fast (<500ms)', value: 65, color: '#10b981' },
-                        { label: 'Medium (500ms-2s)', value: 25, color: '#f59e0b' },
-                        { label: 'Slow (>2s)', value: 10, color: '#ef4444' },
-                      ]}
-                      title="Response Time Categories"
-                    />
+                    <ChartErrorBoundary>
+                      <AccessibleChartWrapper
+                        data={[
+                          { label: 'Fast (<500ms)', value: 65 },
+                          { label: 'Medium (500ms-2s)', value: 25 },
+                          { label: 'Slow (>2s)', value: 10 },
+                        ]}
+                        title="Response Time Categories"
+                        description="Distribution of response times showing performance categories"
+                        chartType="pie"
+                      >
+                        <LazyPieChart
+                          data={[
+                            { label: 'Fast (<500ms)', value: 65 },
+                            { label: 'Medium (500ms-2s)', value: 25 },
+                            { label: 'Slow (>2s)', value: 10 },
+                          ]}
+                          title="Response Time Categories"
+                          height={250}
+                          showPercentages={true}
+                          colors={['#10b981', '#f59e0b', '#ef4444']}
+                        />
+                      </AccessibleChartWrapper>
+                    </ChartErrorBoundary>
                   </CardContent>
                 </Card>
 
@@ -562,11 +605,23 @@ export default function MonitoringDashboard() {
                     <CardTitle>System Performance</CardTitle>
                   </CardHeader>
                   <CardContent>
-                    <LineChart
-                      data={analyticsData.metrics.system.performanceMetrics.averageResponseTime}
-                      title="System Metrics Over Time"
-                      color="#8b5cf6"
-                    />
+                    <ChartErrorBoundary>
+                      <AccessibleChartWrapper
+                        data={analyticsData.metrics.system.performanceMetrics.averageResponseTime}
+                        title="System Metrics Over Time"
+                        description="System performance metrics showing response time trends"
+                        chartType="line"
+                      >
+                        <LazyLineChart
+                          data={analyticsData.metrics.system.performanceMetrics.averageResponseTime}
+                          title="System Metrics Over Time"
+                          color="#8b5cf6"
+                          height={250}
+                          yAxisLabel="Response Time (ms)"
+                          xAxisLabel="Time"
+                        />
+                      </AccessibleChartWrapper>
+                    </ChartErrorBoundary>
                   </CardContent>
                 </Card>
               </div>

@@ -59,14 +59,20 @@ export function PieChart({
     ],
   };
 
+  const isMobile = typeof window !== 'undefined' && window.innerWidth < 768;
+  
   const options = {
     responsive: true,
     maintainAspectRatio: false,
     plugins: {
       legend: {
         display: showLegend,
-        position: 'right' as const,
+        position: (isMobile ? 'bottom' : 'right') as const,
         labels: {
+          boxWidth: isMobile ? 12 : 16,
+          font: {
+            size: isMobile ? 10 : 12,
+          },
           generateLabels: (chart: any) => {
             const data = chart.data;
             if (data.labels.length && data.datasets.length) {
@@ -91,7 +97,7 @@ export function PieChart({
         display: !!title,
         text: title,
         font: {
-          size: 16,
+          size: isMobile ? 14 : 16,
           weight: 'bold' as const,
         },
       },
@@ -100,6 +106,12 @@ export function PieChart({
         titleColor: 'white',
         bodyColor: 'white',
         borderWidth: 1,
+        titleFont: {
+          size: isMobile ? 12 : 14,
+        },
+        bodyFont: {
+          size: isMobile ? 11 : 13,
+        },
         callbacks: {
           label: (context: any) => {
             const label = context.label || '';
@@ -115,7 +127,10 @@ export function PieChart({
   const ChartComponent = variant === 'doughnut' ? Doughnut : Pie;
 
   return (
-    <div style={{ height: `${height}px` }}>
+    <div 
+      style={{ height: `${height}px` }}
+      className="w-full"
+    >
       <ChartComponent data={chartData} options={options} />
     </div>
   );

@@ -1,6 +1,8 @@
 import { NextRequest, NextResponse } from 'next/server';
-import { withApiAuth } from '@/lib/middleware/api-auth';
+import { withAnalyticsAuth } from '@/lib/middleware/analytics-auth';
 import { analyticsClient } from '@/lib/analytics/analytics-client';
+
+declare const process: any;
 
 async function getAnalyticsDashboard(request: NextRequest) {
   try {
@@ -50,7 +52,7 @@ async function getAnalyticsDashboard(request: NextRequest) {
 }
 
 async function getSystemAnalytics(timeframe: string) {
-  const memUsage = process.memoryUsage();
+  const memUsage = process?.memoryUsage() || { rss: 0, heapUsed: 0, heapTotal: 0, external: 0 };
 
   const now = new Date();
   const dataPoints = getTimeframeDataPoints(timeframe);
@@ -347,4 +349,4 @@ function getTimeframeInterval(timeframe: string): number {
   return intervalMap[timeframe as keyof typeof intervalMap] || 24 * 60 * 60 * 1000;
 }
 
-export const GET = withApiAuth(getAnalyticsDashboard);
+export const GET = withAnalyticsAuth(getAnalyticsDashboard);
