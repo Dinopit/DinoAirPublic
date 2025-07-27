@@ -36,7 +36,7 @@ export class NotificationService {
   private static async requestPermission(): Promise<void> {
     if (Platform.OS === 'android') {
       // Android 13+ requires explicit permission
-      if (Platform.Version >= 33) {
+      if (parseInt(Platform.Version, 10) >= 33) {
         const granted = await PermissionsAndroid.request(
           PermissionsAndroid.PERMISSIONS.POST_NOTIFICATIONS
         );
