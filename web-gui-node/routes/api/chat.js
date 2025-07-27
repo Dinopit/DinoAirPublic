@@ -14,6 +14,7 @@ const { ollamaBreaker } = require('../../lib/circuit-breaker');
 const { withRetry, isRetryableError } = require('../../lib/retry');
 const { requireAuth } = require('../../middleware/auth-middleware');
 const { streamManager } = require('../../lib/stream-manager');
+const { memorySystem } = require('../../lib/knowledge-base');
 const router = express.Router();
 
 // In-memory fallback metrics (if Supabase is not available)
@@ -78,16 +79,42 @@ async function getOrCreateSession(userId, sessionId) {
 }
 
 /**
- * Store chat message in Supabase
+ * Store chat message in Supabase and extract knowledge
  */
 async function storeMessage(sessionId, role, content, metadata = {}) {
   try {
-    await chatMessages.add(sessionId, role, content, {
+    // Store the message
+    const messageData = await chatMessages.add(sessionId, role, content, {
       ...metadata,
       timestamp: new Date().toISOString()
     });
+
+    // Extract knowledge from user and assistant messages
+    if (['user', 'assistant'].includes(role) && content.length > 20) {
+      try {
+        // Get user ID from session for knowledge extraction
+        const session = await chatSessions.getById(sessionId);
+        if (session?.user_id) {
+          // Process message for knowledge extraction (async, don't wait)
+          memorySystem.processMessage(
+            session.user_id,
+            sessionId,
+            messageData.id,
+            content,
+            role
+          ).catch(error => {
+            console.warn('Knowledge extraction failed:', error.message);
+          });
+        }
+      } catch (knowledgeError) {
+        console.warn('Failed to extract knowledge:', knowledgeError.message);
+      }
+    }
+
+    return messageData;
   } catch (error) {
     console.warn('Failed to store message in Supabase:', error.message);
+    return null;
   }
 }
 
@@ -114,16 +141,43 @@ router.post('/', requireAuth, rateLimits.chat, sanitizeInput, chatValidation.cha
     chatSession = await getOrCreateSession(userId, sessionId);
     console.log('Chat session:', chatSession.id);
 
-    // Store the user message in Supabase
-    await storeMessage(chatSession.id, 'user', lastMessage.content, {
+    // Store the user message in Supabase (with knowledge extraction)
+    const userMessageData = await storeMessage(chatSession.id, 'user', lastMessage.content, {
       model: model || 'qwen:7b-chat-v1.5-q4_K_M',
       system_prompt: systemPrompt || null
     });
 
-    // Format the prompt for Ollama with optional system prompt
+    // Get relevant memories to enhance the conversation
+    let memoryContext = '';
+    try {
+      const memories = await memorySystem.getRelevantMemories(userId, lastMessage.content, {
+        maxMemories: 3,
+        includeRecent: true,
+        minSimilarity: 0.4
+      });
+
+      if (memories.total_found > 0) {
+        memoryContext = await memorySystem.generateMemoryContext(userId, lastMessage.content);
+        console.log('Added memory context for user:', userId);
+      }
+    } catch (memoryError) {
+      console.warn('Failed to retrieve memories:', memoryError.message);
+    }
+
+    // Format the prompt for Ollama with optional system prompt and memory context
     let prompt = lastMessage.content;
-    if (systemPrompt) {
-      prompt = `System: ${systemPrompt}\n\nUser: ${prompt}`;
+    if (systemPrompt || memoryContext) {
+      let contextParts = [];
+      
+      if (systemPrompt) {
+        contextParts.push(`System: ${systemPrompt}`);
+      }
+      
+      if (memoryContext) {
+        contextParts.push(`Memory Context: ${memoryContext}`);
+      }
+      
+      prompt = `${contextParts.join('\n\n')}\n\nUser: ${prompt}`;
     }
 
     // Use provided model or default
