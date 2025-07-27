@@ -255,3 +255,163 @@ export interface Theme {
     xl: string;
   };
 }
+
+// User preferences and customization types
+export type ThemeMode = 'light' | 'dark' | 'auto';
+export type Language = 'en' | 'es' | 'fr' | 'de' | 'ja' | 'zh';
+export type DateFormat = 'MM/DD/YYYY' | 'DD/MM/YYYY' | 'YYYY-MM-DD';
+export type TimeFormat = '12h' | '24h';
+
+export interface AccessibilityPreferences {
+  highContrast: boolean;
+  reducedMotion: boolean;
+  fontSize: 'small' | 'medium' | 'large' | 'extra-large';
+  screenReader: boolean;
+  keyboardNavigation: boolean;
+}
+
+export interface NotificationPreferences {
+  email: boolean;
+  push: boolean;
+  desktop: boolean;
+  sound: boolean;
+  types: {
+    system: boolean;
+    updates: boolean;
+    collaboration: boolean;
+    errors: boolean;
+  };
+}
+
+export interface ChatPreferences {
+  autoSave: boolean;
+  showTimestamps: boolean;
+  messageGrouping: boolean;
+  enterToSend: boolean;
+  showTypingIndicator: boolean;
+  maxHistoryLength: number;
+  defaultPersonality: string;
+}
+
+export interface UIPreferences {
+  sidebarCollapsed: boolean;
+  compactMode: boolean;
+  showTooltips: boolean;
+  animationsEnabled: boolean;
+  gridView: boolean;
+  itemsPerPage: number;
+}
+
+export interface UserPreferences {
+  // Theme and appearance
+  themeMode: ThemeMode;
+  customTheme?: Partial<Theme>;
+  
+  // Localization
+  language: Language;
+  dateFormat: DateFormat;
+  timeFormat: TimeFormat;
+  timezone: string;
+  
+  // Accessibility
+  accessibility: AccessibilityPreferences;
+  
+  // Notifications
+  notifications: NotificationPreferences;
+  
+  // Chat specific
+  chat: ChatPreferences;
+  
+  // UI behavior
+  ui: UIPreferences;
+  
+  // Advanced settings
+  advanced: {
+    debugMode: boolean;
+    experimentalFeatures: boolean;
+    telemetryEnabled: boolean;
+    autoUpdates: boolean;
+  };
+  
+  // Custom shortcuts
+  shortcuts: Record<string, string>;
+  
+  // Metadata
+  version: string;
+  lastModified: string;
+  syncEnabled: boolean;
+}
+
+export interface UserPreferencesContextType {
+  preferences: UserPreferences;
+  updatePreferences: (updates: DeepPartial<UserPreferences>) => Promise<void>;
+  resetPreferences: () => Promise<void>;
+  exportPreferences: () => string;
+  importPreferences: (data: string) => Promise<void>;
+  isLoading: boolean;
+  error: string | null;
+}
+
+// Theme presets
+export interface ThemePreset {
+  id: string;
+  name: string;
+  description: string;
+  theme: Theme;
+  preview: string; // Base64 encoded preview image
+}
+
+// Default preferences
+export const DEFAULT_USER_PREFERENCES: UserPreferences = {
+  themeMode: 'auto',
+  language: 'en',
+  dateFormat: 'MM/DD/YYYY',
+  timeFormat: '12h',
+  timezone: Intl.DateTimeFormat().resolvedOptions().timeZone,
+  accessibility: {
+    highContrast: false,
+    reducedMotion: false,
+    fontSize: 'medium',
+    screenReader: false,
+    keyboardNavigation: true,
+  },
+  notifications: {
+    email: true,
+    push: true,
+    desktop: true,
+    sound: true,
+    types: {
+      system: true,
+      updates: true,
+      collaboration: true,
+      errors: true,
+    },
+  },
+  chat: {
+    autoSave: true,
+    showTimestamps: true,
+    messageGrouping: true,
+    enterToSend: true,
+    showTypingIndicator: true,
+    maxHistoryLength: 1000,
+    defaultPersonality: 'default',
+  },
+  ui: {
+    sidebarCollapsed: false,
+    compactMode: false,
+    showTooltips: true,
+    animationsEnabled: true,
+    gridView: false,
+    itemsPerPage: 20,
+  },
+  advanced: {
+    debugMode: false,
+    experimentalFeatures: false,
+    telemetryEnabled: true,
+    autoUpdates: true,
+  },
+  shortcuts: {},
+  version: '1.0.0',
+  lastModified: new Date().toISOString(),
+  syncEnabled: false,
+};

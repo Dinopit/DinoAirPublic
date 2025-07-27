@@ -9,11 +9,15 @@ import sys
 import re
 import json
 import subprocess
-from datetime import datetime
-from typing import Dict, List, Optional, Tuple, Any
+import argparse
+import tempfile
+import shutil
+from datetime import datetime, timedelta
+from typing import Dict, List, Optional, Tuple, Any, Union
 from pathlib import Path
 from dataclasses import dataclass, asdict
 from enum import Enum
+from collections import defaultdict, Counter
 
 class ChangeType(Enum):
     """Types of changes for changelog categorization."""
@@ -452,42 +456,496 @@ class ChangelogGenerator:
                 
         release = self.generate_release_changelog(version, prev_tag)
         return self.format_release_changelog(release)
+    
+    def generate_release_statistics(self, version: Optional[str] = None) -> Dict[str, Any]:
+        """Generate statistics for a release or all releases."""
+        if version:
+            # Statistics for specific version
+            tags = self.get_git_tags()
+            prev_tag = None
+            
+            for i, (tag, date) in enumerate(tags):
+                if tag == version:
+                    if i + 1 < len(tags):
+                        prev_tag = tags[i + 1][0]
+                    break
+            
+            release = self.generate_release_changelog(version, prev_tag)
+            entries = release.entries
+        else:
+            # Statistics for all releases
+            entries = []
+            tags = self.get_git_tags()
+            prev_tag = None
+            
+            for tag, date in tags:
+                release = self.generate_release_changelog(tag, prev_tag)
+                entries.extend(release.entries)
+                prev_tag = tag
+        
+        # Calculate statistics
+        stats = {
+            'total_changes': len(entries),
+            'by_type': Counter(entry.type.value for entry in entries),
+            'by_author': Counter(entry.author for entry in entries),
+            'breaking_changes': sum(1 for entry in entries if entry.breaking_change),
+            'issues_closed': sum(len(entry.closes_issues) for entry in entries),
+            'date_range': {
+                'start': min(entry.date for entry in entries) if entries else None,
+                'end': max(entry.date for entry in entries) if entries else None
+            }
+        }
+        
+        # Add scope statistics if available
+        scopes = [entry.scope for entry in entries if entry.scope]
+        if scopes:
+            stats['by_scope'] = Counter(scopes)
+        
+        return stats
+    
+    def generate_release_summary(self, version: str) -> str:
+        """Generate a comprehensive release summary."""
+        stats = self.generate_release_statistics(version)
+        release_notes = self.create_release_notes(version)
+        
+        summary_lines = [
+            f"# Release Summary: {version}",
+            f"Generated on: {datetime.now().strftime('%Y-%m-%d %H:%M:%S')}",
+            "",
+            "## 📊 Statistics",
+            f"- **Total Changes**: {stats['total_changes']}",
+            f"- **Breaking Changes**: {stats['breaking_changes']}",
+            f"- **Issues Closed**: {stats['issues_closed']}",
+            ""
+        ]
+        
+        # Add change type breakdown
+        if stats['by_type']:
+            summary_lines.extend([
+                "### Changes by Type",
+                ""
+            ])
+            for change_type, count in stats['by_type'].most_common():
+                emoji = {
+                    'feat': '✨', 'fix': '🐛', 'docs': '📚', 'style': '💄',
+                    'refactor': '♻️', 'perf': '⚡', 'test': '✅', 'chore': '🔧',
+                    'breaking': '💥', 'security': '🔒'
+                }.get(change_type, '📝')
+                summary_lines.append(f"- {emoji} **{change_type.title()}**: {count}")
+            summary_lines.append("")
+        
+        # Add contributor breakdown
+        if stats['by_author']:
+            summary_lines.extend([
+                "### Contributors",
+                ""
+            ])
+            for author, count in stats['by_author'].most_common():
+                summary_lines.append(f"- **{author}**: {count} changes")
+            summary_lines.append("")
+        
+        # Add scope breakdown if available
+        if 'by_scope' in stats and stats['by_scope']:
+            summary_lines.extend([
+                "### Changes by Scope",
+                ""
+            ])
+            for scope, count in stats['by_scope'].most_common():
+                summary_lines.append(f"- **{scope}**: {count} changes")
+            summary_lines.append("")
+        
+        # Add date range
+        if stats['date_range']['start'] and stats['date_range']['end']:
+            start_date = stats['date_range']['start'].strftime('%Y-%m-%d')
+            end_date = stats['date_range']['end'].strftime('%Y-%m-%d')
+            duration = (stats['date_range']['end'] - stats['date_range']['start']).days
+            summary_lines.extend([
+                "### Development Timeline",
+                f"- **Start Date**: {start_date}",
+                f"- **End Date**: {end_date}",
+                f"- **Duration**: {duration} days",
+                ""
+            ])
+        
+        # Add detailed changelog
+        summary_lines.extend([
+            "## 📝 Detailed Changelog",
+            "",
+            release_notes
+        ])
+        
+        return "\n".join(summary_lines)
+    
+    def export_release_data(self, version: str, format: str = 'json') -> str:
+        """Export release data in various formats."""
+        tags = self.get_git_tags()
+        prev_tag = None
+        
+        for i, (tag, date) in enumerate(tags):
+            if tag == version:
+                if i + 1 < len(tags):
+                    prev_tag = tags[i + 1][0]
+                break
+        
+        release = self.generate_release_changelog(version, prev_tag)
+        stats = self.generate_release_statistics(version)
+        
+        data = {
+            'version': version,
+            'date': release.date.isoformat(),
+            'is_prerelease': release.is_prerelease,
+            'statistics': {
+                'total_changes': stats['total_changes'],
+                'breaking_changes': stats['breaking_changes'],
+                'issues_closed': stats['issues_closed'],
+                'by_type': dict(stats['by_type']),
+                'by_author': dict(stats['by_author'])
+            },
+            'changes': [
+                {
+                    'type': entry.type.value,
+                    'scope': entry.scope,
+                    'description': entry.description,
+                    'commit_hash': entry.commit_hash,
+                    'author': entry.author,
+                    'date': entry.date.isoformat(),
+                    'breaking_change': entry.breaking_change,
+                    'closes_issues': entry.closes_issues
+                }
+                for entry in release.entries
+            ]
+        }
+        
+        if format.lower() == 'json':
+            return json.dumps(data, indent=2, ensure_ascii=False)
+        elif format.lower() == 'yaml':
+            # Simple YAML-like output without external dependencies
+            def dict_to_yaml(d, indent=0):
+                lines = []
+                for key, value in d.items():
+                    prefix = "  " * indent
+                    if isinstance(value, dict):
+                        lines.append(f"{prefix}{key}:")
+                        lines.append(dict_to_yaml(value, indent + 1))
+                    elif isinstance(value, list):
+                        lines.append(f"{prefix}{key}:")
+                        for item in value:
+                            if isinstance(item, dict):
+                                lines.append(f"{prefix}  -")
+                                lines.append(dict_to_yaml(item, indent + 2))
+                            else:
+                                lines.append(f"{prefix}  - {item}")
+                    else:
+                        lines.append(f"{prefix}{key}: {value}")
+                return "\n".join(lines)
+            
+            return dict_to_yaml(data)
+        else:
+            raise ValueError(f"Unsupported format: {format}")
+    
+    def create_migration_guide(self, from_version: str, to_version: str) -> str:
+        """Create a migration guide between two versions."""
+        # Get changes between versions
+        tags = self.get_git_tags()
+        tag_dict = {tag: date for tag, date in tags}
+        
+        if from_version not in tag_dict or to_version not in tag_dict:
+            raise ValueError("One or both versions not found in git tags")
+        
+        # Get all releases between versions
+        migration_entries = []
+        collecting = False
+        
+        for tag, date in tags:
+            if tag == to_version:
+                collecting = True
+            
+            if collecting and tag != from_version:
+                release = self.generate_release_changelog(tag)
+                migration_entries.extend(release.entries)
+            
+            if tag == from_version:
+                break
+        
+        # Filter for breaking changes and important updates
+        breaking_changes = [e for e in migration_entries if e.breaking_change]
+        feature_changes = [e for e in migration_entries if e.type == ChangeType.FEATURE]
+        
+        guide_lines = [
+            f"# Migration Guide: {from_version} → {to_version}",
+            f"Generated on: {datetime.now().strftime('%Y-%m-%d %H:%M:%S')}",
+            "",
+            "## Overview",
+            f"This guide helps you migrate from version {from_version} to {to_version}.",
+            ""
+        ]
+        
+        if breaking_changes:
+            guide_lines.extend([
+                "## 💥 Breaking Changes",
+                "",
+                "**⚠️ Important: These changes require action on your part.**",
+                ""
+            ])
+            
+            for entry in breaking_changes:
+                guide_lines.extend([
+                    f"### {entry.description}",
+                    f"- **Commit**: `{entry.commit_hash[:8]}`",
+                    f"- **Author**: {entry.author}",
+                    f"- **Date**: {entry.date.strftime('%Y-%m-%d')}",
+                    ""
+                ])
+        
+        if feature_changes:
+            guide_lines.extend([
+                "## ✨ New Features",
+                "",
+                "These new features are available in the latest version:",
+                ""
+            ])
+            
+            for entry in feature_changes:
+                scope_text = f" ({entry.scope})" if entry.scope else ""
+                guide_lines.append(f"- {entry.description}{scope_text}")
+            
+            guide_lines.append("")
+        
+        # Add general migration steps
+        guide_lines.extend([
+            "## 🚀 Migration Steps",
+            "",
+            "1. **Backup your current installation**",
+            "   ```bash",
+            "   # Create a backup of your current setup",
+            "   cp -r /path/to/dinoair /path/to/dinoair-backup",
+            "   ```",
+            "",
+            "2. **Update to the new version**",
+            "   ```bash",
+            "   # Pull the latest changes",
+            "   git fetch --tags",
+            f"   git checkout {to_version}",
+            "   ```",
+            "",
+            "3. **Update dependencies**",
+            "   ```bash",
+            "   # Update Python dependencies",
+            "   pip install -r requirements.txt",
+            "   ",
+            "   # Update Node.js dependencies",
+            "   cd web-gui && npm install",
+            "   ```",
+            "",
+            "4. **Run migration scripts (if any)**",
+            "   ```bash",
+            "   # Check for and run any migration scripts",
+            "   python migrate.py",
+            "   ```",
+            "",
+            "5. **Test your installation**",
+            "   ```bash",
+            "   # Run tests to ensure everything works",
+            "   python -m pytest tests/",
+            "   ```",
+            ""
+        ])
+        
+        if breaking_changes:
+            guide_lines.extend([
+                "## ⚠️ Post-Migration Checklist",
+                "",
+                "After migrating, please verify:",
+                ""
+            ])
+            
+            for entry in breaking_changes:
+                guide_lines.append(f"- [ ] Addressed breaking change: {entry.description}")
+            
+            guide_lines.extend([
+                "- [ ] All tests pass",
+                "- [ ] Application starts successfully",
+                "- [ ] Core functionality works as expected",
+                ""
+            ])
+        
+        guide_lines.extend([
+            "## 🆘 Need Help?",
+            "",
+            "If you encounter issues during migration:",
+            "",
+            "- Check the [troubleshooting guide](TROUBLESHOOTING.md)",
+            "- Review the [full changelog](CHANGELOG.md)",
+            "- Open an issue on [GitHub](https://github.com/Dinopit/DinoAirPublic/issues)",
+            "- Join our [Discord community](https://discord.gg/dinoair)",
+            ""
+        ])
+        
+        return "\n".join(guide_lines)
 
 def main():
-    """Main entry point for changelog automation."""
-    import argparse
+    """Main entry point for enhanced changelog automation."""
+    parser = argparse.ArgumentParser(
+        description="DinoAir Enhanced Changelog Automation",
+        formatter_class=argparse.RawDescriptionHelpFormatter,
+        epilog="""
+Examples:
+  %(prog)s --version v1.2.0                    # Generate changelog for specific version
+  %(prog)s --full                              # Regenerate full changelog
+  %(prog)s --release-notes v1.2.0              # Generate release notes
+  %(prog)s --stats v1.2.0                      # Show release statistics
+  %(prog)s --summary v1.2.0                    # Generate comprehensive release summary
+  %(prog)s --export v1.2.0 --format json       # Export release data as JSON
+  %(prog)s --migration v1.1.0 v1.2.0           # Generate migration guide
+        """
+    )
     
-    parser = argparse.ArgumentParser(description="DinoAir Changelog Automation")
+    # Basic operations
     parser.add_argument("--version", help="Generate changelog for specific version")
     parser.add_argument("--full", action="store_true", help="Regenerate full changelog")
     parser.add_argument("--release-notes", help="Generate release notes for version")
+    
+    # Enhanced features
+    parser.add_argument("--stats", help="Generate statistics for version (or all if no version)")
+    parser.add_argument("--summary", help="Generate comprehensive release summary")
+    parser.add_argument("--export", help="Export release data for version")
+    parser.add_argument("--format", choices=['json', 'yaml'], default='json', 
+                       help="Export format (default: json)")
+    parser.add_argument("--migration", nargs=2, metavar=('FROM', 'TO'),
+                       help="Generate migration guide between two versions")
+    
+    # Configuration
     parser.add_argument("--config", help="Path to changelog configuration file")
     parser.add_argument("--repo", help="Path to git repository")
+    parser.add_argument("--output", help="Output file path (default: stdout)")
+    parser.add_argument("--verbose", "-v", action="store_true", help="Verbose output")
     
     args = parser.parse_args()
     
-    generator = ChangelogGenerator(args.repo)
+    # Initialize generator
+    try:
+        generator = ChangelogGenerator(args.repo)
+        
+        if args.config:
+            generator.config_path = Path(args.config)
+            generator.config = generator._load_config()
+            
+        if args.verbose:
+            print(f"Repository: {generator.repo_path}")
+            print(f"Changelog: {generator.changelog_path}")
+            print(f"Config: {generator.config_path}")
+            print()
+            
+    except Exception as e:
+        print(f"Error initializing changelog generator: {e}", file=sys.stderr)
+        sys.exit(1)
     
-    if args.config:
-        generator.config_path = Path(args.config)
-        generator.config = generator._load_config()
-        
-    if args.release_notes:
-        notes = generator.create_release_notes(args.release_notes)
-        print(notes)
-        
-    elif args.version:
-        success = generator.update_changelog(args.version)
-        if not success:
-            sys.exit(1)
+    output_content = None
+    
+    try:
+        # Handle different operations
+        if args.migration:
+            from_version, to_version = args.migration
+            if args.verbose:
+                print(f"Generating migration guide: {from_version} → {to_version}")
+            output_content = generator.create_migration_guide(from_version, to_version)
             
-    elif args.full:
-        success = generator.update_changelog()
-        if not success:
-            sys.exit(1)
+        elif args.export:
+            if args.verbose:
+                print(f"Exporting release data for {args.export} in {args.format} format")
+            output_content = generator.export_release_data(args.export, args.format)
             
-    else:
-        print("Use --version, --full, or --release-notes to generate changelog")
+        elif args.summary:
+            if args.verbose:
+                print(f"Generating release summary for {args.summary}")
+            output_content = generator.generate_release_summary(args.summary)
+            
+        elif args.stats:
+            if args.verbose:
+                print(f"Generating statistics for {args.stats}")
+            stats = generator.generate_release_statistics(args.stats)
+            
+            # Format statistics for display
+            stats_lines = [
+                f"📊 Release Statistics: {args.stats}",
+                f"Generated on: {datetime.now().strftime('%Y-%m-%d %H:%M:%S')}",
+                "",
+                f"Total Changes: {stats['total_changes']}",
+                f"Breaking Changes: {stats['breaking_changes']}",
+                f"Issues Closed: {stats['issues_closed']}",
+                ""
+            ]
+            
+            if stats['by_type']:
+                stats_lines.append("Changes by Type:")
+                for change_type, count in stats['by_type'].most_common():
+                    stats_lines.append(f"  {change_type}: {count}")
+                stats_lines.append("")
+            
+            if stats['by_author']:
+                stats_lines.append("Changes by Author:")
+                for author, count in stats['by_author'].most_common():
+                    stats_lines.append(f"  {author}: {count}")
+                stats_lines.append("")
+            
+            if 'by_scope' in stats:
+                stats_lines.append("Changes by Scope:")
+                for scope, count in stats['by_scope'].most_common():
+                    stats_lines.append(f"  {scope}: {count}")
+                stats_lines.append("")
+            
+            if stats['date_range']['start'] and stats['date_range']['end']:
+                start_date = stats['date_range']['start'].strftime('%Y-%m-%d')
+                end_date = stats['date_range']['end'].strftime('%Y-%m-%d')
+                duration = (stats['date_range']['end'] - stats['date_range']['start']).days
+                stats_lines.extend([
+                    f"Development Period: {start_date} to {end_date} ({duration} days)",
+                    ""
+                ])
+            
+            output_content = "\n".join(stats_lines)
+            
+        elif args.release_notes:
+            if args.verbose:
+                print(f"Generating release notes for {args.release_notes}")
+            output_content = generator.create_release_notes(args.release_notes)
+            
+        elif args.version:
+            if args.verbose:
+                print(f"Updating changelog for version {args.version}")
+            success = generator.update_changelog(args.version)
+            if not success:
+                sys.exit(1)
+            print(f"✅ Changelog updated for version {args.version}")
+            
+        elif args.full:
+            if args.verbose:
+                print("Regenerating full changelog")
+            success = generator.update_changelog()
+            if not success:
+                sys.exit(1)
+            print("✅ Full changelog regenerated")
+            
+        else:
+            parser.print_help()
+            sys.exit(1)
+        
+        # Output content if generated
+        if output_content:
+            if args.output:
+                output_path = Path(args.output)
+                with open(output_path, 'w', encoding='utf-8') as f:
+                    f.write(output_content)
+                print(f"✅ Output written to {output_path}")
+            else:
+                print(output_content)
+                
+    except Exception as e:
+        print(f"❌ Error: {e}", file=sys.stderr)
+        if args.verbose:
+            import traceback
+            traceback.print_exc()
+        sys.exit(1)
 
 if __name__ == "__main__":
     main()
