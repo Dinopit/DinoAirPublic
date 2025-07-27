@@ -2,7 +2,6 @@
   "name": "dinoair-web-gui-node",
   "version": "1.0.0",
   "description": "DinoAir Web GUI - Node.js version with Express server",
-  "type": "module",
   "main": "server.js",
   "scripts": {
     "start": "node --trace-warnings server.js",

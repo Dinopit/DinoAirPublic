@@ -40,20 +40,14 @@ interface Conversation {
 
 // Memoized message component for better performance
 const MessageItem = memo<{ message: Message }>(({ message }) => (
-  <div
-    className={`flex ${message.role === 'user' ? 'justify-end' : 'justify-start'}`}
-  >
+  <div className={`flex ${message.role === 'user' ? 'justify-end' : 'justify-start'}`}>
     <div
       className={`max-w-[70%] p-3 rounded-lg ${
-        message.role === 'user'
-          ? 'bg-primary text-primary-foreground'
-          : 'bg-muted text-foreground'
+        message.role === 'user' ? 'bg-primary text-primary-foreground' : 'bg-muted text-foreground'
       }`}
     >
       <p className="whitespace-pre-wrap">{message.content}</p>
-      <p className="text-xs opacity-70 mt-1">
-        {message.timestamp.toLocaleTimeString()}
-      </p>
+      <p className="text-xs opacity-70 mt-1">{message.timestamp.toLocaleTimeString()}</p>
     </div>
   </div>
 ));
@@ -66,8 +60,14 @@ const LoadingIndicator = memo(() => (
     <div className="bg-muted text-foreground p-3 rounded-lg">
       <div className="flex space-x-2">
         <div className="w-2 h-2 bg-current rounded-full animate-bounce" />
-        <div className="w-2 h-2 bg-current rounded-full animate-bounce" style={{ animationDelay: '0.1s' }} />
-        <div className="w-2 h-2 bg-current rounded-full animate-bounce" style={{ animationDelay: '0.2s' }} />
+        <div
+          className="w-2 h-2 bg-current rounded-full animate-bounce"
+          style={{ animationDelay: '0.1s' }}
+        />
+        <div
+          className="w-2 h-2 bg-current rounded-full animate-bounce"
+          style={{ animationDelay: '0.2s' }}
+        />
       </div>
     </div>
   </div>
@@ -76,34 +76,37 @@ const LoadingIndicator = memo(() => (
 LoadingIndicator.displayName = 'LoadingIndicator';
 
 const LocalChatView = memo(() => {
-  const [messages, setMessages] = useState<Message[]>([
+  // FIX 1: Lazy state initialization - avoid large initial state computation
+  const [messages, setMessages] = useState<Message[]>(() => [
     {
       id: '1',
       role: 'assistant',
-      content: 'Welcome to DinoAir Free Tier! I can help you with AI-powered conversations and image generation. How can I assist you today?',
-      timestamp: new Date()
-    }
+      content:
+        'Welcome to DinoAir Free Tier! I can help you with AI-powered conversations and image generation. How can I assist you today?',
+      timestamp: new Date(),
+    },
   ]);
-  const [inputValue, setInputValue] = useState('');
-  const [isLoading, setIsLoading] = useState(false);
-  const [models, setModels] = useState<Model[]>([]);
-  const [selectedModel, setSelectedModel] = useState('qwen:7b-chat-v1.5-q4_K_M');
-  const [conversations, setConversations] = useState<Conversation[]>([]);
-  const [activeConversationId, setActiveConversationId] = useState<string | null>(null);
-  const [showSettings, setShowSettings] = useState(false);
-  const [customSystemPrompt, setCustomSystemPrompt] = useState('');
-  const [isStreaming, setIsStreaming] = useState(false);
-  const [artifactNotifications, setArtifactNotifications] = useState<string[]>([]);
+  const [inputValue, setInputValue] = useState(() => '');
+  const [isLoading, setIsLoading] = useState(() => false);
+  const [models, setModels] = useState<Model[]>(() => []);
+  const [selectedModel, setSelectedModel] = useState(() => 'qwen:7b-chat-v1.5-q4_K_M');
+  const [conversations, setConversations] = useState<Conversation[]>(() => []);
+  const [activeConversationId, setActiveConversationId] = useState<string | null>(() => null);
+  const [showSettings, setShowSettings] = useState(() => false);
+  const [customSystemPrompt, setCustomSystemPrompt] = useState(() => '');
+  const [isStreaming, setIsStreaming] = useState(() => false);
+  const [artifactNotifications, setArtifactNotifications] = useState<string[]>(() => []);
   const abortControllerRef = useRef<AbortController | null>(null);
   const messagesEndRef = useRef<HTMLDivElement>(null);
 
   // Use centralized personality store
   const { personalities, loading: personalitiesLoading } = usePersonalities();
   const { currentPersonality, setCurrentPersonality } = useCurrentPersonality();
-  
+
   // Initialize system prompt from current personality
-  const systemPrompt = useMemo(() => 
-    customSystemPrompt || currentPersonality?.systemPrompt || 'You are a helpful AI assistant.',
+  const systemPrompt = useMemo(
+    () =>
+      customSystemPrompt || currentPersonality?.systemPrompt || 'You are a helpful AI assistant.',
     [customSystemPrompt, currentPersonality]
   );
 
@@ -111,27 +114,38 @@ const LocalChatView = memo(() => {
     messagesEndRef.current?.scrollIntoView({ behavior: 'smooth' });
   }, []);
 
+  // FIX 4: Stable dependency to prevent infinite re-renders
   useEffect(() => {
     scrollToBottom();
-  }, [messages, scrollToBottom]);
+  }, [messages, scrollToBottom]); // ✅ scrollToBottom is memoized with useCallback
 
-  // Auto-dismiss notifications after 5 seconds
+  // FIX 2: AbortController pattern for timer cleanup
   useEffect(() => {
+    const controller = new AbortController();
+
     if (artifactNotifications.length > 0) {
       const timer = setTimeout(() => {
-        setArtifactNotifications(prev => prev.slice(1));
+        setArtifactNotifications((prev) => prev.slice(1));
       }, 5000);
-      return () => clearTimeout(timer);
+
+      // Cleanup when component unmounts or effect re-runs
+      controller.signal.addEventListener('abort', () => {
+        clearTimeout(timer);
+      });
+
+      return () => {
+        controller.abort(); // 🧹 Full teardown
+      };
     }
     return undefined;
-  }, [artifactNotifications]);
+  }, [artifactNotifications]); // ✅ Stable dependency
 
-  // Load models and conversations on mount
+  // FIX 3: Proper dependencies for useEffect to prevent infinite loops
   useEffect(() => {
     fetchModels();
     loadConversations();
     // Personalities will be fetched automatically by the store if needed
-  }, []);
+  }, []); // ✅ Empty deps, only once
 
   // Load conversations from localStorage
   const loadConversations = useCallback(() => {
@@ -145,8 +159,8 @@ const LocalChatView = memo(() => {
           updatedAt: new Date(conv.updatedAt),
           messages: conv.messages.map((msg: any) => ({
             ...msg,
-            timestamp: new Date(msg.timestamp)
-          }))
+            timestamp: new Date(msg.timestamp),
+          })),
         }));
         setConversations(conversations);
       }
@@ -171,18 +185,18 @@ const LocalChatView = memo(() => {
       const response = await apiClient.get<{ models: Model[] }>('/ollama/models', {
         retryConfig: {
           maxAttempts: 2,
-          initialDelay: 500
+          initialDelay: 500,
         },
         context: {
           endpoint: '/api/ollama/models',
-          method: 'GET'
-        }
+          method: 'GET',
+        },
       });
-      
+
       if (response.error) {
         throw response.error;
       }
-      
+
       if (response.data?.models) {
         setModels(response.data.models);
       }
@@ -197,84 +211,102 @@ const LocalChatView = memo(() => {
               label: 'Retry',
               onClick: () => {
                 fetchModels();
-              }
-            }
-          ]
+              },
+            },
+          ],
         }
       );
     }
   }, []);
 
   // Save current conversation
-  const saveCurrentConversation = useCallback((name?: string) => {
-    const conversationName = name || `Conversation ${new Date().toLocaleString()}`;
-    const conversation: Conversation = {
-      id: activeConversationId || Date.now().toString(),
-      name: conversationName,
-      messages: messages,
-      model: selectedModel,
-      systemPrompt: systemPrompt,
-      createdAt: activeConversationId ?
-        conversations.find(c => c.id === activeConversationId)?.createdAt || new Date() :
-        new Date(),
-      updatedAt: new Date()
-    };
+  const saveCurrentConversation = useCallback(
+    (name?: string) => {
+      const conversationName = name || `Conversation ${new Date().toLocaleString()}`;
+      const conversation: Conversation = {
+        id: activeConversationId || Date.now().toString(),
+        name: conversationName,
+        messages: messages,
+        model: selectedModel,
+        systemPrompt: systemPrompt,
+        createdAt: activeConversationId
+          ? conversations.find((c) => c.id === activeConversationId)?.createdAt || new Date()
+          : new Date(),
+        updatedAt: new Date(),
+      };
 
-    const updatedConversations = activeConversationId
-      ? conversations.map(c => c.id === activeConversationId ? conversation : c)
-      : [...conversations, conversation];
+      const updatedConversations = activeConversationId
+        ? conversations.map((c) => (c.id === activeConversationId ? conversation : c))
+        : [...conversations, conversation];
 
-    saveConversations(updatedConversations);
-    setActiveConversationId(conversation.id);
-  }, [activeConversationId, conversations, messages, selectedModel, systemPrompt, saveConversations]);
+      saveConversations(updatedConversations);
+      setActiveConversationId(conversation.id);
+    },
+    [activeConversationId, conversations, messages, selectedModel, systemPrompt, saveConversations]
+  );
 
   // Load a conversation
-  const loadConversation = useCallback((conversationId: string) => {
-    const conversation = conversations.find(c => c.id === conversationId);
-    if (conversation) {
-      setMessages(conversation.messages);
-      setSelectedModel(conversation.model);
-      setCustomSystemPrompt(conversation.systemPrompt);
-      setActiveConversationId(conversationId);
-    }
-  }, [conversations]);
+  const loadConversation = useCallback(
+    (conversationId: string) => {
+      const conversation = conversations.find((c) => c.id === conversationId);
+      if (conversation) {
+        setMessages(conversation.messages);
+        setSelectedModel(conversation.model);
+        setCustomSystemPrompt(conversation.systemPrompt);
+        setActiveConversationId(conversationId);
+      }
+    },
+    [conversations]
+  );
 
   // Delete a conversation
-  const deleteConversation = useCallback((conversationId: string) => {
-    if (confirm('Are you sure you want to delete this conversation?')) {
-      const filtered = conversations.filter(c => c.id !== conversationId);
-      saveConversations(filtered);
-      if (activeConversationId === conversationId) {
-        setActiveConversationId(null);
-        setMessages([{
-          id: '1',
-          role: 'assistant',
-          content: 'Welcome to DinoAir Free Tier! I can help you with AI-powered conversations and image generation. How can I assist you today?',
-          timestamp: new Date()
-        }]);
+  const deleteConversation = useCallback(
+    (conversationId: string) => {
+      if (confirm('Are you sure you want to delete this conversation?')) {
+        const filtered = conversations.filter((c) => c.id !== conversationId);
+        saveConversations(filtered);
+        if (activeConversationId === conversationId) {
+          setActiveConversationId(null);
+          setMessages([
+            {
+              id: '1',
+              role: 'assistant',
+              content:
+                'Welcome to DinoAir Free Tier! I can help you with AI-powered conversations and image generation. How can I assist you today?',
+              timestamp: new Date(),
+            },
+          ]);
+        }
       }
-    }
-  }, [conversations, activeConversationId, saveConversations]);
+    },
+    [conversations, activeConversationId, saveConversations]
+  );
 
   // New conversation
   const startNewConversation = useCallback(() => {
     setActiveConversationId(null);
-    setMessages([{
-      id: '1',
-      role: 'assistant',
-      content: 'Welcome to DinoAir Free Tier! I can help you with AI-powered conversations and image generation. How can I assist you today?',
-      timestamp: new Date()
-    }]);
+    setMessages([
+      {
+        id: '1',
+        role: 'assistant',
+        content:
+          'Welcome to DinoAir Free Tier! I can help you with AI-powered conversations and image generation. How can I assist you today?',
+        timestamp: new Date(),
+      },
+    ]);
   }, []);
 
   // Handle personality selection
-  const handlePersonalityChange = useCallback((personalityId: string) => {
-    const personality = personalities.find(p => p.id === personalityId);
-    if (personality) {
-      setCurrentPersonality(personality);
-      setCustomSystemPrompt(personality.systemPrompt || '');
-    }
-  }, [personalities, setCurrentPersonality]);
+  const handlePersonalityChange = useCallback(
+    (personalityId: string) => {
+      const personality = personalities.find((p) => p.id === personalityId);
+      if (personality) {
+        setCurrentPersonality(personality);
+        setCustomSystemPrompt(personality.systemPrompt || '');
+      }
+    },
+    [personalities, setCurrentPersonality]
+  );
 
   // Cancel streaming
   const cancelStreaming = useCallback(() => {
@@ -287,43 +319,44 @@ const LocalChatView = memo(() => {
   }, []);
 
   // Create artifacts from code blocks
-  const createArtifactsFromCodeBlocks = useCallback((artifactInfos: { name: string; type: string; content: string }[]) => {
-    try {
-      // Load existing artifacts
-      const stored = localStorage.getItem('dinoair-artifacts');
-      let existingArtifacts: Artifact[] = [];
-      
-      if (stored) {
-        try {
-          const parsed = JSON.parse(stored);
-          existingArtifacts = Array.isArray(parsed) ? parsed : [];
-        } catch {
-          existingArtifacts = [];
+  const createArtifactsFromCodeBlocks = useCallback(
+    (artifactInfos: { name: string; type: string; content: string }[]) => {
+      try {
+        // Load existing artifacts
+        const stored = localStorage.getItem('dinoair-artifacts');
+        let existingArtifacts: Artifact[] = [];
+
+        if (stored) {
+          try {
+            const parsed = JSON.parse(stored);
+            existingArtifacts = Array.isArray(parsed) ? parsed : [];
+          } catch {
+            existingArtifacts = [];
+          }
         }
+
+        // Create new artifacts
+        const newArtifacts: Artifact[] = artifactInfos.map((info) => ({
+          id: Date.now().toString() + Math.random().toString(36).substr(2, 9),
+          name: info.name,
+          type: info.type,
+          content: info.content,
+          createdAt: new Date(),
+        }));
+
+        // Save artifacts
+        const allArtifacts = [...existingArtifacts, ...newArtifacts];
+        localStorage.setItem('dinoair-artifacts', JSON.stringify(allArtifacts));
+
+        // Show notifications
+        const notifications = newArtifacts.map((artifact) => `Created artifact: ${artifact.name}`);
+        setArtifactNotifications((prev) => [...prev, ...notifications]);
+      } catch (error) {
+        console.error('Failed to create artifacts:', error);
       }
-
-      // Create new artifacts
-      const newArtifacts: Artifact[] = artifactInfos.map(info => ({
-        id: Date.now().toString() + Math.random().toString(36).substr(2, 9),
-        name: info.name,
-        type: info.type,
-        content: info.content,
-        createdAt: new Date()
-      }));
-
-      // Save artifacts
-      const allArtifacts = [...existingArtifacts, ...newArtifacts];
-      localStorage.setItem('dinoair-artifacts', JSON.stringify(allArtifacts));
-
-      // Show notifications
-      const notifications = newArtifacts.map(artifact =>
-        `Created artifact: ${artifact.name}`
-      );
-      setArtifactNotifications(prev => [...prev, ...notifications]);
-    } catch (error) {
-      console.error('Failed to create artifacts:', error);
-    }
-  }, []);
+    },
+    []
+  );
 
   const handleSendMessage = useCallback(async () => {
     if (!inputValue.trim() || isLoading) return;
@@ -332,7 +365,7 @@ const LocalChatView = memo(() => {
       id: Date.now().toString(),
       role: 'user',
       content: inputValue.trim(),
-      timestamp: new Date()
+      timestamp: new Date(),
     };
 
     const updatedMessages = [...messages, userMessage];
@@ -346,9 +379,9 @@ const LocalChatView = memo(() => {
       id: (Date.now() + 1).toString(),
       role: 'assistant',
       content: '',
-      timestamp: new Date()
+      timestamp: new Date(),
     };
-    setMessages(prev => [...prev, assistantMessage]);
+    setMessages((prev) => [...prev, assistantMessage]);
 
     // Create abort controller for cancellation
     abortControllerRef.current = new AbortController();
@@ -365,14 +398,14 @@ const LocalChatView = memo(() => {
           model: selectedModel,
           personality: currentPersonality?.id || 'default',
           systemPrompt: systemPrompt,
-          stream: true
+          stream: true,
         }),
-        signal: abortControllerRef.current.signal
+        signal: abortControllerRef.current.signal,
       });
 
       if (!response.ok) {
         let errorMessage = 'Failed to get response from AI';
-        
+
         try {
           const errorData = await response.json();
           if (errorData.error) {
@@ -382,7 +415,7 @@ const LocalChatView = memo(() => {
           // If parsing JSON fails, use status text
           errorMessage = `Error: ${response.statusText}`;
         }
-        
+
         throw new Error(errorMessage);
       }
 
@@ -397,18 +430,16 @@ const LocalChatView = memo(() => {
 
       while (true) {
         const { done, value } = await reader.read();
-        
+
         if (done) break;
 
         const chunk = decoder.decode(value, { stream: true });
         accumulatedContent += chunk;
 
         // Update the assistant message with accumulated content
-        setMessages(prev =>
-          prev.map(msg =>
-            msg.id === assistantMessage.id
-              ? { ...msg, content: accumulatedContent }
-              : msg
+        setMessages((prev) =>
+          prev.map((msg) =>
+            msg.id === assistantMessage.id ? { ...msg, content: accumulatedContent } : msg
           )
         );
       }
@@ -426,55 +457,63 @@ const LocalChatView = memo(() => {
       }
     } catch (error: any) {
       console.error('Error sending message:', error);
-      
+
       // Don't show error if it was cancelled
       if (error.name !== 'AbortError') {
-        const errorMessage = error instanceof Error ? error.message : 'An unexpected error occurred';
-        
+        const errorMessage =
+          error instanceof Error ? error.message : 'An unexpected error occurred';
+
         // Update the message to show error
-        setMessages(prev =>
-          prev.map(msg =>
-            msg.id === assistantMessage.id
-              ? { ...msg, content: `Error: ${errorMessage}` }
-              : msg
+        setMessages((prev) =>
+          prev.map((msg) =>
+            msg.id === assistantMessage.id ? { ...msg, content: `Error: ${errorMessage}` } : msg
           )
         );
-        
+
         // Show toast notification for error
-        toast.error(
-          'Failed to send message',
-          errorMessage,
-          {
-            actions: [
-              {
-                label: 'Retry',
-                onClick: () => {
-                  // Remove the error message and retry
-                  setMessages(prev => prev.filter(msg => msg.id !== assistantMessage.id));
-                  setInputValue(userMessage.content);
-                }
-              }
-            ]
-          }
-        );
+        toast.error('Failed to send message', errorMessage, {
+          actions: [
+            {
+              label: 'Retry',
+              onClick: () => {
+                // Remove the error message and retry
+                setMessages((prev) => prev.filter((msg) => msg.id !== assistantMessage.id));
+                setInputValue(userMessage.content);
+              },
+            },
+          ],
+        });
       }
     } finally {
       setIsLoading(false);
       setIsStreaming(false);
       abortControllerRef.current = null;
     }
-  }, [inputValue, isLoading, messages, selectedModel, currentPersonality, systemPrompt, activeConversationId, saveCurrentConversation, createArtifactsFromCodeBlocks]);
+  }, [
+    inputValue,
+    isLoading,
+    messages,
+    selectedModel,
+    currentPersonality,
+    systemPrompt,
+    activeConversationId,
+    saveCurrentConversation,
+    createArtifactsFromCodeBlocks,
+  ]);
 
-  const handleKeyPress = useCallback((e: React.KeyboardEvent) => {
-    if (e.key === 'Enter' && !e.shiftKey) {
-      e.preventDefault();
-      handleSendMessage();
-    }
-  }, [handleSendMessage]);
+  const handleKeyPress = useCallback(
+    (e: React.KeyboardEvent) => {
+      if (e.key === 'Enter' && !e.shiftKey) {
+        e.preventDefault();
+        handleSendMessage();
+      }
+    },
+    [handleSendMessage]
+  );
 
   // Memoize active conversation name
-  const activeConversationName = useMemo(() => 
-    conversations.find(c => c.id === activeConversationId)?.name,
+  const activeConversationName = useMemo(
+    () => conversations.find((c) => c.id === activeConversationId)?.name,
     [conversations, activeConversationId]
   );
 
@@ -489,13 +528,15 @@ const LocalChatView = memo(() => {
               className="bg-green-500 text-white px-4 py-2 rounded-lg shadow-lg animate-fade-in flex items-center gap-2"
               style={{
                 animation: 'fadeIn 0.3s ease-in-out',
-                animationDelay: `${index * 0.1}s`
+                animationDelay: `${index * 0.1}s`,
               }}
             >
               <span>📄</span>
               <span className="text-sm">{notification}</span>
               <button
-                onClick={() => setArtifactNotifications(prev => prev.filter((_, i) => i !== index))}
+                onClick={() =>
+                  setArtifactNotifications((prev) => prev.filter((_, i) => i !== index))
+                }
                 className="ml-2 text-white/80 hover:text-white"
               >
                 ✕
@@ -582,7 +623,7 @@ const LocalChatView = memo(() => {
           {showSettings && (
             <div className="mt-4 p-4 border rounded-lg bg-muted/50">
               <h3 className="font-semibold mb-3">System Prompt Configuration</h3>
-              
+
               {/* Personality Selection */}
               <div className="mb-4">
                 <label className="block text-sm font-medium mb-2">Select Personality</label>

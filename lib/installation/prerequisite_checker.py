@@ -633,7 +633,8 @@ class PrerequisiteChecker:
         """Generate a detailed report of all checks"""
         report = ["DinoAir Installation Prerequisite Check Report"]
         report.append("=" * 60)
-        report.append(f"Timestamp: {platform.datetime.now().isoformat()}")
+        from datetime import datetime
+        report.append(f"Timestamp: {datetime.now().isoformat()}")
         report.append(f"Platform: {platform.platform()}")
         report.append("")
         

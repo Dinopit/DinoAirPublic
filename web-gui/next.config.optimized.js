@@ -277,8 +277,12 @@ const nextConfig = {
     serverComponentsExternalPackages: ['swagger-ui-react', 'prismjs'],
     // Enable optimized CSS imports
     optimizeCss: true,
-    // Memory optimization
-    memoryBasedWorkers: true,
+    // Turbo mode for faster builds (replaces memoryBasedWorkers)
+    turbo: {
+      resolveAlias: {
+        lodash: 'lodash-es',
+      },
+    },
   },
 
   // Output configuration
