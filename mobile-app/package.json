@@ -42,7 +42,8 @@
     "react-native-webrtc": "^118.0.1",
     "react-native-widgets": "^1.0.0",
     "socket.io-client": "^4.7.4",
-    "uuid": "^9.0.1"
+    "uuid": "^9.0.1",
+    "zustand": "^4.4.7"
   },
   "devDependencies": {
     "@babel/core": "^7.20.0",
