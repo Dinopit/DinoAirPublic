@@ -4,14 +4,8 @@ import React from 'react';
 import { Wifi, WifiOff, Clock, X, RefreshCw, AlertTriangle } from 'lucide-react';
 import { useOfflineStatus } from '../../hooks/useOfflineStatus';
 
-// Mock toast hook for now - this should be imported from the actual toast component
-const useToast = () => {
-  return {
-    addToast: (toast: { type: string; title: string; message?: string }) => {
-      console.log('Toast:', toast);
-    },
-  };
-};
+// Import the actual toast hook from the toast notification library
+import { useToast } from '../../components/ui/toast';
 
 export const OfflineIndicator = () => {
   const {
