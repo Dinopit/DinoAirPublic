@@ -136,7 +136,7 @@ class EnhancedMonitoringSystem:
                 # Initialize structured logging
                 try:
                     self._structured_logger = StructuredLogger()
-                except:
+                except Exception:
                     print("Warning: Failed to initialize structured logger")
                 
                 self._initialized = True
