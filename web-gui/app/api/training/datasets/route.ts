@@ -5,19 +5,19 @@ import { modelTrainingService } from '@/lib/services/model-training';
 export async function GET(request: NextRequest) {
   try {
     const datasets = await modelTrainingService.getDatasets();
-    
+
     return NextResponse.json({
       success: true,
       datasets,
-      count: datasets.length
+      count: datasets.length,
     });
   } catch (error) {
     console.error('Failed to fetch datasets:', error);
     return NextResponse.json(
-      { 
-        success: false, 
+      {
+        success: false,
         error: 'Failed to fetch datasets',
-        message: error instanceof Error ? error.message : 'Unknown error'
+        message: error instanceof Error ? error.message : 'Unknown error',
       },
       { status: 500 }
     );
@@ -30,19 +30,13 @@ export async function POST(request: NextRequest) {
     const formData = await request.formData();
     const file = formData.get('file') as File;
     const metadataStr = formData.get('metadata') as string;
-    
+
     if (!file) {
-      return NextResponse.json(
-        { success: false, error: 'No file provided' },
-        { status: 400 }
-      );
+      return NextResponse.json({ success: false, error: 'No file provided' }, { status: 400 });
     }
 
     if (!metadataStr) {
-      return NextResponse.json(
-        { success: false, error: 'No metadata provided' },
-        { status: 400 }
-      );
+      return NextResponse.json({ success: false, error: 'No metadata provided' }, { status: 400 });
     }
 
     let metadata;
@@ -50,7 +44,10 @@ export async function POST(request: NextRequest) {
       metadata = JSON.parse(metadataStr);
     } catch (error) {
       return NextResponse.json(
-        { success: false, error: 'Invalid metadata JSON' },
+        {
+          success: false,
+          error: `Invalid metadata JSON: ${error instanceof Error ? error.message : 'Unknown parsing error'}`,
+        },
         { status: 400 }
       );
     }
@@ -67,18 +64,21 @@ export async function POST(request: NextRequest) {
     }
 
     const dataset = await modelTrainingService.uploadDataset(file, metadata);
-    
-    return NextResponse.json({
-      success: true,
-      dataset
-    }, { status: 201 });
+
+    return NextResponse.json(
+      {
+        success: true,
+        dataset,
+      },
+      { status: 201 }
+    );
   } catch (error) {
     console.error('Failed to upload dataset:', error);
     return NextResponse.json(
-      { 
-        success: false, 
+      {
+        success: false,
         error: 'Failed to upload dataset',
-        message: error instanceof Error ? error.message : 'Unknown error'
+        message: error instanceof Error ? error.message : 'Unknown error',
       },
       { status: 500 }
     );
