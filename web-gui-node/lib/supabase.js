@@ -25,8 +25,13 @@ async function validateSupabaseConfig() {
   }
 
   // Validate URL format
-  if (!supabaseUrl.match(/^https:\/\/[a-z0-9-]+\.supabase\.co$/)) {
-    console.warn('⚠️  SUPABASE_URL format appears invalid or uses example value');
+  try {
+    const parsedUrl = new URL(supabaseUrl);
+    if (!parsedUrl.hostname.endsWith('.supabase.co')) {
+      console.warn('⚠️  SUPABASE_URL format appears invalid or uses example value');
+    }
+  } catch (error) {
+    throw new Error('SUPABASE_URL is not a valid URL');
   }
 
   // Check for weak secrets
