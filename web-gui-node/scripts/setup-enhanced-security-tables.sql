@@ -222,10 +222,13 @@ BEGIN
                 suspicious := TRUE;
             END IF;
         EXCEPTION WHEN undefined_function THEN
-            -- pg_similarity extension not available, fall back to basic check
-            -- Flag as suspicious if user agents are completely different
-            -- This is a more conservative approach without similarity scoring
-            suspicious := TRUE;
+            -- pg_similarity extension not available, fall back to basic string comparison
+            -- Flag as suspicious if user agents differ significantly in length or are completely dissimilar
+            IF ABS(LENGTH(session_record.user_agent) - LENGTH(p_new_user_agent)) > 20 OR
+               POSITION(session_record.user_agent IN p_new_user_agent) = 0 AND
+               POSITION(p_new_user_agent IN session_record.user_agent) = 0 THEN
+                suspicious := TRUE;
+            END IF;
         END;
     END IF;
     
