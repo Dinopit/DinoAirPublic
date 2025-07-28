@@ -22,7 +22,7 @@ const withPWA =
             options: {
               cacheName: 'google-fonts',
               expiration: {
-                maxEntries: 4,
+                maxEntries: 10,
                 maxAgeSeconds: 365 * 24 * 60 * 60, // 365 days
               },
             },
@@ -33,12 +33,58 @@ const withPWA =
             options: {
               cacheName: 'static-font-assets',
               expiration: {
-                maxEntries: 4,
+                maxEntries: 10,
                 maxAgeSeconds: 7 * 24 * 60 * 60, // 7 days
               },
             },
           },
+          {
+            urlPattern: /\.(?:jpg|jpeg|gif|png|svg|ico|webp)$/i,
+            handler: 'StaleWhileRevalidate',
+            options: {
+              cacheName: 'static-image-assets',
+              expiration: {
+                maxEntries: 64,
+                maxAgeSeconds: 30 * 24 * 60 * 60, // 30 days
+              },
+            },
+          },
+          {
+            urlPattern: /\.(?:js|css)$/i,
+            handler: 'StaleWhileRevalidate',
+            options: {
+              cacheName: 'static-js-css-assets',
+              expiration: {
+                maxEntries: 32,
+                maxAgeSeconds: 24 * 60 * 60, // 24 hours
+              },
+            },
+          },
+          {
+            urlPattern: /^\/api\/.*$/i,
+            handler: 'NetworkFirst',
+            options: {
+              cacheName: 'api-cache',
+              expiration: {
+                maxEntries: 16,
+                maxAgeSeconds: 5 * 60, // 5 minutes
+              },
+              networkTimeoutSeconds: 10,
+            },
+          },
+          {
+            urlPattern: /^https:\/\/.*\.(?:js|css|woff2?|png|jpg|jpeg|svg|gif|webp)$/i,
+            handler: 'StaleWhileRevalidate',
+            options: {
+              cacheName: 'external-assets',
+              expiration: {
+                maxEntries: 32,
+                maxAgeSeconds: 24 * 60 * 60, // 24 hours
+              },
+            },
+          },
         ],
+        disableDevLogs: true,
       })
     : (config) => config;
 
@@ -279,7 +325,6 @@ const nextConfig = {
       '@radix-ui/react-dropdown-menu',
       '@radix-ui/react-select',
       '@radix-ui/react-toast',
-      'date-fns',
       'chart.js',
       'react-chartjs-2',
     ],
@@ -287,8 +332,8 @@ const nextConfig = {
     serverComponentsExternalPackages: ['swagger-ui-react', 'prismjs'],
     // Enable optimized CSS imports
     optimizeCss: true,
-    // Memory optimization
-    memoryBasedWorkers: true,
+    // Enable optimized font loading
+    optimizeServerReact: true,
   },
 
   // Output configuration

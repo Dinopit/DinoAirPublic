@@ -19,36 +19,77 @@ import '../../lib/services/model-registry-init';
 // Dynamically import heavy components to reduce initial bundle size
 const LocalChatView = dynamic(() => import('./LocalChatView'), {
   ssr: false,
-  loading: () => <div className="flex items-center justify-center h-64">Loading chat...</div>,
+  loading: () => (
+    <div className="flex items-center justify-center h-64">
+      <div className="text-center">
+        <div className="w-8 h-8 border-4 border-primary border-t-transparent rounded-full animate-spin mx-auto mb-2"></div>
+        <p className="text-sm text-muted-foreground">Loading chat...</p>
+      </div>
+    </div>
+  ),
 });
 
 const LocalArtifactsView = dynamic(() => import('./LocalArtifactsView'), {
   ssr: false,
-  loading: () => <div className="flex items-center justify-center h-64">Loading artifacts...</div>,
+  loading: () => (
+    <div className="flex items-center justify-center h-64">
+      <div className="text-center">
+        <div className="w-8 h-8 border-4 border-primary border-t-transparent rounded-full animate-spin mx-auto mb-2"></div>
+        <p className="text-sm text-muted-foreground">Loading artifacts...</p>
+      </div>
+    </div>
+  ),
 });
 
 const DinoLocalAssistant = dynamic(() => import('./DinoLocalAssistant'), {
   ssr: false,
-  loading: () => <div className="flex items-center justify-center h-64">Loading assistant...</div>,
+  loading: () => (
+    <div className="flex items-center justify-center h-64">
+      <div className="text-center">
+        <div className="w-8 h-8 border-4 border-primary border-t-transparent rounded-full animate-spin mx-auto mb-2"></div>
+        <p className="text-sm text-muted-foreground">Loading assistant...</p>
+      </div>
+    </div>
+  ),
 });
 
 const DebugPanel = dynamic(() => import('../ui/debug-panel'), {
   ssr: false,
-  loading: () => <div>Loading debug panel...</div>,
+  loading: () => (
+    <div className="flex items-center justify-center p-4">
+      <div className="text-center">
+        <div className="w-6 h-6 border-2 border-primary border-t-transparent rounded-full animate-spin mx-auto mb-2"></div>
+        <p className="text-xs text-muted-foreground">Loading debug panel...</p>
+      </div>
+    </div>
+  ),
 });
 
 const PluginManager = dynamic(
   () => import('../plugins/PluginManager').then((mod) => ({ default: mod.PluginManager })),
   {
     ssr: false,
-    loading: () => <div className="flex items-center justify-center h-64">Loading plugins...</div>,
+    loading: () => (
+      <div className="flex items-center justify-center h-64">
+        <div className="text-center">
+          <div className="w-8 h-8 border-4 border-primary border-t-transparent rounded-full animate-spin mx-auto mb-2"></div>
+          <p className="text-sm text-muted-foreground">Loading plugins...</p>
+        </div>
+      </div>
+    ),
   }
 );
 
+// Lazy load marketplace component only when needed
 const ModelMarketplace = dynamic(() => import('../marketplace/ModelMarketplace'), {
   ssr: false,
   loading: () => (
-    <div className="flex items-center justify-center h-64">Loading marketplace...</div>
+    <div className="flex items-center justify-center h-64">
+      <div className="text-center">
+        <div className="w-8 h-8 border-4 border-primary border-t-transparent rounded-full animate-spin mx-auto mb-2"></div>
+        <p className="text-sm text-muted-foreground">Loading marketplace...</p>
+      </div>
+    </div>
   ),
 });
 
@@ -323,7 +364,7 @@ const OptimizedLocalGuiContent = () => {
     ]
   );
 
-  useKeyboardShortcuts(shortcuts);
+  useKeyboardShortcuts({ shortcuts });
 
   // Memoize tab content to prevent unnecessary re-renders
   const tabContent = useMemo(() => {
@@ -450,31 +491,28 @@ const OptimizedLocalGuiContent = () => {
       {/* Debug Panel */}
       {debugMode && showDebugPanel && (
         <div className="border-t">
-          <DebugPanel onClose={() => setShowDebugPanel(false)} />
+          <DebugPanel isOpen={showDebugPanel} onClose={() => setShowDebugPanel(false)} />
         </div>
       )}
 
       {/* Modals */}
       {showShortcutsModal && (
         <KeyboardShortcutsModal
+          isOpen={showShortcutsModal}
           shortcuts={shortcuts}
           onClose={() => setShowShortcutsModal(false)}
         />
       )}
 
-      {showSettings && <SettingsPanel onClose={() => setShowSettings(false)} />}
+      {showSettings && (
+        <SettingsPanel isOpen={showSettings} onClose={() => setShowSettings(false)} />
+      )}
 
       {showOnboarding && (
         <OnboardingTutorial
+          isOpen={showOnboarding}
+          onClose={() => setShowOnboarding(false)}
           onComplete={() => {
-            setShowOnboarding(false);
-            try {
-              localStorage.setItem('dinoair-tutorial-completed', 'true');
-            } catch (error) {
-              console.warn('Could not save tutorial completion status:', error);
-            }
-          }}
-          onSkip={() => {
             setShowOnboarding(false);
             try {
               localStorage.setItem('dinoair-tutorial-completed', 'true');
