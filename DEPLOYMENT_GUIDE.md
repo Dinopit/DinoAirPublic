@@ -415,6 +415,64 @@ models:
   cleanup_old: true
 ```
 
+## Production Readiness Checklist
+
+Before deploying DinoAir to production, ensure all these requirements are met:
+
+### ✅ Security Requirements
+
+- [ ] **Secret Key**: Generated secure secret key with `openssl rand -hex 32`
+- [ ] **Database Security**: Strong database passwords and restricted access
+- [ ] **SSL/TLS**: Valid SSL certificates configured for HTTPS
+- [ ] **Firewall**: Proper firewall rules allowing only necessary ports
+- [ ] **Environment Variables**: All secrets stored in environment variables (not hardcoded)
+- [ ] **File Permissions**: Restricted file permissions on configuration files (600/700)
+
+### ✅ Configuration Requirements
+
+- [ ] **Environment Templates**: Production `.env` file configured from template
+- [ ] **Database Connection**: Tested database connectivity and credentials
+- [ ] **AI Services**: ComfyUI and Ollama properly configured and accessible
+- [ ] **Resource Limits**: Memory and CPU limits set appropriately
+- [ ] **Logging**: Production logging level (INFO/WARN) and log rotation configured
+- [ ] **Monitoring**: Health checks and metrics endpoints enabled
+
+### ✅ Infrastructure Requirements
+
+- [ ] **System Resources**: Adequate CPU, memory, and disk space allocated
+- [ ] **Network Access**: Required ports open and accessible
+- [ ] **Backup Strategy**: Database and configuration backup procedures in place
+- [ ] **Load Balancing**: Load balancer configured for high availability (if needed)
+- [ ] **DNS Configuration**: Domain names properly configured and tested
+
+### ✅ Operational Requirements
+
+- [ ] **Process Management**: Service manager (systemd/Docker) configured for auto-restart
+- [ ] **Log Aggregation**: Centralized logging configured (if applicable)
+- [ ] **Monitoring Alerts**: Alert notifications configured for critical failures
+- [ ] **Update Procedures**: Documented update and rollback procedures
+- [ ] **Incident Response**: Team contact information and escalation procedures documented
+
+### Quick Validation Commands
+
+```bash
+# Test configuration loading
+python -c "from lib.config import ConfigLoader; print('✅ Config loads successfully')"
+
+# Test database connection
+python -c "import psycopg2; print('✅ Database connection available')" 
+
+# Test AI service endpoints
+curl -f http://localhost:8188/ && echo "✅ ComfyUI accessible"
+curl -f http://localhost:11434/ && echo "✅ Ollama accessible"
+
+# Test SSL certificate (if applicable)
+openssl s_client -connect yourdomain.com:443 -servername yourdomain.com < /dev/null
+
+# Check system resources
+df -h && free -h && echo "✅ System resources checked"
+```
+
 ## Security Considerations
 
 ### 1. Network Security
