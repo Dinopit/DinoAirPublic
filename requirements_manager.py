@@ -188,7 +188,7 @@ class RequirementsManager:
                                 
                                 if not found:
                                     missing_deps.append(line)
-                        except Exception:
+                        except (InvalidRequirement, ValueError):
                             # If requirement parsing fails, add to missing deps
                             missing_deps.append(line)
         except FileNotFoundError:
