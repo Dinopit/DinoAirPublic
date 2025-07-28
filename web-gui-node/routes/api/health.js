@@ -37,6 +37,10 @@ async function performDeepServiceCheck(serviceName, baseUrl, timeout = CONFIG.he
     return healthCache.get(cacheKey);
   }
 
+  // Create AbortController for timeout handling
+  const controller = new AbortController();
+  const timeoutId = setTimeout(() => controller.abort(), timeout);
+
   try {
     const endpoints = [];
     const version = undefined;
@@ -46,13 +50,13 @@ async function performDeepServiceCheck(serviceName, baseUrl, timeout = CONFIG.he
     if (serviceName === 'ollama') {
       // Deep Ollama health check
       const [tagsRes, versionRes, embedRes] = await Promise.allSettled([
-        fetch(`${baseUrl}/api/tags`, { timeout }),
-        fetch(`${baseUrl}/api/version`, { timeout }),
+        fetch(`${baseUrl}/api/tags`, { signal: controller.signal }),
+        fetch(`${baseUrl}/api/version`, { signal: controller.signal }),
         fetch(`${baseUrl}/api/embed`, {
           method: 'POST',
           headers: { 'Content-Type': 'application/json' },
           body: JSON.stringify({ model: 'test', input: 'test' }),
-          timeout: timeout / 2 // Shorter timeout for functionality test
+          signal: controller.signal
         })
       ]);
 
@@ -78,10 +82,10 @@ async function performDeepServiceCheck(serviceName, baseUrl, timeout = CONFIG.he
     } else if (serviceName === 'comfyui') {
       // Deep ComfyUI health check
       const [rootRes, systemStatsRes, historyRes, queueRes] = await Promise.allSettled([
-        fetch(`${baseUrl}/`, { method: 'HEAD', timeout }),
-        fetch(`${baseUrl}/system_stats`, { timeout }),
-        fetch(`${baseUrl}/history`, { timeout }),
-        fetch(`${baseUrl}/queue`, { timeout })
+        fetch(`${baseUrl}/`, { method: 'HEAD', signal: controller.signal }),
+        fetch(`${baseUrl}/system_stats`, { signal: controller.signal }),
+        fetch(`${baseUrl}/history`, { signal: controller.signal }),
+        fetch(`${baseUrl}/queue`, { signal: controller.signal })
       ]);
 
       if (rootRes.status === 'fulfilled' && rootRes.value.ok) {
@@ -106,6 +110,9 @@ async function performDeepServiceCheck(serviceName, baseUrl, timeout = CONFIG.he
       }
     }
 
+    // Clear timeout since we completed successfully
+    clearTimeout(timeoutId);
+
     const responseTime = Date.now() - startTime;
     const isHealthy = endpoints.length > 0;
 
@@ -128,6 +135,9 @@ async function performDeepServiceCheck(serviceName, baseUrl, timeout = CONFIG.he
 
     return result;
   } catch (error) {
+    // Clear timeout on error
+    clearTimeout(timeoutId);
+    
     const result = {
       name: serviceName,
       status: 'unhealthy',
@@ -538,13 +548,28 @@ router.get('/status', rateLimits.api, async (req, res) => {
     // Quick check of critical services with circuit breaker
     const [ollamaOk, comfyOk] = await Promise.allSettled([
       ollamaBreaker.call(() =>
-        withRetry(() => fetch(`${CONFIG.ollamaUrl}/api/tags`, { timeout: 3000 }).then(r => r.ok), {
+        withRetry(() => {
+          const controller = new AbortController();
+          const timeoutId = setTimeout(() => controller.abort(), 3000);
+          return fetch(`${CONFIG.ollamaUrl}/api/tags`, { signal: controller.signal })
+            .then(r => {
+              clearTimeout(timeoutId);
+              return r.ok;
+            });
+        }, {
           maxRetries: 1,
           retryCondition: isRetryableError
         })
       ),
       comfyuiBreaker.call(() =>
-        withRetry(() => fetch(`${CONFIG.comfyuiUrl}/`, { timeout: 3000, method: 'HEAD' }).then(r => r.ok), {
+        withRetry(() => {
+          const controller = new AbortController();
+          const timeoutId = setTimeout(() => controller.abort(), 3000);
+          return fetch(`${CONFIG.comfyuiUrl}/`, { signal: controller.signal, method: 'HEAD' }).then(r => {
+            clearTimeout(timeoutId);
+            return r.ok;
+          });
+        }, {
           maxRetries: 1,
           retryCondition: isRetryableError
         })

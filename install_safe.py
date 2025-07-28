@@ -14,6 +14,12 @@ import traceback
 from typing import Optional, Tuple, Dict, Any
 from pathlib import Path
 
+# Cross-platform terminal color support
+from colorama import init, Fore, Back, Style
+
+# Initialize colorama for cross-platform support
+init(autoreset=True)
+
 # Add lib directory to path for imports
 script_dir = Path(__file__).parent
 lib_dir = script_dir / "lib"
@@ -45,16 +51,16 @@ class SafeInstaller:
         self.install_log.append(log_entry)
         
         if not self.args.quiet:
-            # Color coding for different levels
+            # Color coding for different levels using colorama for cross-platform support
             colors = {
-                "INFO": "\033[0m",     # Default
-                "SUCCESS": "\033[92m",  # Green
-                "WARNING": "\033[93m",  # Yellow
-                "ERROR": "\033[91m",    # Red
-                "DEBUG": "\033[94m"     # Blue
+                "INFO": Style.RESET_ALL,          # Default
+                "SUCCESS": Fore.GREEN,            # Green
+                "WARNING": Fore.YELLOW,           # Yellow
+                "ERROR": Fore.RED,                # Red
+                "DEBUG": Fore.BLUE                # Blue
             }
-            color = colors.get(level, "\033[0m")
-            print(f"{color}{log_entry}\033[0m")
+            color = colors.get(level, Style.RESET_ALL)
+            print(f"{color}{log_entry}{Style.RESET_ALL}")
     
     def save_install_log(self):
         """Save installation log to file"""
