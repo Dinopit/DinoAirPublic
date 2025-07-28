@@ -2,6 +2,8 @@
 import subprocess
 import sys
 from pathlib import Path
+from packaging.requirements import Requirement
+import importlib.util
 
 class RequirementsManager:
     """Manage Python and Node.js dependencies"""
@@ -68,6 +70,7 @@ class RequirementsManager:
             "psutil>=5.9.0",
             "colorama>=0.4.6",
             "tqdm>=4.66.0",
+            "packaging>=23.0",
             "",
             "# Data processing",
             "pillow>=10.1.0",
@@ -160,10 +163,33 @@ class RequirementsManager:
                     line = line.strip()
                     if line and not line.startswith('#') and not line.startswith('-r'):
                         try:
-                            # Extract package name without version specifier
-                            pkg_name = line.split('>=')[0].split('==')[0].split('<')[0]
-                            __import__(pkg_name.replace('-', '_'))
-                        except ImportError:
+                            # Use packaging library for robust requirement parsing
+                            req = Requirement(line)
+                            pkg_name = req.name
+                            
+                            # Define common variations for the package name
+                            variations = [
+                                pkg_name.replace('_', '-'),
+                                pkg_name.lower(),
+                                pkg_name.upper()
+                            ]
+                            
+                            # Try to find and import the module
+                            # Handle cases where package name differs from import name
+                            import_name = pkg_name.replace('-', '_')
+                            spec = importlib.util.find_spec(import_name)
+                            if spec is None:
+                                found = False
+                                for variation in variations:
+                                    spec = importlib.util.find_spec(variation.replace('-', '_'))
+                                    if spec is not None:
+                                        found = True
+                                        break
+                                
+                                if not found:
+                                    missing_deps.append(line)
+                        except (InvalidRequirement, ValueError):
+                            # If requirement parsing fails, add to missing deps
                             missing_deps.append(line)
         except FileNotFoundError:
             print("❌ requirements.txt not found")
