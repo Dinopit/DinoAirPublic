@@ -1,7 +1,7 @@
 import psutil
 import asyncio
 import time
-from typing import Dict, List
+from typing import Dict, List, TypedDict, Optional
 import logging
 from datetime import datetime
 import json
