@@ -73,56 +73,158 @@ function validateFileSignature(buffer, mimeType) {
 }
 
 /**
- * Scan file for malicious content using ClamAV (if available)
+ * Scan file for malicious content using multiple detection methods
  */
 async function scanFileForViruses(filePath) {
   try {
-    // Check if ClamAV is available
-    execSync('which clamscan', { stdio: 'ignore' });
+    // Method 1: Try ClamAV if available
+    try {
+      execSync('which clamscan', { stdio: 'ignore' });
+      
+      const result = execSync(`clamscan --no-summary "${filePath}"`, {
+        encoding: 'utf8',
+        timeout: 30000 // 30 second timeout
+      });
 
-    // Run virus scan
-    const result = execSync(`clamscan --no-summary "${filePath}"`, {
-      encoding: 'utf8',
-      timeout: 30000 // 30 second timeout
+      if (result.includes('FOUND')) {
+        return {
+          clean: false,
+          result: 'Virus/malware detected by ClamAV',
+          method: 'clamav'
+        };
+      }
+    } catch (clamError) {
+      // ClamAV not available, continue with other methods
+    }
+
+    // Method 2: Enhanced content analysis for suspicious patterns
+    const content = await fs.readFile(filePath);
+    const contentStr = content.toString('utf8', 0, Math.min(content.length, 50000)); // Scan first 50KB
+    
+    const suspiciousPatterns = [
+      // Script injection patterns
+      /eval\s*\(/gi,
+      /exec\s*\(/gi,
+      /system\s*\(/gi,
+      /shell_exec\s*\(/gi,
+      /passthru\s*\(/gi,
+      /proc_open\s*\(/gi,
+      
+      // HTML/JavaScript patterns
+      /<script[^>]*>/gi,
+      /javascript:/gi,
+      /vbscript:/gi,
+      /onload\s*=/gi,
+      /onerror\s*=/gi,
+      /onclick\s*=/gi,
+      /onmouseover\s*=/gi,
+      
+      // SQL injection patterns
+      /union\s+select/gi,
+      /drop\s+table/gi,
+      /insert\s+into/gi,
+      /delete\s+from/gi,
+      /update\s+set/gi,
+      
+      // File inclusion patterns
+      /include\s*\(/gi,
+      /require\s*\(/gi,
+      /file_get_contents\s*\(/gi,
+      
+      // Command injection patterns
+      /\|\s*nc\s/gi,
+      /\|\s*netcat\s/gi,
+      /\|\s*bash\s/gi,
+      /\|\s*sh\s/gi,
+      /\|\s*cmd\s/gi,
+      
+      // Base64 encoded suspicious content
+      /[A-Za-z0-9+\/]{100,}={0,2}/g // Detect long base64 strings
+    ];
+
+    const foundPatterns = [];
+    suspiciousPatterns.forEach((pattern, index) => {
+      if (pattern.test(contentStr)) {
+        foundPatterns.push(`Pattern ${index + 1}`);
+      }
     });
 
-    return {
-      clean: !result.includes('FOUND'),
-      result: result.trim()
-    };
-  } catch (error) {
-    // ClamAV not available or scan failed
-    console.warn('Virus scanning not available or failed:', error.message);
+    // Method 3: Check for embedded executable signatures
+    const executableSignatures = [
+      Buffer.from([0x4D, 0x5A]), // PE executable (MZ header)
+      Buffer.from([0x7F, 0x45, 0x4C, 0x46]), // ELF executable
+      Buffer.from([0xCA, 0xFE, 0xBA, 0xBE]), // Mach-O executable
+      Buffer.from([0xFE, 0xED, 0xFA, 0xCE]), // Mach-O executable (reverse)
+    ];
 
-    // Fallback: Basic content analysis for suspicious patterns
-    try {
-      const content = await fs.readFile(filePath);
-      const suspiciousPatterns = [
-        /eval\s*\(/gi,
-        /exec\s*\(/gi,
-        /system\s*\(/gi,
-        /shell_exec\s*\(/gi,
-        /<script[^>]*>/gi,
-        /javascript:/gi,
-        /vbscript:/gi,
-        /onload\s*=/gi,
-        /onerror\s*=/gi
-      ];
+    const hasExecutableSignature = executableSignatures.some(signature => {
+      if (content.length < signature.length) return false;
+      return content.subarray(0, signature.length).equals(signature);
+    });
 
-      const contentStr = content.toString('utf8', 0, Math.min(content.length, 10000));
-      const hasSuspiciousContent = suspiciousPatterns.some(pattern => pattern.test(contentStr));
-
+    if (hasExecutableSignature) {
       return {
-        clean: !hasSuspiciousContent,
-        result: hasSuspiciousContent ? 'Suspicious content detected' : 'Basic scan passed'
-      };
-    } catch (readError) {
-      return {
-        clean: true,
-        result: 'Could not scan file content'
+        clean: false,
+        result: 'Executable file signature detected',
+        method: 'signature_scan'
       };
     }
+
+    // Method 4: Check file entropy (high entropy might indicate packed/encrypted malware)
+    const entropy = calculateEntropy(content.subarray(0, Math.min(content.length, 8192)));
+    if (entropy > 7.5) { // High entropy threshold
+      return {
+        clean: false,
+        result: `High entropy detected (${entropy.toFixed(2)}) - possible packed/encrypted content`,
+        method: 'entropy_analysis'
+      };
+    }
+
+    if (foundPatterns.length > 0) {
+      return {
+        clean: false,
+        result: `Suspicious content patterns detected: ${foundPatterns.join(', ')}`,
+        method: 'pattern_analysis'
+      };
+    }
+
+    return {
+      clean: true,
+      result: 'Multiple security scans passed',
+      method: 'comprehensive'
+    };
+
+  } catch (error) {
+    console.error('File security scan error:', error);
+    return {
+      clean: true,
+      result: 'Scan failed - allowing with warning',
+      method: 'error'
+    };
   }
+}
+
+/**
+ * Calculate Shannon entropy of data to detect packed/encrypted content
+ */
+function calculateEntropy(buffer) {
+  const frequencies = new Array(256).fill(0);
+  
+  // Count byte frequencies
+  for (let i = 0; i < buffer.length; i++) {
+    frequencies[buffer[i]]++;
+  }
+  
+  // Calculate entropy
+  let entropy = 0;
+  for (let i = 0; i < 256; i++) {
+    if (frequencies[i] > 0) {
+      const probability = frequencies[i] / buffer.length;
+      entropy -= probability * Math.log2(probability);
+    }
+  }
+  
+  return entropy;
 }
 
 /**

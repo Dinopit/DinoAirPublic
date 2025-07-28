@@ -264,45 +264,42 @@ class SecurityDatabase {
   }
 
   async storeUserRetentionPreferences(userId, preferences) {
-    const query = `
-      INSERT INTO user_retention_preferences (
-        user_id, chat_retention_days, artifact_retention_days, 
-        analytics_retention_days, auto_delete_enabled, minimal_data_collection, updated_at
-      ) VALUES ($1, $2, $3, $4, $5, $6, $7)
-      ON CONFLICT (user_id) 
-      DO UPDATE SET 
-        chat_retention_days = EXCLUDED.chat_retention_days,
-        artifact_retention_days = EXCLUDED.artifact_retention_days,
-        analytics_retention_days = EXCLUDED.analytics_retention_days,
-        auto_delete_enabled = EXCLUDED.auto_delete_enabled,
-        minimal_data_collection = EXCLUDED.minimal_data_collection,
-        updated_at = EXCLUDED.updated_at
-    `;
-
-    const values = [
-      userId,
-      preferences.chat_retention_days,
-      preferences.artifact_retention_days,
-      preferences.analytics_retention_days,
-      preferences.auto_delete_enabled,
-      preferences.minimal_data_collection,
-      preferences.updated_at
-    ];
+    await this.ensureInitialized();
 
     try {
-      await this.db.query(query, values);
+      const { error } = await this.supabase
+        .from('user_retention_preferences')
+        .upsert({
+          user_id: userId,
+          chat_retention_days: preferences.chat_retention_days,
+          artifact_retention_days: preferences.artifact_retention_days,
+          analytics_retention_days: preferences.analytics_retention_days,
+          auto_delete_enabled: preferences.auto_delete_enabled,
+          minimal_data_collection: preferences.minimal_data_collection,
+          updated_at: preferences.updated_at || new Date().toISOString()
+        }, {
+          onConflict: 'user_id'
+        });
+
+      if (error) throw error;
     } catch (error) {
       console.error('Error storing retention preferences:', error);
       throw error;
     }
-  }
+  },
 
   async getUserRetentionPreferences(userId) {
-    const query = 'SELECT * FROM user_retention_preferences WHERE user_id = $1';
+    await this.ensureInitialized();
 
     try {
-      const result = await this.db.query(query, [userId]);
-      return result.rows[0] || null;
+      const { data, error } = await this.supabase
+        .from('user_retention_preferences')
+        .select('*')
+        .eq('user_id', userId)
+        .single();
+
+      if (error && error.code !== 'PGRST116') throw error;
+      return data || null;
     } catch (error) {
       console.error('Error getting retention preferences:', error);
       throw error;
@@ -310,25 +307,24 @@ class SecurityDatabase {
   }
 
   async storeDataExportRequest(exportRequest) {
-    const query = `
-      INSERT INTO data_export_requests (
-        user_id, export_type, requested_at, status, estimated_completion, includes
-      ) VALUES ($1, $2, $3, $4, $5, $6)
-      RETURNING id
-    `;
-
-    const values = [
-      exportRequest.user_id,
-      exportRequest.export_type,
-      exportRequest.requested_at,
-      exportRequest.status,
-      exportRequest.estimated_completion,
-      JSON.stringify(exportRequest.includes)
-    ];
+    await this.ensureInitialized();
 
     try {
-      const result = await this.db.query(query, values);
-      return result.rows[0]?.id;
+      const { data, error } = await this.supabase
+        .from('data_export_requests')
+        .insert({
+          user_id: exportRequest.user_id,
+          export_type: exportRequest.export_type,
+          requested_at: exportRequest.requested_at,
+          status: exportRequest.status,
+          estimated_completion: exportRequest.estimated_completion,
+          includes: exportRequest.includes
+        })
+        .select()
+        .single();
+
+      if (error) throw error;
+      return data?.id;
     } catch (error) {
       console.error('Error storing export request:', error);
       throw error;
@@ -336,24 +332,15 @@ class SecurityDatabase {
   }
 
   async updateDataExportRequest(requestId, updates) {
-    const setClause = [];
-    const values = [requestId];
-    let paramIndex = 2;
-
-    for (const [key, value] of Object.entries(updates)) {
-      setClause.push(`${key} = $${paramIndex}`);
-      values.push(value);
-      paramIndex++;
-    }
-
-    const query = `
-      UPDATE data_export_requests 
-      SET ${setClause.join(', ')}
-      WHERE id = $1
-    `;
+    await this.ensureInitialized();
 
     try {
-      await this.db.query(query, values);
+      const { error } = await this.supabase
+        .from('data_export_requests')
+        .update(updates)
+        .eq('id', requestId);
+
+      if (error) throw error;
     } catch (error) {
       console.error('Error updating export request:', error);
       throw error;
@@ -361,17 +348,20 @@ class SecurityDatabase {
   }
 
   async getUserExportRequests(userId) {
-    const query = `
-      SELECT * FROM data_export_requests 
-      WHERE user_id = $1 
-      ORDER BY requested_at DESC
-    `;
+    await this.ensureInitialized();
 
     try {
-      const result = await this.db.query(query, [userId]);
-      return result.rows.map(row => ({
+      const { data, error } = await this.supabase
+        .from('data_export_requests')
+        .select('*')
+        .eq('user_id', userId)
+        .order('requested_at', { ascending: false });
+
+      if (error) throw error;
+      
+      return data.map(row => ({
         ...row,
-        includes: JSON.parse(row.includes || '[]')
+        includes: typeof row.includes === 'string' ? JSON.parse(row.includes || '[]') : row.includes
       }));
     } catch (error) {
       console.error('Error getting export requests:', error);

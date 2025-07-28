@@ -35,6 +35,8 @@
     "load-test:auth": "npx artillery run load-tests/scenarios/auth-api.yml",
     "load-test:system": "npx artillery run load-tests/scenarios/system-api.yml",
     "load-test:all": "npm run load-test:health && npm run load-test:chat && npm run load-test:artifacts && npm run load-test:auth && npm run load-test:system",
+    "security:validate": "node scripts/validate-security.js",
+    "security:test": "npm run test && npm run security:validate",
     "prepare": "cd .. && husky install",
     "lint:fix-safe": "eslint --fix . || true"
   },
