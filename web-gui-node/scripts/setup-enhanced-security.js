@@ -37,7 +37,7 @@ async function setupSecurityTables() {
         console.log(`   ${statement.substring(0, 100)}${statement.length > 100 ? '...' : ''}`);
 
         const { error } = await supabaseAdmin.rpc('exec_sql', { 
-          sql_query: statement + ';' 
+          sql_query: statement.endsWith(';') ? statement : statement + ';' 
         });
 
         if (error) {
