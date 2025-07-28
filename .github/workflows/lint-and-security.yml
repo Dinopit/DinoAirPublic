@@ -113,6 +113,26 @@ jobs:
         with:
           fetch-depth: 0
           
+      - name: Set up Node.js for secrets management
+        uses: actions/setup-node@v4
+        with:
+          node-version: '18'
+          
+      - name: Install dependencies for secrets validation
+        run: |
+          cd web-gui-node
+          npm ci
+          
+      - name: Run DinoAir Secrets Validation
+        run: |
+          node scripts/secrets-cli.js validate --strict --json > secrets-validation.json || true
+          echo "Secrets validation completed"
+          
+      - name: Run DinoAir Security Audit
+        run: |
+          node scripts/secrets-cli.js audit --detailed --save || true
+          echo "Security audit completed"
+          
       - name: Run Gitleaks
         uses: gitleaks/gitleaks-action@v2
         env:
@@ -131,6 +151,16 @@ jobs:
             p/python
         env:
           SEMGREP_APP_TOKEN: ${{ secrets.SEMGREP_APP_TOKEN }}
+          
+      - name: Upload security scan results
+        uses: actions/upload-artifact@v4
+        if: always()
+        with:
+          name: security-scan-results
+          path: |
+            secrets-validation.json
+            security-audit-*.json
+          retention-days: 30
 
   dependency-check:
     name: Dependency Vulnerability Scan

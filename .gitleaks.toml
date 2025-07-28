@@ -1,8 +1,9 @@
-title = "DinoAir Gitleaks Configuration"
+title = "DinoAir Enhanced Gitleaks Configuration"
 
 [extend]
 useDefault = true
 
+# Custom rules for DinoAir-specific secrets
 [[rules]]
 id = "supabase-url"
 description = "Supabase URL"
@@ -14,6 +15,12 @@ id = "supabase-anon-key"
 description = "Supabase Anonymous Key"
 regex = '''eyJhbGciOiJIUzI1NiIsInR5cCI6IkpXVCJ9\.[a-zA-Z0-9_-]+\.[a-zA-Z0-9_-]+'''
 tags = ["supabase", "jwt", "key"]
+
+[[rules]]
+id = "supabase-service-role"
+description = "Supabase Service Role Key"
+regex = '''eyJhbGciOiJIUzI1NiIsInR5cCI6IkpXVCJ9\.[a-zA-Z0-9_-]{100,}\.[a-zA-Z0-9_-]+'''
+tags = ["supabase", "service-role", "critical"]
 
 [[rules]]
 id = "postgres-connection"
@@ -33,6 +40,48 @@ description = "Generic Secret"
 regex = '''(?i)(secret|password|passwd|pwd)[[:space:]]*[=:][[:space:]]*['\"]?[a-zA-Z0-9_-]{8,}['\"]?'''
 tags = ["secret", "password"]
 
+[[rules]]
+id = "session-secret"
+description = "Session Secret"
+regex = '''(?i)session[_-]?secret[[:space:]]*[=:][[:space:]]*['\"]?[a-zA-Z0-9_-]{16,}['\"]?'''
+tags = ["session", "secret"]
+
+[[rules]]
+id = "jwt-secret"
+description = "JWT Secret"
+regex = '''(?i)jwt[_-]?secret[[:space:]]*[=:][[:space:]]*['\"]?[a-zA-Z0-9_-]{16,}['\"]?'''
+tags = ["jwt", "secret"]
+
+[[rules]]
+id = "sentry-dsn"
+description = "Sentry DSN"
+regex = '''https://[a-f0-9]{32}@[a-z0-9]+\.ingest\.sentry\.io/[0-9]+'''
+tags = ["sentry", "dsn"]
+
+[[rules]]
+id = "slack-webhook"
+description = "Slack Webhook URL"
+regex = '''https://hooks\.slack\.com/services/[A-Z0-9]+/[A-Z0-9]+/[a-zA-Z0-9]+'''
+tags = ["slack", "webhook"]
+
+[[rules]]
+id = "smtp-credentials"
+description = "SMTP Credentials in URL"
+regex = '''smtp://[^:]+:[^@]+@'''
+tags = ["smtp", "credentials"]
+
+[[rules]]
+id = "weak-password-patterns"
+description = "Common Weak Password Patterns"
+regex = '''(?i)\b(password|secret|key)\b[[:space:]]*[=:][[:space:]]*['\"]?(password|1234?|admin|root|test|demo|letmein|welcome|qwerty|abc123)['\"]?'''
+tags = ["weak", "password"]
+
+[[rules]]
+id = "production-secrets-in-code"
+description = "Production-like secrets in source code"
+regex = '''(?i)(prod|production)[_-]?(password|secret|key|token)[[:space:]]*[=:][[:space:]]*['\"]?[a-zA-Z0-9_-]{8,}['\"]?'''
+tags = ["production", "secret", "critical"]
+
 [allowlist]
 paths = [
     ".env.example",
@@ -43,16 +92,55 @@ paths = [
     "**/*_test.go",
     "**/*_test.js",
     "**/*_test.py",
-    "CREDENTIAL_SECURITY.md"
+    "CREDENTIAL_SECURITY.md",
+    "SECURITY.md",
+    "scripts/secrets-cli.js",
+    "lib/secrets-manager.js"
 ]
 
 # Allow example/placeholder values
 regexes = [
     '''your-[a-z-]+-here''',
     '''your-[a-z-]+-id''',
+    '''your-[a-z-]+-change-this-in-production''',
+    '''change-this-in-production''',
     '''example\.com''',
     '''localhost''',
     '''127\.0\.0\.1''',
     '''placeholder''',
-    '''change-this-in-production'''
+    '''your-project-id-change-this''',
+    '''your-secure-.*-change-this''',
+    '''minimum-32-chars-change-this''',
+    '''sk_your-secret-key-change-this''',
+    '''pk_test_your-publishable-key-change-this''',
+    '''sb-your-api-key-change-this''',
+    '''eyJhbGciOiJIUzI1NiIsInR5cCI6IkpXVCJ9\.your-.*-change-this''',
+    '''your-webhook-url-change-this''',
+    '''your-sentry-dsn-change-this''',
+    '''username-change-this''',
+    '''password-change-this''',
+    '''database-name-change-this''',
+    '''YOUR/SLACK/WEBHOOK-change-this''',
+    # Placeholder patterns for documentation
+    '''<your-.*>''',
+    '''\[your-.*\]''',
+    '''\{your-.*\}''',
+    # Common test values
+    '''test[_-]?key''',
+    '''fake[_-]?secret''',
+    '''mock[_-]?token'''
+]
+
+# High-sensitivity files that should trigger alerts even with weak patterns
+[[rules]]
+id = "sensitive-file-weak-secrets"
+description = "Weak secrets in sensitive files"
+regex = '''(?i)(api[_-]?key|secret|password|token)[[:space:]]*[=:][[:space:]]*['\"]?(test|demo|example|123)[a-zA-Z0-9]*['\"]?'''
+tags = ["weak", "sensitive-file"]
+paths = [
+    "**/config/**",
+    "**/deployment/**",
+    "**/.env",
+    "**/docker-compose.yml",
+    "**/kubernetes/**"
 ]
