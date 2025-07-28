@@ -39,7 +39,7 @@ export const Skeleton: React.FC<SkeletonProps> = ({
   return (
     <div
       className={`
-        bg-gray-200 dark:bg-gray-700
+        bg-muted dark:bg-muted
         ${animation ? (pulse ? 'animate-pulse' : 'skeleton') : ''}
         ${getVariantClasses()}
         ${className}
