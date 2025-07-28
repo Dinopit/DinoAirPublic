@@ -3,14 +3,14 @@
     "Python": "3.12",
     "Node.js": "20.19.4",
     "RAM": "15.6 GB",
-    "Disk Space": "27.3 GB",
+    "Disk Space": "27.1 GB",
     "GPU": "PyTorch not installed",
     "Port Conflicts": []
   },
   "errors": [],
   "warnings": [
     "Recommended 16GB RAM, found 15.6GB",
-    "Recommended 30GB disk space, found 27.3GB"
+    "Recommended 30GB disk space, found 27.1GB"
   ],
   "can_proceed": true
 }
