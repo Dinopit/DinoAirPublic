@@ -170,7 +170,10 @@ jobs:
             fi
             
             # Check system resources
-            echo "CPU: $(top -bn1 | grep "Cpu(s)" | awk '{print $2}' | cut -d'%' -f1)"
+            CPU_USAGE=$(awk -v PREV_IDLE=0 -v PREV_TOTAL=0 '
+              BEGIN { getline; split($0, cpu, " "); idle=cpu[5]; total=0; for (i=2; i<=NF; i++) total+=cpu[i]; }
+              { usage=100 * (1 - (idle - PREV_IDLE) / (total - PREV_TOTAL)); print usage; PREV_IDLE=idle; PREV_TOTAL=total; }' < /proc/stat)
+            echo "CPU: ${CPU_USAGE}%"
             echo "Memory: $(free -m | awk 'NR==2{printf "%.1f%%", $3*100/$2}')"
             echo "---"
             
