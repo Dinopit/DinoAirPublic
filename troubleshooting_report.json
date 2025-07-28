@@ -1,0 +1,42 @@
+{
+  "issues": [
+    {
+      "issue": "Not running in virtual environment",
+      "severity": "warning",
+      "fix": "Activate the virtual environment: source venv/bin/activate"
+    },
+    {
+      "issue": "Missing node_modules in web-gui",
+      "severity": "error",
+      "fix": "Run: cd web-gui && npm install"
+    },
+    {
+      "issue": "Missing node_modules in web-gui-node",
+      "severity": "error",
+      "fix": "Run: cd web-gui-node && npm install"
+    },
+    {
+      "issue": "Missing .env file",
+      "severity": "error",
+      "fix": "Run the enhanced installation script or copy .env.example to .env"
+    },
+    {
+      "issue": "Directory data does not exist",
+      "severity": "warning",
+      "fix": "Create directory: mkdir -p data"
+    },
+    {
+      "issue": "Directory models does not exist",
+      "severity": "warning",
+      "fix": "Create directory: mkdir -p models"
+    },
+    {
+      "issue": "PyTorch not installed",
+      "severity": "warning",
+      "fix": "Run: pip install torch torchvision torchaudio"
+    }
+  ],
+  "fixes_applied": [],
+  "total_issues": 7,
+  "critical_count": 0
+}

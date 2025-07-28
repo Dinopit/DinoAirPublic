@@ -1,0 +1,24 @@
+# GPU requirements for DinoAir
+# Install with: pip install -r requirements-gpu.txt
+
+-r requirements.txt
+
+# PyTorch and related
+torch>=2.1.0
+torchvision>=0.16.0
+torchaudio>=2.1.0
+
+# AI/ML libraries
+transformers>=4.35.0
+accelerate>=0.24.0
+diffusers>=0.23.0
+safetensors>=0.4.0
+
+# Performance optimizations
+xformers>=0.0.22
+
+# Computer vision
+opencv-python>=4.8.0
+
+# ONNX runtime
+onnxruntime-gpu>=1.16.0

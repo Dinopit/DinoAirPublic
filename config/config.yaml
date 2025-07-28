@@ -1,0 +1,7 @@
+app_name: DinoAir
+debug: false
+host: localhost
+port: 3000
+timeout: 300
+version: '1.5'
+workers: 4
