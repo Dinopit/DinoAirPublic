@@ -1,5 +1,5 @@
 import React, { useState } from 'react';
-import { Mic, Settings } from 'lucide-react';
+import { Mic } from 'lucide-react';
 import { VoiceControls } from '../../ui/voice-controls';
 import { sanitizeText } from '../../../lib/security/sanitizer';
 
@@ -50,7 +50,7 @@ const ChatInput: React.FC<ChatInputProps> = ({
           <div className="p-4 border-b bg-muted/50">
             <VoiceControls
               onTranscriptChange={handleTranscriptChange}
-              onAudioMessage={onAudioMessage}
+              onAudioMessage={onAudioMessage || (() => {})}
               compact={false}
             />
           </div>

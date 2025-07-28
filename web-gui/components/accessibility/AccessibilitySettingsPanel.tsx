@@ -8,7 +8,7 @@
 import React from 'react';
 import { useTranslation } from 'react-i18next';
 import { useAccessibility } from '../../contexts/accessibility-context';
-import { Settings, Eye, Keyboard, Volume2, Type, Monitor } from 'lucide-react';
+import { Settings, Eye, Keyboard, Volume2, Type } from 'lucide-react';
 
 interface AccessibilitySettingsPanelProps {
   isOpen?: boolean;

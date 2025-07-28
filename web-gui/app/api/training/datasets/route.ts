@@ -2,7 +2,7 @@ import { NextRequest, NextResponse } from 'next/server';
 import { modelTrainingService } from '@/lib/services/model-training';
 
 // GET /api/training/datasets - Get all datasets
-export async function GET(request: NextRequest) {
+export async function GET(_request: NextRequest) {
   try {
     const datasets = await modelTrainingService.getDatasets();
 

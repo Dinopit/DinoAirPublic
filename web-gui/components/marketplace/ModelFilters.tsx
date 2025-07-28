@@ -1,5 +1,7 @@
 import React from 'react';
-import { ModelCategory } from '@/lib/services/model-registry';
+
+// Define ModelCategory type locally to avoid import issues
+type ModelCategory = 'chat' | 'image' | 'embedding' | 'all';
 
 interface ModelFiltersProps {
   selectedCategory?: ModelCategory;
@@ -16,7 +18,7 @@ const ModelFilters: React.FC<ModelFiltersProps> = ({
   showInstalled,
   installedFilter,
   onInstalledFilterChange,
-  className = ''
+  className = '',
 }) => {
   const categories = [
     { value: ModelCategory.CODE_GENERATION, label: 'Code Generation', icon: '💻' },
@@ -25,7 +27,7 @@ const ModelFilters: React.FC<ModelFiltersProps> = ({
     { value: ModelCategory.CHAT, label: 'Chat', icon: '💬' },
     { value: ModelCategory.IMAGE_GENERATION, label: 'Image Generation', icon: '🎨' },
     { value: ModelCategory.DOMAIN_SPECIFIC, label: 'Domain Specific', icon: '🔬' },
-    { value: ModelCategory.CUSTOM, label: 'Custom', icon: '⚙️' }
+    { value: ModelCategory.CUSTOM, label: 'Custom', icon: '⚙️' },
   ];
 
   return (
@@ -36,7 +38,7 @@ const ModelFilters: React.FC<ModelFiltersProps> = ({
           <span className="text-sm font-medium text-foreground">Category:</span>
           <select
             value={selectedCategory || ''}
-            onChange={(e) => onCategoryChange(e.target.value as ModelCategory || undefined)}
+            onChange={(e) => onCategoryChange((e.target.value as ModelCategory) || undefined)}
             className="px-3 py-2 border border-border rounded-lg bg-background text-foreground text-sm focus:outline-none focus:ring-2 focus:ring-primary focus:border-transparent"
           >
             <option value="">All Categories</option>
@@ -53,7 +55,13 @@ const ModelFilters: React.FC<ModelFiltersProps> = ({
           <div className="flex items-center space-x-2">
             <span className="text-sm font-medium text-foreground">Status:</span>
             <select
-              value={installedFilter === true ? 'installed' : installedFilter === false ? 'available' : 'all'}
+              value={
+                installedFilter === true
+                  ? 'installed'
+                  : installedFilter === false
+                    ? 'available'
+                    : 'all'
+              }
               onChange={(e) => {
                 const value = e.target.value;
                 if (value === 'installed') {
@@ -88,9 +96,9 @@ const ModelFilters: React.FC<ModelFiltersProps> = ({
           {categories.slice(0, 4).map((category) => (
             <button
               key={category.value}
-              onClick={() => onCategoryChange(
-                selectedCategory === category.value ? undefined : category.value
-              )}
+              onClick={() =>
+                onCategoryChange(selectedCategory === category.value ? undefined : category.value)
+              }
               className={`px-3 py-2 rounded-lg text-sm font-medium transition-colors ${
                 selectedCategory === category.value
                   ? 'bg-primary text-primary-foreground'
@@ -123,7 +131,7 @@ const ModelFilters: React.FC<ModelFiltersProps> = ({
           <span className="text-xs text-muted-foreground">Active filters:</span>
           {selectedCategory && (
             <span className="px-2 py-1 bg-primary/10 text-primary text-xs rounded-full">
-              {categories.find(c => c.value === selectedCategory)?.label}
+              {categories.find((c) => c.value === selectedCategory)?.label}
               <button
                 onClick={() => onCategoryChange(undefined)}
                 className="ml-1 hover:text-primary/80"

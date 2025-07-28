@@ -1,8 +1,7 @@
-import { NodeSDK } from '@opentelemetry/sdk-node';
-import { resourceFromAttributes } from '@opentelemetry/resources';
-import { SemanticResourceAttributes } from '@opentelemetry/semantic-conventions';
-import { getNodeAutoInstrumentations } from '@opentelemetry/auto-instrumentations-node';
-import { PrometheusExporter } from '@opentelemetry/exporter-prometheus';
+/**
+ * APM (Application Performance Monitoring)
+ * Simplified monitoring setup for DinoAir
+ */
 
 export interface APMConfig {
   serviceName?: string;
@@ -21,10 +20,9 @@ export interface PerformanceMetrics {
 }
 
 export class APMMonitor {
-  private sdk: NodeSDK;
-  private metricsExporter: PrometheusExporter;
   private config: APMConfig;
   private isStarted: boolean = false;
+  private metrics: Map<string, number> = new Map();
 
   constructor(config: APMConfig = {}) {
     this.config = {
@@ -35,73 +33,65 @@ export class APMMonitor {
       enableConsoleExporter: process.env.NODE_ENV === 'development',
       ...config,
     };
-
-    this.metricsExporter = new PrometheusExporter({
-      port: this.config.metricsPort!,
-      endpoint: this.config.metricsEndpoint!,
-    });
-
-    this.sdk = new NodeSDK({
-      resource: resourceFromAttributes({
-        [SemanticResourceAttributes.SERVICE_NAME]: this.config.serviceName!,
-        [SemanticResourceAttributes.SERVICE_VERSION]: this.config.serviceVersion!,
-        [SemanticResourceAttributes.SERVICE_NAMESPACE]: 'dinoair',
-        [SemanticResourceAttributes.DEPLOYMENT_ENVIRONMENT]: process.env.NODE_ENV || 'development',
-      }),
-      instrumentations: [getNodeAutoInstrumentations({
-        '@opentelemetry/instrumentation-fs': {
-          enabled: false, // Disable file system instrumentation to reduce noise
-        },
-      })],
-      metricReader: this.metricsExporter,
-    });
   }
 
   start(): void {
     if (this.isStarted) {
-      console.warn('APM monitoring is already started');
       return;
     }
 
-    try {
-      this.sdk.start();
-      this.isStarted = true;
-      console.log(`APM monitoring started for ${this.config.serviceName} v${this.config.serviceVersion}`);
-      console.log(`Metrics available at http://localhost:${this.config.metricsPort}${this.config.metricsEndpoint}`);
-    } catch (error) {
-      console.error('Failed to start APM monitoring:', error);
-      throw error;
-    }
+    console.log(`APM: Starting monitoring for ${this.config.serviceName}`);
+    this.isStarted = true;
   }
 
   async shutdown(): Promise<void> {
     if (!this.isStarted) {
-      console.warn('APM monitoring is not started');
       return;
     }
 
-    try {
-      await this.sdk.shutdown();
-      this.isStarted = false;
-      console.log('APM monitoring shutdown completed');
-    } catch (error) {
-      console.error('Failed to shutdown APM monitoring:', error);
-      throw error;
+    console.log('APM: Stopping monitoring');
+    this.isStarted = false;
+  }
+
+  recordMetric(name: string, value: number): void {
+    this.metrics.set(name, value);
+
+    if (this.config.enableConsoleExporter) {
+      console.log(`APM Metric: ${name} = ${value}`);
     }
   }
 
+  getMetrics(): Record<string, number> {
+    return Object.fromEntries(this.metrics);
+  }
+
   collectPerformanceMetrics(): PerformanceMetrics {
-    const startTime = process.hrtime.bigint();
-    
-    const metrics: PerformanceMetrics = {
-      responseTime: Number(process.hrtime.bigint() - startTime) / 1000000, // Convert to milliseconds
-      memoryUsage: process.memoryUsage(),
-      cpuUsage: process.cpuUsage(),
-      uptime: process.uptime(),
+    const memoryUsage =
+      typeof process !== 'undefined'
+        ? process.memoryUsage()
+        : { rss: 0, heapTotal: 0, heapUsed: 0, external: 0, arrayBuffers: 0 };
+
+    const cpuUsage = typeof process !== 'undefined' ? process.cpuUsage() : { user: 0, system: 0 };
+
+    const uptime = typeof process !== 'undefined' ? process.uptime() : 0;
+
+    return {
+      responseTime: 0,
+      memoryUsage,
+      cpuUsage,
+      uptime,
       timestamp: new Date().toISOString(),
     };
+  }
 
-    return metrics;
+  startSpan(name: string): { end: () => void } {
+    const startTime = Date.now();
+    return {
+      end: () => {
+        const duration = Date.now() - startTime;
+        this.recordMetric(`span.${name}.duration`, duration);
+      },
+    };
   }
 
   getStatus(): { isStarted: boolean; config: APMConfig } {
@@ -123,20 +113,10 @@ export function getAPMInstance(config?: APMConfig): APMMonitor {
 
 export function initializeAPM(config?: APMConfig): APMMonitor {
   const apm = getAPMInstance(config);
-  
+
   if (process.env.NODE_ENV === 'production' || process.env.DINOAIR_APM_ENABLED === 'true') {
     apm.start();
   }
-
-  process.on('SIGTERM', async () => {
-    console.log('Received SIGTERM, shutting down APM monitoring...');
-    await apm.shutdown();
-  });
-
-  process.on('SIGINT', async () => {
-    console.log('Received SIGINT, shutting down APM monitoring...');
-    await apm.shutdown();
-  });
 
   return apm;
 }

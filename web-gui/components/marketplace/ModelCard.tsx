@@ -16,38 +16,43 @@ const ModelCard: React.FC<ModelCardProps> = ({
   onInstallToggle,
   onSelect,
   showExternalBadge = false,
-  className = ''
+  className = '',
 }) => {
   const formatSize = (bytes: number): string => {
     if (bytes === 0) return 'Unknown';
+    const BYTES_PER_KB = 1024;
     const sizes = ['B', 'KB', 'MB', 'GB', 'TB'];
     const i = Math.floor(Math.log(bytes) / Math.log(BYTES_PER_KB));
-    return Math.round(bytes / Math.pow(BYTES_PER_KB, i) * 100) / 100 + ' ' + sizes[i];
+    return Math.round((bytes / Math.pow(BYTES_PER_KB, i)) * 100) / 100 + ' ' + sizes[i];
   };
 
   const formatCategory = (category: string): string => {
-    return category.split('-').map(word => 
-      word.charAt(0).toUpperCase() + word.slice(1)
-    ).join(' ');
+    return category
+      .split('-')
+      .map((word) => word.charAt(0).toUpperCase() + word.slice(1))
+      .join(' ');
   };
 
   const getCategoryColor = (category: string): string => {
     const colors = {
       'code-generation': 'bg-blue-100 text-blue-800',
       'creative-writing': 'bg-purple-100 text-purple-800',
-      'analysis': 'bg-green-100 text-green-800',
-      'chat': 'bg-orange-100 text-orange-800',
+      analysis: 'bg-green-100 text-green-800',
+      chat: 'bg-orange-100 text-orange-800',
       'image-generation': 'bg-pink-100 text-pink-800',
       'domain-specific': 'bg-gray-100 text-gray-800',
-      'custom': 'bg-indigo-100 text-indigo-800'
+      custom: 'bg-indigo-100 text-indigo-800',
     };
     return colors[category as keyof typeof colors] || colors.custom;
   };
 
-  const isInstalling = installProgress?.status === 'downloading' || installProgress?.status === 'installing';
+  const isInstalling =
+    installProgress?.status === 'downloading' || installProgress?.status === 'installing';
 
   return (
-    <div className={`model-card bg-card border rounded-lg p-6 hover:shadow-lg transition-all duration-200 ${className}`}>
+    <div
+      className={`model-card bg-card border rounded-lg p-6 hover:shadow-lg transition-all duration-200 ${className}`}
+    >
       {/* Header */}
       <div className="flex items-start justify-between mb-4">
         <div className="flex-1 min-w-0">
@@ -59,7 +64,7 @@ const ModelCard: React.FC<ModelCardProps> = ({
           </div>
           <p className="text-sm text-muted-foreground">v{model.version}</p>
         </div>
-        
+
         <div className="flex items-center space-x-2">
           {model.rating > 0 && (
             <div className="flex items-center">
@@ -75,7 +80,9 @@ const ModelCard: React.FC<ModelCardProps> = ({
 
       {/* Category Badge */}
       <div className="mb-3">
-        <span className={`inline-block px-3 py-1 rounded-full text-xs font-medium ${getCategoryColor(model.category)}`}>
+        <span
+          className={`inline-block px-3 py-1 rounded-full text-xs font-medium ${getCategoryColor(model.category)}`}
+        >
           {formatCategory(model.category)}
         </span>
       </div>
@@ -90,10 +97,7 @@ const ModelCard: React.FC<ModelCardProps> = ({
         <div className="mb-4">
           <div className="flex flex-wrap gap-1">
             {model.tags.slice(0, 3).map((tag) => (
-              <span
-                key={tag}
-                className="px-2 py-1 text-xs bg-muted text-muted-foreground rounded"
-              >
+              <span key={tag} className="px-2 py-1 text-xs bg-muted text-muted-foreground rounded">
                 {tag}
               </span>
             ))}
@@ -148,7 +152,8 @@ const ModelCard: React.FC<ModelCardProps> = ({
           </div>
           {installProgress.downloadedBytes && installProgress.totalBytes && (
             <div className="text-xs text-muted-foreground mt-1">
-              {formatSize(installProgress.downloadedBytes)} / {formatSize(installProgress.totalBytes)}
+              {formatSize(installProgress.downloadedBytes)} /{' '}
+              {formatSize(installProgress.totalBytes)}
             </div>
           )}
         </div>
@@ -176,7 +181,7 @@ const ModelCard: React.FC<ModelCardProps> = ({
             'Install'
           )}
         </button>
-        
+
         {onSelect && (
           <button
             onClick={onSelect}
