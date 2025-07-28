@@ -8,7 +8,7 @@ import { KeyboardShortcutsModal } from '../ui/keyboard-shortcuts-modal';
 import { OnboardingTutorial } from '../ui/onboarding-tutorial';
 import { SettingsPanel } from '../ui/settings-panel';
 import { ToastProvider, useToast } from '../ui/toast';
-import { Menu, X, Settings, Keyboard, Bug, BarChart3, Puzzle } from 'lucide-react';
+import { Menu, X, Settings, Keyboard, Bug, BarChart3 } from 'lucide-react';
 import { DebugProvider, useDebug } from '../../contexts/debug-context';
 import { useScreenReader } from '../../hooks/useScreenReader';
 import { OfflineIndicator } from '../ui/offline-indicator';
@@ -37,14 +37,19 @@ const DebugPanel = dynamic(() => import('../ui/debug-panel'), {
   loading: () => <div>Loading debug panel...</div>,
 });
 
-const PluginManager = dynamic(() => import('../plugins'), {
-  ssr: false,
-  loading: () => <div className="flex items-center justify-center h-64">Loading plugins...</div>,
-});
+const PluginManager = dynamic(
+  () => import('../plugins/PluginManager').then((mod) => ({ default: mod.PluginManager })),
+  {
+    ssr: false,
+    loading: () => <div className="flex items-center justify-center h-64">Loading plugins...</div>,
+  }
+);
 
 const ModelMarketplace = dynamic(() => import('../marketplace/ModelMarketplace'), {
   ssr: false,
-  loading: () => <div className="flex items-center justify-center h-64">Loading marketplace...</div>,
+  loading: () => (
+    <div className="flex items-center justify-center h-64">Loading marketplace...</div>
+  ),
 });
 
 type Tab = 'chat' | 'artifacts' | 'local-tools' | 'plugins' | 'marketplace';
