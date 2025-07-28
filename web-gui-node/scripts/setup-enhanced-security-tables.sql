@@ -1,6 +1,17 @@
 -- Enhanced session management database schema
 -- Creates table for tracking user sessions with sliding timeouts and activity monitoring
 
+-- Enable the pg_similarity extension if available (for user agent comparison)
+-- This needs to be at the beginning before any functions that use SIMILARITY
+DO $$
+BEGIN
+    CREATE EXTENSION IF NOT EXISTS pg_similarity;
+EXCEPTION WHEN others THEN
+    -- Extension not available, continue without it
+    NULL;
+END
+$$;
+
 -- User sessions table for enhanced session management
 CREATE TABLE IF NOT EXISTS user_sessions (
     id BIGSERIAL PRIMARY KEY,
@@ -204,10 +215,18 @@ BEGIN
     IF LENGTH(session_record.user_agent) > 10 AND 
        LENGTH(p_new_user_agent) > 10 AND
        session_record.user_agent != p_new_user_agent THEN
-        -- Allow minor variations but flag major changes
-        IF SIMILARITY(session_record.user_agent, p_new_user_agent) < 0.7 THEN
+        -- Try to use SIMILARITY function if pg_similarity extension is available
+        -- Fall back to simple string comparison if not available
+        BEGIN
+            IF SIMILARITY(session_record.user_agent, p_new_user_agent) < 0.7 THEN
+                suspicious := TRUE;
+            END IF;
+        EXCEPTION WHEN undefined_function THEN
+            -- pg_similarity extension not available, fall back to basic check
+            -- Flag as suspicious if user agents are completely different
+            -- This is a more conservative approach without similarity scoring
             suspicious := TRUE;
-        END IF;
+        END;
     END IF;
     
     -- Log suspicious activity
@@ -225,17 +244,6 @@ BEGIN
     RETURN suspicious;
 END;
 $$ LANGUAGE plpgsql SECURITY DEFINER;
-
--- Enable the pg_similarity extension if available (for user agent comparison)
--- This is optional and will fail silently if not available
-DO $$
-BEGIN
-    CREATE EXTENSION IF NOT EXISTS pg_similarity;
-EXCEPTION WHEN others THEN
-    -- Extension not available, continue without it
-    NULL;
-END
-$$;
 
 -- Comments for documentation
 COMMENT ON TABLE user_sessions IS 'Enhanced session tracking with sliding timeouts and activity monitoring';
