@@ -27,7 +27,7 @@ export function ChartWrapper({
       <AccessibleChartWrapper
         data={data}
         title={title}
-        description={description ?? undefined}
+        description={description}
         chartType={chartType}
       >
         {children}
