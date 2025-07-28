@@ -1,0 +1,22 @@
+{
+  "performance": {
+    "batch_size": 2,
+    "memory_limit_mb": 8192,
+    "cpu_threads": 4,
+    "gpu_enabled": false
+  },
+  "hardware_detected": {
+    "cpu": {
+      "cores": 4,
+      "threads": 8
+    },
+    "memory": {
+      "total_gb": 16.0
+    },
+    "gpu": {
+      "type": "none"
+    }
+  },
+  "optimization_applied": true,
+  "timestamp": 1753724310.0142424
+}

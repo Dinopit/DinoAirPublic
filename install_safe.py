@@ -12,6 +12,7 @@ import shutil
 import time
 import traceback
 import getpass
+import json
 from typing import Optional, Tuple, Dict, Any, List
 from pathlib import Path
 from dataclasses import dataclass, asdict
@@ -255,6 +256,7 @@ class HardwareDetector:
     def detect_cpu(self):
         """Detect CPU information"""
         try:
+            import psutil
             cpu_info = {
                 'cores': psutil.cpu_count(logical=False),
                 'threads': psutil.cpu_count(logical=True),
@@ -1325,27 +1327,6 @@ if __name__ == "__main__":
             
         except Exception as e:
             self.log(f"Configuration optimization failed: {e}", "WARNING")
-            
-            # Step 4: Create safe start script
-            self.create_safe_start_script()
-            
-            # Step 5: Summary
-            self.log("\n" + "=" * 60, "INFO")
-            self.log("Installation completed!", "SUCCESS")
-            self.log("=" * 60, "INFO")
-            self.log("\nTo start DinoAir safely, run:", "INFO")
-            self.log(f"  python {self.script_dir}/start_safe.py", "INFO")
-            
-            return True
-            
-        except Exception as e:
-            self.log(f"Unexpected error: {e}", "ERROR")
-            self.log(traceback.format_exc(), "DEBUG")
-            self.perform_rollback()
-            return False
-        
-        finally:
-            self.save_install_log()
 
 
 def main():
