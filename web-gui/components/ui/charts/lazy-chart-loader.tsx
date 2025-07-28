@@ -30,6 +30,10 @@ export function LazyChartLoader({ type, ...props }: ILazyChartLoaderProps) {
     heatmap: Heatmap,
   }[type];
 
+  if (!ChartComponent) {
+    return <div>Unsupported chart type: {type}</div>;
+  }
+
   return (
     <Suspense fallback={<ChartLoadingSpinner />}>
       <ChartComponent {...props} />
