@@ -1,0 +1,14 @@
+{
+  "jwt_secret": "6f07c9791c38f9cb28fd9506ce50adecc425f68a814a41ead30809a007e71268",
+  "api_key_required": true,
+  "rate_limiting": {
+    "enabled": true,
+    "requests_per_minute": 60
+  },
+  "cors": {
+    "enabled": true,
+    "origins": [
+      "http://localhost:3000"
+    ]
+  }
+}

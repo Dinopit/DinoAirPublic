@@ -1,0 +1,158 @@
+{
+  "daily": {
+    "description": "Daily automated backup testing",
+    "schedule": "0 5 * * *",
+    "max_duration": 3600,
+    "test_cases": [
+      {
+        "name": "file_backup_creation",
+        "test_type": "backup_creation",
+        "description": "Test file system backup creation",
+        "enabled": true,
+        "timeout": 600,
+        "prerequisites": [],
+        "test_data": {}
+      },
+      {
+        "name": "database_backup_creation",
+        "test_type": "backup_creation",
+        "description": "Test database backup creation",
+        "enabled": true,
+        "timeout": 300,
+        "prerequisites": [],
+        "test_data": {}
+      },
+      {
+        "name": "backup_verification",
+        "test_type": "backup_verification",
+        "description": "Verify backup integrity",
+        "enabled": true,
+        "timeout": 300,
+        "prerequisites": [],
+        "test_data": {}
+      },
+      {
+        "name": "quick_restore_test",
+        "test_type": "restore_functionality",
+        "description": "Test restore functionality with small dataset",
+        "enabled": true,
+        "timeout": 600,
+        "prerequisites": [],
+        "test_data": {
+          "restore_type": "selective",
+          "test_files": [
+            "config.yaml"
+          ]
+        }
+      }
+    ]
+  },
+  "weekly": {
+    "description": "Weekly comprehensive backup and recovery testing",
+    "schedule": "0 2 * * 0",
+    "max_duration": 7200,
+    "test_cases": [
+      {
+        "name": "full_system_backup",
+        "test_type": "backup_creation",
+        "description": "Test complete system backup",
+        "enabled": true,
+        "timeout": 1800,
+        "prerequisites": [],
+        "test_data": {}
+      },
+      {
+        "name": "comprehensive_verification",
+        "test_type": "backup_verification",
+        "description": "Comprehensive backup verification",
+        "enabled": true,
+        "timeout": 600,
+        "prerequisites": [],
+        "test_data": {}
+      },
+      {
+        "name": "full_restore_test",
+        "test_type": "restore_functionality",
+        "description": "Test full system restore",
+        "enabled": true,
+        "timeout": 2400,
+        "prerequisites": [],
+        "test_data": {
+          "restore_type": "full",
+          "use_test_environment": true
+        }
+      },
+      {
+        "name": "disaster_recovery_simulation",
+        "test_type": "disaster_recovery",
+        "description": "Simulate disaster recovery scenario",
+        "enabled": true,
+        "timeout": 3600,
+        "prerequisites": [],
+        "test_data": {
+          "disaster_type": "database_corruption"
+        }
+      },
+      {
+        "name": "backup_performance_test",
+        "test_type": "performance",
+        "description": "Measure backup performance metrics",
+        "enabled": true,
+        "timeout": 900,
+        "prerequisites": [],
+        "test_data": {}
+      }
+    ]
+  },
+  "monthly": {
+    "description": "Monthly stress testing and edge cases",
+    "schedule": "0 1 1 * *",
+    "max_duration": 10800,
+    "test_cases": [
+      {
+        "name": "large_dataset_backup",
+        "test_type": "stress_test",
+        "description": "Test backup with large dataset",
+        "enabled": true,
+        "timeout": 3600,
+        "prerequisites": [],
+        "test_data": {
+          "dataset_size_mb": 1000
+        }
+      },
+      {
+        "name": "concurrent_backup_test",
+        "test_type": "stress_test",
+        "description": "Test concurrent backup operations",
+        "enabled": true,
+        "timeout": 1800,
+        "prerequisites": [],
+        "test_data": {
+          "concurrent_backups": 3
+        }
+      },
+      {
+        "name": "low_disk_space_test",
+        "test_type": "stress_test",
+        "description": "Test backup behavior with low disk space",
+        "enabled": true,
+        "timeout": 900,
+        "prerequisites": [],
+        "test_data": {
+          "simulate_low_space": true
+        }
+      },
+      {
+        "name": "corruption_recovery_test",
+        "test_type": "disaster_recovery",
+        "description": "Test recovery from corrupted backups",
+        "enabled": true,
+        "timeout": 2400,
+        "prerequisites": [],
+        "test_data": {
+          "corruption_type": "partial"
+        }
+      }
+    ]
+  }
+}
