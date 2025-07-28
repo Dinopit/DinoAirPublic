@@ -18,10 +18,9 @@ import {
   SelectValue,
 } from '@/components/ui/select';
 import { Tabs, TabsContent, TabsList, TabsTrigger } from '@/components/ui/tabs';
-import { LineChart } from '@/components/ui/charts/line-chart';
-import { BarChart as CustomBarChart } from '@/components/ui/charts/bar-chart';
-import { PieChart } from '@/components/ui/charts/pie-chart';
-import { AnalyticsData } from '@/types/analytics';
+import { LazyChartLoader } from '@/components/ui/charts/lazy-chart-loader';
+import { ChartErrorBoundary } from '@/components/ui/charts/chart-error-boundary';
+import type { AnalyticsData } from '@/types/analytics';
 import {
   Activity,
   Cpu,
@@ -517,11 +516,14 @@ export default function MonitoringDashboard() {
                     <CardTitle>Chat Activity Trends</CardTitle>
                   </CardHeader>
                   <CardContent>
-                    <LineChart
-                      data={analyticsData.metrics.chat.dailyActivity}
-                      title="Messages Over Time"
-                      color="#3b82f6"
-                    />
+                    <ChartErrorBoundary>
+                      <LazyChartLoader
+                        type="line"
+                        data={analyticsData.metrics.chat.dailyActivity}
+                        title="Messages Over Time"
+                        color="#3b82f6"
+                      />
+                    </ChartErrorBoundary>
                   </CardContent>
                 </Card>
 
@@ -530,14 +532,19 @@ export default function MonitoringDashboard() {
                     <CardTitle>User Engagement</CardTitle>
                   </CardHeader>
                   <CardContent>
-                    <CustomBarChart
-                      data={analyticsData.metrics.user.userBehavior.mostActiveHours.map((item) => ({
-                        label: `${item.hour}:00`,
-                        value: item.activity,
-                      }))}
-                      title="Activity by Hour"
-                      color="#10b981"
-                    />
+                    <ChartErrorBoundary>
+                      <LazyChartLoader
+                        type="bar"
+                        data={analyticsData.metrics.user.userBehavior.mostActiveHours.map(
+                          (item) => ({
+                            label: `${item.hour}:00`,
+                            value: item.activity,
+                          })
+                        )}
+                        title="Activity by Hour"
+                        color="#10b981"
+                      />
+                    </ChartErrorBoundary>
                   </CardContent>
                 </Card>
 
@@ -546,14 +553,17 @@ export default function MonitoringDashboard() {
                     <CardTitle>Response Time Distribution</CardTitle>
                   </CardHeader>
                   <CardContent>
-                    <PieChart
-                      data={[
-                        { label: 'Fast (<500ms)', value: 65, color: '#10b981' },
-                        { label: 'Medium (500ms-2s)', value: 25, color: '#f59e0b' },
-                        { label: 'Slow (>2s)', value: 10, color: '#ef4444' },
-                      ]}
-                      title="Response Time Categories"
-                    />
+                    <ChartErrorBoundary>
+                      <LazyChartLoader
+                        type="pie"
+                        data={[
+                          { label: 'Fast (<500ms)', value: 65, color: '#10b981' },
+                          { label: 'Medium (500ms-2s)', value: 25, color: '#f59e0b' },
+                          { label: 'Slow (>2s)', value: 10, color: '#ef4444' },
+                        ]}
+                        title="Response Time Categories"
+                      />
+                    </ChartErrorBoundary>
                   </CardContent>
                 </Card>
 
@@ -562,11 +572,14 @@ export default function MonitoringDashboard() {
                     <CardTitle>System Performance</CardTitle>
                   </CardHeader>
                   <CardContent>
-                    <LineChart
-                      data={analyticsData.metrics.system.performanceMetrics.averageResponseTime}
-                      title="System Metrics Over Time"
-                      color="#8b5cf6"
-                    />
+                    <ChartErrorBoundary>
+                      <LazyChartLoader
+                        type="line"
+                        data={analyticsData.metrics.system.performanceMetrics.averageResponseTime}
+                        title="System Metrics Over Time"
+                        color="#8b5cf6"
+                      />
+                    </ChartErrorBoundary>
                   </CardContent>
                 </Card>
               </div>

@@ -1,11 +1,13 @@
-import { NextRequest, NextResponse } from 'next/server';
-import { withApiAuth } from '@/lib/middleware/api-auth';
+import type { NextRequest } from 'next/server';
+import { NextResponse } from 'next/server';
+
 import { analyticsClient } from '@/lib/analytics/analytics-client';
+import { withAnalyticsAuth } from '@/lib/middleware/analytics-auth';
 
 async function getAnalyticsDashboard(request: NextRequest) {
   try {
     const { searchParams } = new URL(request.url);
-    const timeframe = searchParams.get('timeframe') || '7d';
+    const timeframe = searchParams.get('timeframe') ?? '7d';
     const includeInsights = searchParams.get('includeInsights') === 'true';
 
     const chatAnalyticsData = await analyticsClient.getAdvancedAnalytics(timeframe);
@@ -347,4 +349,4 @@ function getTimeframeInterval(timeframe: string): number {
   return intervalMap[timeframe as keyof typeof intervalMap] || 24 * 60 * 60 * 1000;
 }
 
-export const GET = withApiAuth(getAnalyticsDashboard);
+export const GET = withAnalyticsAuth(getAnalyticsDashboard);
