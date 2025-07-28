@@ -294,11 +294,11 @@ runTest('Password Strength Validation', () => {
   const strongPassword = "MyStr0ng!P@ssw0rd2024";
   
   weakPasswords.forEach(password => {
-    const isWeak = !/^(?=.*[a-z])(?=.*[A-Z])(?=.*\d)(?=.*[@$!%*?&^#()_+\-=\[\]{};':"\\|,.<>\/?])[A-Za-z\d@$!%*?&^#()_+\-=\[\]{};':"\\|,.<>\/?]{12,}$/.test(password);
+    const isWeak = !customValidators.isValidPassword(password);
     assert(isWeak, `Weak password incorrectly validated as strong: ${password}`);
   });
   
-  const isStrong = /^(?=.*[a-z])(?=.*[A-Z])(?=.*\d)(?=.*[@$!%*?&^#()_+\-=\[\]{};':"\\|,.<>\/?])[A-Za-z\d@$!%*?&^#()_+\-=\[\]{};':"\\|,.<>\/?]{12,}$/.test(strongPassword);
+  const isStrong = customValidators.isValidPassword(strongPassword);
   assert(isStrong, "Strong password incorrectly rejected");
 });
 
