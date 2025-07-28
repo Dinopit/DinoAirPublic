@@ -1,0 +1,21 @@
+{
+  "version": "1.0",
+  "created": 1753721591.947944,
+  "data_categories": {
+    "configuration": {
+      "description": "User configuration and preferences",
+      "retention_days": 365,
+      "legal_basis": "legitimate_interest"
+    },
+    "logs": {
+      "description": "Application logs and error reports",
+      "retention_days": 90,
+      "legal_basis": "legitimate_interest"
+    },
+    "models": {
+      "description": "Downloaded AI models and associated data",
+      "retention_days": 0,
+      "legal_basis": "consent"
+    }
+  }
+}
