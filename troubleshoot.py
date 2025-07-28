@@ -213,9 +213,10 @@ class DinoAirTroubleshooter:
         for issue in self.issues:
             if "Missing directory" in issue["issue"] and "mkdir" in issue["fix"]:
                 try:
-                    dir_name = issue["issue"].split()[-3]  # Extract directory name
-                    Path(dir_name).mkdir(parents=True, exist_ok=True)
-                    self.fixes_applied.append(f"Created directory: {dir_name}")
+                    dir_name = issue.get("directory")  # Use the explicit directory field
+                    if dir_name:
+                        Path(dir_name).mkdir(parents=True, exist_ok=True)
+                        self.fixes_applied.append(f"Created directory: {dir_name}")
                 except:
                     pass
     
