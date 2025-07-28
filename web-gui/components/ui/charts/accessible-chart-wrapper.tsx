@@ -63,6 +63,8 @@ export function AccessibleChartWrapper({
     if (index < 0 || index >= data.length) return;
 
     const point = data[index];
+    if (!point) return;
+
     const value = 'value' in point ? point.value : 0;
     const label = 'label' in point ? point.label : `Point ${index + 1}`;
 
