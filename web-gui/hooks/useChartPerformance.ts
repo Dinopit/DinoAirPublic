@@ -182,7 +182,7 @@ export function useChartPerformance(
     if (opts.reportingInterval > 0) {
       reportingIntervalId.current = setInterval(() => {
         const avgMetrics = getAverageMetrics();
-        if (avgMetrics.renderTime > 0) {
+        if (avgMetrics.renderTime > 0 && opts.debugMode) {
           console.debug('Chart Performance Metrics:', {
             ...avgMetrics,
             memoryUsage: `${(avgMetrics.memoryUsage / 1024 / 1024).toFixed(2)} MB`,
