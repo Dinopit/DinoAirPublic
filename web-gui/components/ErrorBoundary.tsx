@@ -64,7 +64,7 @@ class ErrorBoundary extends Component<Props, State> {
     if (!this.state.dinoAirError) return;
 
     const errorDetails = {
-      message: this.state.dinoAirError.message,
+      message: 'An error occurred. Please contact support if the issue persists.', // Redacted for security
       type: this.state.dinoAirError.type,
       severity: this.state.dinoAirError.severity,
       userMessage: this.state.dinoAirError.userMessage,
