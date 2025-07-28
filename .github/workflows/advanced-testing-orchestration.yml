@@ -172,9 +172,10 @@ jobs:
       - name: Checkout code
         uses: actions/checkout@v4
 
-      - name: Trigger advanced security testing
-        uses: ./.github/workflows/advanced-security-testing.yml
-        continue-on-error: true
+      - name: Security testing reference
+        run: |
+          echo "Security testing is handled by the 'Advanced Security Testing' workflow"
+          echo "which runs automatically on push/PR events in parallel with this workflow"
 
       - name: Generate security test summary
         run: |
