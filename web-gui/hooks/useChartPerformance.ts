@@ -62,8 +62,8 @@ export function useChartPerformance(
       return 0;
     }
 
-    // Use performance.measureUserAgentSpecificMemory if available (Chrome)
-    if ('measureUserAgentSpecificMemory' in performance) {
+    // Use performance.measureUserAgentSpecificMemory if available and crossOriginIsolated is true (Chrome)
+    if (self.crossOriginIsolated && 'measureUserAgentSpecificMemory' in performance) {
       return (performance as any).measureUserAgentSpecificMemory?.()?.bytes || 0;
     }
 
