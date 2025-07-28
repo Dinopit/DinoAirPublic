@@ -89,7 +89,7 @@ export const useOfflineStatus = () => {
         const db = await initDB();
 
         const queuedRequest: QueuedRequest = {
-          id: `${Date.now()}-${Math.random().toString(36).substr(2, 9)}`,
+          id: `${Date.now()}-${Math.random().toString(36).substring(2, 11)}`,
           url,
           method: options.method || 'GET',
           body: options.body as string,
