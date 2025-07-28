@@ -42,7 +42,7 @@ const enhancedAuth = async (req, res, next) => {
     return await handleSessionAuth(req, res, next, metadata);
 
   } catch (error) {
-    console.error(`🛡️  [${new Date().toISOString()}] EnhancedAuth: Error:`, error);
+    console.error(`🛡️  [${new Date().toISOString()}] EnhancedAuth: Error:`, sanitizeError(error));
     console.timeEnd('enhancedAuth');
     return res.status(500).json({ error: 'Authentication system error' });
   }
