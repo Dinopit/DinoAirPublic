@@ -66,7 +66,7 @@ const ModelCard: React.FC<ModelCardProps> = ({
         </div>
 
         <div className="flex items-center space-x-2">
-          {model.rating > 0 && (
+          {model.rating && model.rating > 0 && (
             <div className="flex items-center">
               <span className="text-yellow-500">⭐</span>
               <span className="text-sm text-muted-foreground ml-1">{model.rating.toFixed(1)}</span>
