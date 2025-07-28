@@ -1,0 +1,82 @@
+{
+  "app": {
+    "title": "DinoAir - Local AI Platform",
+    "description": "A powerful, self-contained AI platform combining local language models with image generation capabilities",
+    "loading": "Loading DinoAir...",
+    "initializing": "Initializing optimized interface"
+  },
+  "navigation": {
+    "chat": "Chat",
+    "artifacts": "Artifacts",
+    "localTools": "Local Tools",
+    "plugins": "Plugins",
+    "marketplace": "Marketplace",
+    "settings": "Settings",
+    "help": "Help",
+    "toggleTheme": "Toggle theme",
+    "toggleMenu": "Toggle menu"
+  },
+  "accessibility": {
+    "skipToMain": "Skip to main content",
+    "closeDialog": "Close dialog",
+    "openDialog": "Open dialog",
+    "menu": "Menu",
+    "loading": "Loading",
+    "error": "Error",
+    "success": "Success",
+    "warning": "Warning",
+    "info": "Information",
+    "liveRegionPolite": "Status updates",
+    "liveRegionAssertive": "Important announcements",
+    "keyboardShortcuts": "Keyboard shortcuts",
+    "highContrast": "High contrast mode",
+    "reduceMotion": "Reduce motion",
+    "screenReader": "Screen reader optimized"
+  },
+  "chat": {
+    "inputPlaceholder": "Type your message...",
+    "send": "Send message",
+    "newConversation": "New conversation",
+    "clearChat": "Clear chat",
+    "exportChat": "Export chat",
+    "thinking": "AI is thinking...",
+    "error": "Failed to send message",
+    "retry": "Retry",
+    "copy": "Copy message",
+    "edit": "Edit message",
+    "delete": "Delete message"
+  },
+  "settings": {
+    "title": "Settings",
+    "general": "General",
+    "accessibility": "Accessibility",
+    "appearance": "Appearance",
+    "language": "Language",
+    "theme": "Theme",
+    "autoMode": "Auto",
+    "lightMode": "Light",
+    "darkMode": "Dark",
+    "highContrastMode": "High Contrast",
+    "fontSize": "Font Size",
+    "small": "Small",
+    "medium": "Medium",
+    "large": "Large",
+    "extraLarge": "Extra Large",
+    "reduceMotion": "Reduce Motion",
+    "announceChanges": "Announce Changes",
+    "keyboardNavigation": "Keyboard Navigation",
+    "save": "Save",
+    "cancel": "Cancel",
+    "reset": "Reset to Defaults"
+  },
+  "errors": {
+    "general": "Something went wrong",
+    "network": "Network error",
+    "loading": "Failed to load",
+    "notFound": "Not found",
+    "unauthorized": "Unauthorized access",
+    "serverError": "Server error",
+    "retry": "Try again",
+    "goBack": "Go back"
+  }
+}

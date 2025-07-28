@@ -1,0 +1,82 @@
+{
+  "app": {
+    "title": "DinoAir - Plataforma de IA Local",
+    "description": "Una plataforma de IA poderosa y autónoma que combina modelos de lenguaje locales con capacidades de generación de imágenes",
+    "loading": "Cargando DinoAir...",
+    "initializing": "Inicializando interfaz optimizada"
+  },
+  "navigation": {
+    "chat": "Chat",
+    "artifacts": "Artefactos",
+    "localTools": "Herramientas Locales",
+    "plugins": "Complementos",
+    "marketplace": "Tienda",
+    "settings": "Configuración",
+    "help": "Ayuda",
+    "toggleTheme": "Cambiar tema",
+    "toggleMenu": "Alternar menú"
+  },
+  "accessibility": {
+    "skipToMain": "Saltar al contenido principal",
+    "closeDialog": "Cerrar diálogo",
+    "openDialog": "Abrir diálogo",
+    "menu": "Menú",
+    "loading": "Cargando",
+    "error": "Error",
+    "success": "Éxito",
+    "warning": "Advertencia",
+    "info": "Información",
+    "liveRegionPolite": "Actualizaciones de estado",
+    "liveRegionAssertive": "Anuncios importantes",
+    "keyboardShortcuts": "Atajos de teclado",
+    "highContrast": "Modo de alto contraste",
+    "reduceMotion": "Reducir movimiento",
+    "screenReader": "Optimizado para lector de pantalla"
+  },
+  "chat": {
+    "inputPlaceholder": "Escribe tu mensaje...",
+    "send": "Enviar mensaje",
+    "newConversation": "Nueva conversación",
+    "clearChat": "Limpiar chat",
+    "exportChat": "Exportar chat",
+    "thinking": "La IA está pensando...",
+    "error": "Error al enviar mensaje",
+    "retry": "Reintentar",
+    "copy": "Copiar mensaje",
+    "edit": "Editar mensaje",
+    "delete": "Eliminar mensaje"
+  },
+  "settings": {
+    "title": "Configuración",
+    "general": "General",
+    "accessibility": "Accesibilidad",
+    "appearance": "Apariencia",
+    "language": "Idioma",
+    "theme": "Tema",
+    "autoMode": "Automático",
+    "lightMode": "Claro",
+    "darkMode": "Oscuro",
+    "highContrastMode": "Alto Contraste",
+    "fontSize": "Tamaño de Fuente",
+    "small": "Pequeño",
+    "medium": "Mediano",
+    "large": "Grande",
+    "extraLarge": "Extra Grande",
+    "reduceMotion": "Reducir Movimiento",
+    "announceChanges": "Anunciar Cambios",
+    "keyboardNavigation": "Navegación por Teclado",
+    "save": "Guardar",
+    "cancel": "Cancelar",
+    "reset": "Restablecer Valores Predeterminados"
+  },
+  "errors": {
+    "general": "Algo salió mal",
+    "network": "Error de red",
+    "loading": "Error al cargar",
+    "notFound": "No encontrado",
+    "unauthorized": "Acceso no autorizado",
+    "serverError": "Error del servidor",
+    "retry": "Intentar de nuevo",
+    "goBack": "Volver"
+  }
+}

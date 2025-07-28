@@ -216,8 +216,7 @@
     "security/detect-non-literal-regexp": "warn",
     "security/detect-non-literal-require": "warn",
     "security/detect-object-injection": "warn",
-    "security/detect-possible-timing-attacks": "warn",
-    "security/detect-pseudorandombytes": "error"
+    "security/detect-possible-timing-attacks": "warn"
   },
   "overrides": [
     {

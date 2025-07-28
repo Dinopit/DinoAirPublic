@@ -2,7 +2,13 @@ import type { Metadata, Viewport } from 'next';
 // import { Inter } from 'next/font/google' // Disabled for offline building
 import { ThemeProvider } from '@/components/ui/theme-provider';
 import { ToastNotifications } from '@/components/ui/toast-notifications';
+import { AccessibilityProvider } from '@/contexts/accessibility-context';
+import { SkipLinks } from '@/components/accessibility/SkipLinks';
+import { LiveRegion, StatusRegion, AlertRegion } from '@/components/accessibility/LiveRegions';
 import './globals.css';
+
+// Initialize i18n
+import '@/lib/i18n/config';
 
 // const inter = Inter({ subsets: ['latin'] }) // Disabled for offline building
 
@@ -50,16 +56,30 @@ export default function RootLayout({ children }: { children: React.ReactNode }) 
       <head>
         <link rel="icon" href="/favicon.ico" />
         <link rel="apple-touch-icon" href="/icons/icon-192x192.png" />
+        <meta name="theme-color" content="#3b82f6" />
       </head>
       <body className="font-sans">
-        {' '}
-        {/* Use system font instead of inter.className */}
-        <ThemeProvider>
-          <div id="root">{children}</div>
-          <div id="modal-root" />
-          <div id="toast-root" />
-          <ToastNotifications />
-        </ThemeProvider>
+        <SkipLinks />
+        <AccessibilityProvider>
+          <ThemeProvider>
+            <div id="root">
+              <main id="main-content" role="main">
+                {children}
+              </main>
+            </div>
+            <div id="modal-root" />
+            <div id="toast-root" />
+            <div id="navigation" role="navigation" aria-label="Main navigation" />
+            <div id="accessibility-settings" aria-label="Accessibility settings" />
+
+            {/* Live regions for announcements */}
+            <StatusRegion id="status-announcements" />
+            <AlertRegion id="alert-announcements" />
+            <LiveRegion id="general-announcements" priority="polite" />
+
+            <ToastNotifications />
+          </ThemeProvider>
+        </AccessibilityProvider>
       </body>
     </html>
   );

@@ -247,7 +247,7 @@ const nextConfig = {
     config.resolve.alias = {
       ...config.resolve.alias,
       // Use lighter alternatives where possible
-      lodash: 'lodash-es',
+      lodash: 'lodash',
     };
 
     // Handle node modules for client-side
