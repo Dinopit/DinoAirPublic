@@ -1,35 +1,88 @@
 /**
- * Supabase Client Configuration
+ * Supabase Client Configuration with Enhanced Security
  * Provides database connection and utility functions for DinoAir
  */
 
 const { createClient } = require('@supabase/supabase-js');
+const SecretsManager = require('../../lib/secrets-manager');
 require('dotenv').config();
 
-// Validate environment variables
-if (!process.env.SUPABASE_URL) {
-  throw new Error('SUPABASE_URL environment variable is required');
+// Initialize secrets manager
+const secretsManager = new SecretsManager();
+
+// Validate environment variables with security checks
+async function validateSupabaseConfig() {
+  const supabaseUrl = await secretsManager.getSecret('SUPABASE_URL');
+  const supabaseAnonKey = await secretsManager.getSecret('SUPABASE_ANON_KEY');
+  const supabaseServiceKey = await secretsManager.getSecret('SUPABASE_SERVICE_ROLE_KEY');
+
+  if (!supabaseUrl) {
+    throw new Error('SUPABASE_URL environment variable is required');
+  }
+
+  if (!supabaseAnonKey) {
+    throw new Error('SUPABASE_ANON_KEY environment variable is required');
+  }
+
+  // Validate URL format
+  if (!supabaseUrl.match(/^https:\/\/[a-z0-9-]+\.supabase\.co$/)) {
+    console.warn('⚠️  SUPABASE_URL format appears invalid or uses example value');
+  }
+
+  // Check for weak secrets
+  if (secretsManager.isWeakSecret(supabaseUrl) || secretsManager.isWeakSecret(supabaseAnonKey)) {
+    console.warn('⚠️  Supabase configuration contains weak or example values');
+    console.warn('   Please update with real credentials for production use');
+  }
+
+  // Warn about missing service role key if in production
+  if (process.env.NODE_ENV === 'production' && !supabaseServiceKey) {
+    console.warn('⚠️  SUPABASE_SERVICE_ROLE_KEY not configured for production environment');
+  }
+
+  return { supabaseUrl, supabaseAnonKey, supabaseServiceKey };
 }
 
-if (!process.env.SUPABASE_ANON_KEY) {
-  throw new Error('SUPABASE_ANON_KEY environment variable is required');
+// Initialize clients with validated configuration
+let supabase = null;
+let supabaseAdmin = null;
+
+async function initializeClients() {
+  try {
+    const config = await validateSupabaseConfig();
+    
+    // Create Supabase client with anonymous key (for public operations)
+    supabase = createClient(config.supabaseUrl, config.supabaseAnonKey, {
+      auth: {
+        autoRefreshToken: true,
+        persistSession: true,
+        detectSessionInUrl: false
+      }
+    });
+
+    // Create Supabase client with service role key (for admin operations)
+    if (config.supabaseServiceKey) {
+      supabaseAdmin = createClient(config.supabaseUrl, config.supabaseServiceKey, {
+        auth: {
+          autoRefreshToken: false,
+          persistSession: false
+        }
+      });
+    } else {
+      console.warn('⚠️  Admin client not available - SUPABASE_SERVICE_ROLE_KEY not configured');
+    }
+
+    console.log('✅ Supabase clients initialized successfully');
+  } catch (error) {
+    console.error('❌ Failed to initialize Supabase clients:', error.message);
+    throw error;
+  }
 }
 
-// Create Supabase client with anonymous key (for public operations)
-const supabase = createClient(process.env.SUPABASE_URL, process.env.SUPABASE_ANON_KEY, {
-  auth: {
-    autoRefreshToken: true,
-    persistSession: true,
-    detectSessionInUrl: false
-  }
-});
-
-// Create Supabase client with service role key (for admin operations)
-const supabaseAdmin = createClient(process.env.SUPABASE_URL, process.env.SUPABASE_SERVICE_ROLE_KEY, {
-  auth: {
-    autoRefreshToken: false,
-    persistSession: false
-  }
+// Initialize clients on module load
+initializeClients().catch(error => {
+  console.error('Fatal error initializing Supabase:', error);
+  process.exit(1);
 });
 
 /**

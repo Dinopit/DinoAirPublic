@@ -1,4 +1,17 @@
 {
+  "name": "dinoair",
+  "version": "1.0.0",
+  "description": "DinoAir - Secure AI Application Platform",
+  "scripts": {
+    "secrets": "node scripts/secrets-cli.js",
+    "secrets:validate": "node scripts/secrets-cli.js validate --strict",
+    "secrets:generate": "node scripts/secrets-cli.js generate",
+    "secrets:audit": "node scripts/secrets-cli.js audit --detailed",
+    "secrets:rotation-check": "node scripts/secrets-cli.js rotation-check",
+    "secrets:init": "node scripts/secrets-cli.js init",
+    "security:scan": "gitleaks detect --source . --verbose",
+    "security:full-audit": "npm run secrets:audit && npm run security:scan"
+  },
   "devDependencies": {
     "eslint-plugin-jsx-a11y": "^6.10.2"
   }
