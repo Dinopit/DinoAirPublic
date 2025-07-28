@@ -11,7 +11,7 @@ interface IChartErrorBoundaryState {
 interface IChartErrorBoundaryProps {
   children: ReactNode;
   fallback?: ReactNode;
-  onError?: (error: Error) => void;
+  onError?: ((error: Error) => void) | undefined;
   maxRetries?: number;
 }
 

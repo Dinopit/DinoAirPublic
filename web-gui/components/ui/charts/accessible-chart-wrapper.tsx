@@ -7,7 +7,7 @@ interface IAccessibleChartWrapperProps {
   children: React.ReactNode;
   data: TimeSeriesDataPoint[] | Array<{ label: string; value: number }>;
   title: string;
-  description?: string;
+  description?: string | undefined;
   chartType: 'line' | 'bar' | 'pie' | 'heatmap';
 }
 
