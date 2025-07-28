@@ -74,14 +74,22 @@ async function initializeClients() {
 
     console.log('✅ Supabase clients initialized successfully');
   } catch (error) {
-    console.error('❌ Failed to initialize Supabase clients:', error.message);
+    if (error instanceof ConfigurationError) {
+      console.error('❌ Configuration error during Supabase initialization:', error.message);
+    } else {
+      console.error('❌ Connection error during Supabase initialization:', error.message);
+    }
     throw error;
   }
 }
 
 // Initialize clients on module load
 initializeClients().catch(error => {
-  console.error('Fatal error initializing Supabase:', error);
+  if (error instanceof ConfigurationError) {
+    console.error('Fatal configuration error initializing Supabase:', error.message);
+  } else {
+    console.error('Fatal connection error initializing Supabase:', error.message);
+  }
   process.exit(1);
 });
 
