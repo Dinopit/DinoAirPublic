@@ -550,8 +550,12 @@ router.get('/status', rateLimits.api, async (req, res) => {
       ollamaBreaker.call(() =>
         withRetry(() => {
           const controller = new AbortController();
-          setTimeout(() => controller.abort(), 3000);
-          return fetch(`${CONFIG.ollamaUrl}/api/tags`, { signal: controller.signal }).then(r => r.ok);
+          const timeoutId = setTimeout(() => controller.abort(), 3000);
+          return fetch(`${CONFIG.ollamaUrl}/api/tags`, { signal: controller.signal })
+            .then(r => {
+              clearTimeout(timeoutId);
+              return r.ok;
+            });
         }, {
           maxRetries: 1,
           retryCondition: isRetryableError
