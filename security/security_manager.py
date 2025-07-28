@@ -104,7 +104,11 @@ class SecurityManager:
         
         return sanitized.strip()
     
-    def validate_file_upload(self, filename: str, content_type: str) -> tuple[bool, str]:
+    class ValidationResult(NamedTuple):
+        is_valid: bool
+        message: str
+    
+    def validate_file_upload(self, filename: str, content_type: str) -> ValidationResult:
         """Validate file uploads"""
         allowed_extensions = {
             '.png', '.jpg', '.jpeg', '.gif', '.webp',  # Images
