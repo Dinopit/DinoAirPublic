@@ -36,13 +36,10 @@ export const VoiceInput: React.FC<VoiceInputProps> = ({
   const [autoReadResponses, setAutoReadResponses] = useState(false);
 
   const {
-    isListening,
     transcript,
     interimTranscript,
     error: sttError,
     isSupported: sttSupported,
-    startListening,
-    stopListening,
     resetTranscript,
   } = useSpeechToText({
     continuous: false,
@@ -191,7 +188,7 @@ export const VoiceInput: React.FC<VoiceInputProps> = ({
       {/* Main voice controls */}
       <VoiceControls
         onTranscriptChange={handleTranscriptChange}
-        onAudioMessage={onAudioMessage}
+        onAudioMessage={onAudioMessage || (() => {})}
         compact={false}
       />
 

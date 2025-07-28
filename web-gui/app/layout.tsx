@@ -2,6 +2,7 @@ import type { Metadata, Viewport } from 'next';
 // import { Inter } from 'next/font/google' // Disabled for offline building
 import { ThemeProvider } from '@/components/ui/theme-provider';
 import { ToastNotifications } from '@/components/ui/toast-notifications';
+import { WebVitalsDisplay } from '@/components/ui/web-vitals-monitor';
 import './globals.css';
 
 // const inter = Inter({ subsets: ['latin'] }) // Disabled for offline building
@@ -45,6 +46,8 @@ export const viewport: Viewport = {
 };
 
 export default function RootLayout({ children }: { children: React.ReactNode }) {
+  const isDevelopment = process.env.NODE_ENV === 'development';
+
   return (
     <html lang="en" suppressHydrationWarning>
       <head>
@@ -59,6 +62,13 @@ export default function RootLayout({ children }: { children: React.ReactNode }) 
           <div id="modal-root" />
           <div id="toast-root" />
           <ToastNotifications />
+
+          {/* Performance monitoring in development */}
+          {isDevelopment && (
+            <div className="fixed bottom-4 left-4 z-50">
+              <WebVitalsDisplay compact />
+            </div>
+          )}
         </ThemeProvider>
       </body>
     </html>
