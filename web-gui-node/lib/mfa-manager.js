@@ -406,7 +406,7 @@ class MFAManager {
       const { error } = await supabaseAdmin
         .from('user_mfa')
         .update({ 
-          failure_count: supabaseAdmin.raw('failure_count + 1')
+          failure_count: supabaseAdmin.increment(1)
         })
         .eq('user_id', userId);
 
