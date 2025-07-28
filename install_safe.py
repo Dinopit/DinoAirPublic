@@ -95,7 +95,7 @@ installation tailored to your system and preferences.
                     print(f"{Fore.RED}Please choose from: {choices}{Style.RESET_ALL}")
                     continue
                     
-                return response
+                return response.lower() if choices else response
             except KeyboardInterrupt:
                 print(f"\n{Fore.YELLOW}Installation cancelled by user{Style.RESET_ALL}")
                 sys.exit(0)
