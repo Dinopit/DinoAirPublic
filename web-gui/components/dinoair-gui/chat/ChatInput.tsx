@@ -1,6 +1,7 @@
 import React, { useState } from 'react';
 import { Mic, Settings } from 'lucide-react';
 import { VoiceControls } from '../../ui/voice-controls';
+import { sanitizeText } from '../../../lib/security/sanitizer';
 
 interface ChatInputProps {
   isLoading: boolean;
@@ -21,14 +22,16 @@ const ChatInput: React.FC<ChatInputProps> = ({
   const [showVoiceControls, setShowVoiceControls] = useState(false);
 
   const handleTranscriptChange = (transcript: string) => {
-    if (transcript.trim()) {
-      setInputValue((prev) => prev + (prev ? ' ' : '') + transcript);
+    const sanitizedTranscript = sanitizeText(transcript);
+    if (sanitizedTranscript.trim()) {
+      setInputValue((prev) => prev + (prev ? ' ' : '') + sanitizedTranscript);
     }
   };
 
   const handleSendMessage = () => {
-    if (!inputValue.trim() || isLoading) return;
-    onSendMessage(inputValue.trim());
+    const sanitizedInput = sanitizeText(inputValue);
+    if (!sanitizedInput.trim() || isLoading) return;
+    onSendMessage(sanitizedInput.trim());
     setInputValue('');
   };
 

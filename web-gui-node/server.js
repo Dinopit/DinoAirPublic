@@ -66,6 +66,11 @@ const app = express();
 const server = http.createServer(app);
 console.log(`[${new Date().toISOString()}] ✅ Express app and HTTP server created`);
 
+// Enhanced security middleware
+console.log(`[${new Date().toISOString()}] 🛡️  Loading enhanced security middleware...`);
+const { enhancedSanitizeInput } = require('./middleware/enhanced-validation');
+console.log(`[${new Date().toISOString()}] ✅ Enhanced validation middleware loaded`);
+
 console.log(`[${new Date().toISOString()}] 🔌 Initializing Socket.IO...`);
 const io = socketIo(server, {
   cors: {
@@ -115,6 +120,11 @@ console.log(`[${new Date().toISOString()}] 📝 Loading body parsing middleware.
 app.use(express.json({ limit: '10mb' }));
 app.use(express.urlencoded({ extended: true, limit: '10mb' }));
 console.log(`[${new Date().toISOString()}] ✅ Body parsing middleware loaded`);
+
+// Enhanced input sanitization (after JSON parsing)
+console.log(`[${new Date().toISOString()}] 🔒 Applying enhanced input sanitization...`);
+app.use(enhancedSanitizeInput);
+console.log(`[${new Date().toISOString()}] ✅ Enhanced input sanitization applied`);
 
 // Static file serving
 console.log(`[${new Date().toISOString()}] 📁 Configuring static file serving...`);
