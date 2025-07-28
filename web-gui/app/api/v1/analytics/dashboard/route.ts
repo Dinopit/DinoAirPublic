@@ -7,7 +7,7 @@ import { withAnalyticsAuth } from '@/lib/middleware/analytics-auth';
 async function getAnalyticsDashboard(request: NextRequest) {
   try {
     const { searchParams } = new URL(request.url);
-    const timeframe = searchParams.get('timeframe') || '7d';
+    const timeframe = searchParams.get('timeframe') ?? '7d';
     const includeInsights = searchParams.get('includeInsights') === 'true';
 
     const chatAnalyticsData = await analyticsClient.getAdvancedAnalytics(timeframe);

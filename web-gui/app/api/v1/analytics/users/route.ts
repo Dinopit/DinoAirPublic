@@ -7,8 +7,8 @@ import { withAnalyticsAuth } from '@/lib/middleware/analytics-auth';
 async function getUserAnalytics(request: NextRequest) {
   try {
     const { searchParams } = new URL(request.url);
-    const timeframe = searchParams.get('timeframe') || '30d';
-    const segment = searchParams.get('segment') || 'all';
+    const timeframe = searchParams.get('timeframe') ?? '30d';
+    const segment = searchParams.get('segment') ?? 'all';
 
     const userAnalyticsData = await analyticsClient.getUserBehaviorAnalytics(timeframe);
 
