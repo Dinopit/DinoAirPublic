@@ -277,10 +277,10 @@ export function usePerformanceMeasure() {
     const endTime = performance.now();
     const duration = endTime - startTime;
 
-    console.debug(`${operationName} took ${duration.toFixed(2)}ms`);
+    logger(`${operationName} took ${duration.toFixed(2)}ms`);
 
     return { result, duration };
-  }, []);
+  }, [logger]);
 
   const measureAsyncOperation = useCallback(async <T>(
     operationName: string,
