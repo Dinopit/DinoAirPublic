@@ -6,14 +6,14 @@ import { Pie, Doughnut } from 'react-chartjs-2';
 
 ChartJS.register(ArcElement, Tooltip, Legend);
 
-interface PieChartData {
+interface IPieChartData {
   label: string;
   value: number;
   color?: string;
 }
 
-interface PieChartProps {
-  data: PieChartData[];
+interface IPieChartProps {
+  data: IPieChartData[];
   title?: string;
   height?: number;
   variant?: 'pie' | 'doughnut';
@@ -43,16 +43,22 @@ export function PieChart({
   showLegend = true,
   showPercentages = true,
   colors = defaultColors,
-}: PieChartProps) {
+}: IPieChartProps) {
   const total = data.reduce((sum, item) => sum + item.value, 0);
 
+  const isMobile = typeof window !== 'undefined' && window.innerWidth < 768;
+
   const chartData = {
-    labels: data.map((item) => item.label),
+    labels: data.map((item: IPieChartData) => item.label),
     datasets: [
       {
-        data: data.map((item) => item.value),
-        backgroundColor: data.map((item, index) => item.color || colors[index % colors.length]),
-        borderColor: data.map((item, index) => item.color || colors[index % colors.length]),
+        data: data.map((item: IPieChartData) => item.value),
+        backgroundColor: data.map(
+          (item: IPieChartData, index: number) => item.color ?? colors[index % colors.length]
+        ),
+        borderColor: data.map(
+          (item: IPieChartData, index: number) => item.color ?? colors[index % colors.length]
+        ),
         borderWidth: 2,
         hoverBorderWidth: 3,
       },
@@ -65,8 +71,13 @@ export function PieChart({
     plugins: {
       legend: {
         display: showLegend,
-        position: 'right' as const,
+        position: isMobile ? ('bottom' as const) : ('right' as const),
         labels: {
+          padding: isMobile ? 10 : 20,
+          boxWidth: isMobile ? 12 : 16,
+          font: {
+            size: isMobile ? 10 : 12,
+          },
           generateLabels: (chart: any) => {
             const data = chart.data;
             if (data.labels.length && data.datasets.length) {
@@ -91,8 +102,11 @@ export function PieChart({
         display: !!title,
         text: title,
         font: {
-          size: 16,
+          size: isMobile ? 14 : 16,
           weight: 'bold' as const,
+        },
+        padding: {
+          bottom: isMobile ? 10 : 20,
         },
       },
       tooltip: {
@@ -100,9 +114,15 @@ export function PieChart({
         titleColor: 'white',
         bodyColor: 'white',
         borderWidth: 1,
+        titleFont: {
+          size: isMobile ? 12 : 14,
+        },
+        bodyFont: {
+          size: isMobile ? 11 : 13,
+        },
         callbacks: {
           label: (context: any) => {
-            const label = context.label || '';
+            const label = context.label ?? '';
             const value = context.parsed;
             const percentage = ((value / total) * 100).toFixed(1);
             return `${label}: ${value} (${percentage}%)`;
@@ -115,7 +135,7 @@ export function PieChart({
   const ChartComponent = variant === 'doughnut' ? Doughnut : Pie;
 
   return (
-    <div style={{ height: `${height}px` }}>
+    <div style={{ height: `${height}px` }} className="w-full">
       <ChartComponent data={chartData} options={options} />
     </div>
   );

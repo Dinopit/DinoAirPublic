@@ -2,15 +2,15 @@
 
 import React from 'react';
 
-interface HeatmapData {
+interface IHeatmapData {
   x: number;
   y: number;
   value: number;
   label?: string;
 }
 
-interface HeatmapProps {
-  data: HeatmapData[];
+interface IHeatmapProps {
+  data: IHeatmapData[];
   title?: string;
   width?: number;
   height?: number;
@@ -43,9 +43,11 @@ export function Heatmap({
   colorScale = defaultColorScale,
   showValues = true,
   cellSize = 40,
-}: HeatmapProps) {
-  const maxValue = Math.max(...data.map((d) => d.value));
-  const minValue = Math.min(...data.map((d) => d.value));
+}: IHeatmapProps) {
+  const isMobile = typeof window !== 'undefined' && window.innerWidth < 768;
+
+  const maxValue = Math.max(...data.map((d: IHeatmapData) => d.value));
+  const minValue = Math.min(...data.map((d: IHeatmapData) => d.value));
 
   const getColor = (value: number) => {
     if (maxValue === minValue) return colorScale[0];
@@ -54,74 +56,83 @@ export function Heatmap({
     return colorScale[Math.min(index, colorScale.length - 1)];
   };
 
-  const maxX = Math.max(...data.map((d) => d.x));
-  const maxY = Math.max(...data.map((d) => d.y));
+  const maxX = Math.max(...data.map((d: IHeatmapData) => d.x));
+  const maxY = Math.max(...data.map((d: IHeatmapData) => d.y));
 
-  const actualWidth = Math.max(width, (maxX + 1) * cellSize + 100);
-  const actualHeight = Math.max(height, (maxY + 1) * cellSize + 100);
+  const adjustedCellSize = isMobile ? Math.min(cellSize, 30) : cellSize;
+  const actualWidth = Math.max(isMobile ? 350 : width, (maxX + 1) * adjustedCellSize + 100);
+  const actualHeight = Math.max(isMobile ? 300 : height, (maxY + 1) * adjustedCellSize + 100);
 
   return (
-    <div className="heatmap-container">
-      {title && <h3 className="text-lg font-semibold mb-4 text-center">{title}</h3>}
+    <div className="heatmap-container w-full">
+      {title && (
+        <h3 className={`font-semibold mb-4 text-center ${isMobile ? 'text-base' : 'text-lg'}`}>
+          {title}
+        </h3>
+      )}
 
-      <div className="relative">
-        <svg width={actualWidth} height={actualHeight} className="border rounded">
-          {/* Y-axis labels */}
+      <div className="relative overflow-x-auto">
+        <svg
+          width={actualWidth}
+          height={actualHeight}
+          className="border rounded min-w-full"
+          viewBox={isMobile ? `0 0 ${actualWidth} ${actualHeight}` : undefined}
+        >
           {yLabels.map((label, index) => (
             <text
               key={`y-${index}`}
               x={40}
-              y={60 + index * cellSize + cellSize / 2}
+              y={60 + index * adjustedCellSize + adjustedCellSize / 2}
               textAnchor="end"
               dominantBaseline="middle"
-              className="text-xs fill-gray-600"
+              className={`fill-gray-600 ${isMobile ? 'text-xs' : 'text-xs'}`}
+              fontSize={isMobile ? '10' : '12'}
             >
               {label}
             </text>
           ))}
 
-          {/* X-axis labels */}
           {xLabels.map((label, index) => (
             <text
               key={`x-${index}`}
-              x={50 + index * cellSize + cellSize / 2}
+              x={50 + index * adjustedCellSize + adjustedCellSize / 2}
               y={40}
               textAnchor="middle"
               dominantBaseline="middle"
-              className="text-xs fill-gray-600"
-              transform={`rotate(-45, ${50 + index * cellSize + cellSize / 2}, 40)`}
+              className={`fill-gray-600 ${isMobile ? 'text-xs' : 'text-xs'}`}
+              fontSize={isMobile ? '10' : '12'}
+              transform={`rotate(-45, ${50 + index * adjustedCellSize + adjustedCellSize / 2}, 40)`}
             >
               {label}
             </text>
           ))}
 
-          {/* Heatmap cells */}
           {data.map((point, index) => (
             <g key={index}>
               <rect
-                x={50 + point.x * cellSize}
-                y={50 + point.y * cellSize}
-                width={cellSize - 1}
-                height={cellSize - 1}
+                x={50 + point.x * adjustedCellSize}
+                y={50 + point.y * adjustedCellSize}
+                width={adjustedCellSize - 1}
+                height={adjustedCellSize - 1}
                 fill={getColor(point.value)}
                 stroke="#fff"
                 strokeWidth={1}
                 className="hover:stroke-gray-400 hover:stroke-2 cursor-pointer"
               >
                 <title>
-                  {point.label || `(${point.x}, ${point.y})`}: {point.value}
+                  {point.label ?? `(${point.x}, ${point.y})`}: {point.value}
                 </title>
               </rect>
 
               {showValues && (
                 <text
-                  x={50 + point.x * cellSize + cellSize / 2}
-                  y={50 + point.y * cellSize + cellSize / 2}
+                  x={50 + point.x * adjustedCellSize + adjustedCellSize / 2}
+                  y={50 + point.y * adjustedCellSize + adjustedCellSize / 2}
                   textAnchor="middle"
                   dominantBaseline="middle"
                   className="text-xs fill-gray-800 pointer-events-none"
                   style={{
-                    fontSize: Math.min(cellSize / 4, 12),
+                    fontSize: Math.min(adjustedCellSize / 4, isMobile ? 10 : 12),
                   }}
                 >
                   {point.value}
@@ -131,12 +142,17 @@ export function Heatmap({
           ))}
         </svg>
 
-        {/* Color scale legend */}
-        <div className="mt-4 flex items-center justify-center space-x-2">
+        <div
+          className={`mt-4 flex items-center justify-center space-x-2 ${isMobile ? 'text-xs' : ''}`}
+        >
           <span className="text-xs text-gray-600">{minValue}</span>
           <div className="flex">
             {colorScale.map((color, index) => (
-              <div key={index} className="w-4 h-4" style={{ backgroundColor: color }} />
+              <div
+                key={index}
+                className={`${isMobile ? 'w-3 h-3' : 'w-4 h-4'}`}
+                style={{ backgroundColor: color }}
+              />
             ))}
           </div>
           <span className="text-xs text-gray-600">{maxValue}</span>

@@ -1,6 +1,8 @@
-import { NextRequest, NextResponse } from 'next/server';
-import { withApiAuth } from '@/lib/middleware/api-auth';
+import type { NextRequest } from 'next/server';
+import { NextResponse } from 'next/server';
+
 import { analyticsClient } from '@/lib/analytics/analytics-client';
+import { withAnalyticsAuth } from '@/lib/middleware/analytics-auth';
 
 async function getTrendAnalytics(request: NextRequest) {
   try {
@@ -246,4 +248,4 @@ function generateTrendInsights(
   return insights;
 }
 
-export const GET = withApiAuth(getTrendAnalytics);
+export const GET = withAnalyticsAuth(getTrendAnalytics);
