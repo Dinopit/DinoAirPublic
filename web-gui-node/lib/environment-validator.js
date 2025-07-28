@@ -52,7 +52,7 @@ class EnvironmentValidator {
     });
 
     // Perform comprehensive security validation
-    const securityValidation = this.secretsManager.validateEnvironment();
+    const securityValidation = await this.secretsManager.validateEnvironment();
     
     // Add security issues to results
     results.securityIssues = securityValidation.issues;
