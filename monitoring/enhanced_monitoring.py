@@ -21,6 +21,90 @@ try:
     from ..correlation_id import set_current_correlation_id as set_correlation_id, get_current_correlation_id as get_correlation_id
 except ImportError as e:
     print(f"Warning: Failed to import monitoring components: {e}")
+    
+    # Define dummy functions for missing imports
+    def get_correlation_id():
+        """No-op dummy correlation ID function."""
+        return None
+    
+    def set_correlation_id(correlation_id):
+        """No-op dummy correlation ID setter function."""
+        pass
+    
+    # Define dummy classes
+    class TraceConfig:
+        """No-op dummy TraceConfig class."""
+        def __init__(self, **kwargs):
+            pass
+    
+    class AuditEventType:
+        """No-op dummy AuditEventType enum-like class."""
+        class _DummyEventType:
+            def __init__(self, value):
+                self.value = value
+        
+        SYSTEM_ACCESS = _DummyEventType("system_access")
+        AUTHENTICATION = _DummyEventType("authentication")
+        AUTHORIZATION = _DummyEventType("authorization")
+        DATA_ACCESS = _DummyEventType("data_access")
+    
+    class AuditSeverity:
+        """No-op dummy AuditSeverity enum-like class."""
+        class _DummySeverity:
+            def __init__(self, value):
+                self.value = value
+        
+        LOW = _DummySeverity("low")
+        MEDIUM = _DummySeverity("medium")
+        HIGH = _DummySeverity("high")
+        CRITICAL = _DummySeverity("critical")
+    
+    class AuditOutcome:
+        """No-op dummy AuditOutcome enum-like class."""
+        class _DummyOutcome:
+            def __init__(self, value):
+                self.value = value
+        
+        SUCCESS = _DummyOutcome("success")
+        FAILURE = _DummyOutcome("failure")
+    
+    class ResourceMonitor:
+        """No-op dummy ResourceMonitor class."""
+        def __init__(self, **kwargs):
+            pass
+        
+        def start_monitoring(self):
+            """No-op start_monitoring method."""
+            pass
+        
+        def get_current_metrics(self):
+            """No-op get_current_metrics method."""
+            return {}
+    
+    class AlertLevel:
+        """No-op dummy AlertLevel enum-like class."""
+        class _DummyAlertLevel:
+            def __init__(self, value):
+                self.value = value
+        
+        WARNING = _DummyAlertLevel("warning")
+        CRITICAL = _DummyAlertLevel("critical")
+    
+    def get_tracer(*args, **kwargs):
+        """No-op dummy tracer function."""
+        return None
+    
+    def init_tracing(*args, **kwargs):
+        """No-op dummy init_tracing function."""
+        return None
+    
+    def get_audit_logger(*args, **kwargs):
+        """No-op dummy audit logger function."""
+        return None
+    
+    def audit_log(*args, **kwargs):
+        """No-op dummy audit_log function."""
+        pass
 
 # Import existing systems
 try:
@@ -30,19 +114,93 @@ except ImportError as e:
     print(f"Warning: Failed to import existing systems: {e}")
     # Define dummy classes to avoid import errors
     class AlertSeverity:
-        LOW = "low"
-        MEDIUM = "medium"
-        HIGH = "high"
-        CRITICAL = "critical"
+        """No-op dummy AlertSeverity enum-like class."""
+        class _DummyAlertSeverity:
+            def __init__(self, value):
+                self.value = value
+        
+        LOW = _DummyAlertSeverity("low")
+        MEDIUM = _DummyAlertSeverity("medium")
+        HIGH = _DummyAlertSeverity("high")
+        CRITICAL = _DummyAlertSeverity("critical")
+    
     class AlertCategory:
-        SECURITY_BREACH = "security_breach"
-        SYSTEM_FAILURE = "system_failure"
-        PERFORMANCE_DEGRADATION = "performance_degradation"
+        """No-op dummy AlertCategory enum-like class."""
+        class _DummyAlertCategory:
+            def __init__(self, value):
+                self.value = value
+        
+        SECURITY_BREACH = _DummyAlertCategory("security_breach")
+        SYSTEM_FAILURE = _DummyAlertCategory("system_failure")
+        PERFORMANCE_DEGRADATION = _DummyAlertCategory("performance_degradation")
+    
     class LogLevel:
-        INFO = "info"
-        ERROR = "error"
+        """No-op dummy LogLevel enum-like class."""
+        class _DummyLogLevel:
+            def __init__(self, value):
+                self.value = value
+        
+        INFO = _DummyLogLevel("INFO")
+        ERROR = _DummyLogLevel("ERROR")
+        DEBUG = _DummyLogLevel("DEBUG")
+        WARN = _DummyLogLevel("WARN")
+        TRACE = _DummyLogLevel("TRACE")
+        FATAL = _DummyLogLevel("FATAL")
+    
     class LogCategory:
-        SYSTEM = "system"
+        """No-op dummy LogCategory enum-like class."""
+        class _DummyLogCategory:
+            def __init__(self, value):
+                self.value = value
+        
+        SYSTEM = _DummyLogCategory("system")
+        SECURITY = _DummyLogCategory("security")
+        PERFORMANCE = _DummyLogCategory("performance")
+        BUSINESS = _DummyLogCategory("business")
+        AUDIT = _DummyLogCategory("audit")
+        INTEGRATION = _DummyLogCategory("integration")
+        USER_ACTION = _DummyLogCategory("user_action")
+    
+    class Alert:
+        """No-op dummy Alert class that accepts all parameters but does nothing."""
+        def __init__(self, **kwargs):
+            # Accept any parameters and store them as attributes
+            for key, value in kwargs.items():
+                setattr(self, key, value)
+    
+    class AlertingSystem:
+        """No-op dummy AlertingSystem class with required interface."""
+        def __init__(self, *args, **kwargs):
+            pass
+        
+        def send_alert(self, alert):
+            """No-op send_alert method."""
+            pass
+    
+    class StructuredLogger:
+        """No-op dummy StructuredLogger class with required interface."""
+        def __init__(self, *args, **kwargs):
+            pass
+        
+        def log(self, level, message, category=None, **kwargs):
+            """No-op log method."""
+            pass
+        
+        def info(self, message, category=None, **kwargs):
+            """No-op info method."""
+            pass
+        
+        def warn(self, message, category=None, **kwargs):
+            """No-op warn method."""
+            pass
+        
+        def error(self, message, category=None, **kwargs):
+            """No-op error method."""
+            pass
+        
+        def debug(self, message, category=None, **kwargs):
+            """No-op debug method."""
+            pass
 
 
 @dataclass

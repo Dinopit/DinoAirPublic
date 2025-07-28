@@ -1,0 +1,2 @@
+Test message
+Failed to write structured log: Object of type LogLevel is not JSON serializable
