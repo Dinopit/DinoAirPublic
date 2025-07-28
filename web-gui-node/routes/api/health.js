@@ -564,8 +564,11 @@ router.get('/status', rateLimits.api, async (req, res) => {
       comfyuiBreaker.call(() =>
         withRetry(() => {
           const controller = new AbortController();
-          setTimeout(() => controller.abort(), 3000);
-          return fetch(`${CONFIG.comfyuiUrl}/`, { signal: controller.signal, method: 'HEAD' }).then(r => r.ok);
+          const timeoutId = setTimeout(() => controller.abort(), 3000);
+          return fetch(`${CONFIG.comfyuiUrl}/`, { signal: controller.signal, method: 'HEAD' }).then(r => {
+            clearTimeout(timeoutId);
+            return r.ok;
+          });
         }, {
           maxRetries: 1,
           retryCondition: isRetryableError
