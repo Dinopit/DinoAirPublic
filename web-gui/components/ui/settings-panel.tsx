@@ -645,13 +645,287 @@ const AITabImplementation: React.FC<any> = ({
   );
 };
 
-const DataTabImplementation: React.FC<any> = ({ exportSettings, importSettings, clearAllData }) => (
-  <div className="space-y-6">
-    {/* Export/Import */}
-    <div>
-      <h3 className="text-lg font-medium mb-3">Settings Backup</h3>
-      <div className="flex gap-3">
+const DataTabImplementation: React.FC<any> = ({
+  exportSettings,
+  importSettings,
+  clearAllData
+}) => {
+  const [consentPreferences, setConsentPreferences] = useState({
+    essential: true,
+    analytics: false,
+    improvements: false
+  });
+  const [dataSummary, setDataSummary] = useState(null);
+  const [loading, setLoading] = useState(false);
+
+  useEffect(() => {
+    fetchConsentPreferences();
+    fetchDataSummary();
+  }, []);
+
+  const fetchConsentPreferences = async () => {
+    try {
+      const response = await fetch('/api/privacy/consent');
+      if (response.ok) {
+        const data = await response.json();
+        setConsentPreferences(data);
+      }
+    } catch (error) {
+      console.error('Failed to fetch consent preferences:', error);
+    }
+  };
+
+  const fetchDataSummary = async () => {
+    try {
+      const response = await fetch('/api/privacy/data-summary');
+      if (response.ok) {
+        const data = await response.json();
+        setDataSummary(data);
+      }
+    } catch (error) {
+      console.error('Failed to fetch data summary:', error);
+    }
+  };
+
+  const updateConsent = async (type: string, value: boolean) => {
+    if (type === 'essential' && !value) {
+      alert('Essential consent is required for core functionality');
+      return;
+    }
+
+    try {
+      setLoading(true);
+      const newPreferences = { ...consentPreferences, [type]: value };
+      
+      const response = await fetch('/api/privacy/consent', {
+        method: 'PUT',
+        headers: {
+          'Content-Type': 'application/json',
+        },
+        body: JSON.stringify(newPreferences),
+      });
+
+      if (response.ok) {
+        setConsentPreferences(newPreferences);
+        toast.success('Consent preferences updated');
+      } else {
+        throw new Error('Failed to update consent');
+      }
+    } catch (error) {
+      console.error('Error updating consent:', error);
+      toast.error('Failed to update consent preferences');
+    } finally {
+      setLoading(false);
+    }
+  };
+
+  const exportUserData = async () => {
+    try {
+      setLoading(true);
+      const response = await fetch('/api/privacy/export');
+      
+      if (response.ok) {
+        const blob = await response.blob();
+        const url = window.URL.createObjectURL(blob);
+        const a = document.createElement('a');
+        a.href = url;
+        a.download = `dinoair-data-export-${new Date().toISOString().split('T')[0]}.json`;
+        document.body.appendChild(a);
+        a.click();
+        document.body.removeChild(a);
+        window.URL.revokeObjectURL(url);
+        toast.success('Data exported successfully');
+      } else {
+        throw new Error('Export failed');
+      }
+    } catch (error) {
+      console.error('Export error:', error);
+      toast.error('Failed to export data');
+    } finally {
+      setLoading(false);
+    }
+  };
+
+  const deleteConversations = async () => {
+    if (!confirm('This will delete all your conversations. This action cannot be undone. Continue?')) {
+      return;
+    }
+
+    const email = prompt('Please enter your email to confirm:');
+    if (!email) return;
+
+    try {
+      setLoading(true);
+      const response = await fetch('/api/privacy/delete', {
+        method: 'DELETE',
+        headers: {
+          'Content-Type': 'application/json',
+        },
+        body: JSON.stringify({
+          confirmEmail: email,
+          deleteType: 'conversations'
+        }),
+      });
+
+      if (response.ok) {
+        toast.success('All conversations deleted');
+        fetchDataSummary();
+      } else {
+        const error = await response.json();
+        throw new Error(error.error || 'Deletion failed');
+      }
+    } catch (error) {
+      console.error('Delete error:', error);
+      toast.error('Failed to delete conversations');
+    } finally {
+      setLoading(false);
+    }
+  };
+
+  const deleteAllData = async () => {
+    if (!confirm('This will permanently delete your account and ALL data. This action cannot be undone. Continue?')) {
+      return;
+    }
+
+    if (!confirm('Are you absolutely sure? This will delete everything and log you out.')) {
+      return;
+    }
+
+    const email = prompt('Please enter your email to confirm account deletion:');
+    if (!email) return;
+
+    try {
+      setLoading(true);
+      const response = await fetch('/api/privacy/delete', {
+        method: 'DELETE',
+        headers: {
+          'Content-Type': 'application/json',
+        },
+        body: JSON.stringify({
+          confirmEmail: email,
+          deleteType: 'all'
+        }),
+      });
+
+      if (response.ok) {
+        toast.success('Account deleted successfully');
+        window.location.href = '/';
+      } else {
+        const error = await response.json();
+        throw new Error(error.error || 'Deletion failed');
+      }
+    } catch (error) {
+      console.error('Delete error:', error);
+      toast.error('Failed to delete account');
+    } finally {
+      setLoading(false);
+    }
+  };
+
+  return (
+    <div className="space-y-6">
+      {/* Privacy Consent */}
+      <div>
+        <h3 className="text-lg font-medium mb-3">Privacy Consent</h3>
+        <p className="text-sm text-muted-foreground mb-4">
+          Control what data we can collect and how we use it. You can change these preferences at any time.
+        </p>
+        <div className="space-y-4">
+          <div className="flex items-center justify-between p-3 border rounded-lg">
+            <div>
+              <h4 className="font-medium">Essential</h4>
+              <p className="text-sm text-muted-foreground">Required for core functionality</p>
+            </div>
+            <input
+              type="checkbox"
+              checked={consentPreferences.essential}
+              disabled={true}
+              className="w-4 h-4 rounded opacity-50"
+            />
+          </div>
+          <div className="flex items-center justify-between p-3 border rounded-lg">
+            <div>
+              <h4 className="font-medium">Analytics</h4>
+              <p className="text-sm text-muted-foreground">Help us improve with usage analytics</p>
+            </div>
+            <input
+              type="checkbox"
+              checked={consentPreferences.analytics}
+              onChange={(e) => updateConsent('analytics', e.target.checked)}
+              disabled={loading}
+              className="w-4 h-4 rounded"
+            />
+          </div>
+          <div className="flex items-center justify-between p-3 border rounded-lg">
+            <div>
+              <h4 className="font-medium">Improvements</h4>
+              <p className="text-sm text-muted-foreground">Feature development and optimization</p>
+            </div>
+            <input
+              type="checkbox"
+              checked={consentPreferences.improvements}
+              onChange={(e) => updateConsent('improvements', e.target.checked)}
+              disabled={loading}
+              className="w-4 h-4 rounded"
+            />
+          </div>
+        </div>
+      </div>
+
+      {/* Data Summary */}
+      {dataSummary && (
+        <div>
+          <h3 className="text-lg font-medium mb-3">Your Data</h3>
+          <div className="grid grid-cols-2 gap-4 mb-4">
+            <div className="p-3 border rounded-lg">
+              <div className="text-2xl font-bold">{dataSummary.chat_sessions}</div>
+              <div className="text-sm text-muted-foreground">Chat Sessions</div>
+            </div>
+            <div className="p-3 border rounded-lg">
+              <div className="text-2xl font-bold">{dataSummary.chat_messages}</div>
+              <div className="text-sm text-muted-foreground">Messages</div>
+            </div>
+            <div className="p-3 border rounded-lg">
+              <div className="text-2xl font-bold">{dataSummary.api_keys}</div>
+              <div className="text-sm text-muted-foreground">API Keys</div>
+            </div>
+            <div className="p-3 border rounded-lg">
+              <div className="text-2xl font-bold">{dataSummary.account_age_days}</div>
+              <div className="text-sm text-muted-foreground">Days Old</div>
+            </div>
+          </div>
+          <div className="text-xs text-muted-foreground">
+            <p><strong>Data Retention:</strong></p>
+            <ul className="list-disc list-inside space-y-1">
+              <li>Chat sessions: {dataSummary.data_retention.chat_sessions}</li>
+              <li>Performance metrics: {dataSummary.data_retention.performance_metrics}</li>
+              <li>API logs: {dataSummary.data_retention.api_logs}</li>
+            </ul>
+          </div>
+        </div>
+      )}
+
+      {/* Data Export */}
+      <div>
+        <h3 className="text-lg font-medium mb-3">Data Export</h3>
+        <p className="text-sm text-muted-foreground mb-4">
+          Download all your data in a portable format. This includes your profile, conversations, and settings.
+        </p>
         <button
+          onClick={exportUserData}
+          disabled={loading}
+          className="flex items-center gap-2 px-4 py-2 bg-primary text-primary-foreground rounded-lg hover:bg-primary/90 disabled:opacity-50"
+        >
+          <Download className="w-4 h-4" />
+          {loading ? 'Exporting...' : 'Export My Data'}
+        </button>
+      </div>
+
+      {/* Settings Backup */}
+      <div>
+        <h3 className="text-lg font-medium mb-3">Settings Backup</h3>
+        <div className="flex gap-3">
+          <button
           onClick={exportSettings}
           className="flex items-center gap-2 px-4 py-2 bg-primary text-primary-foreground rounded-lg hover:bg-primary/90"
         >
@@ -668,28 +942,69 @@ const DataTabImplementation: React.FC<any> = ({ exportSettings, importSettings, 
       </div>
     </div>
 
-    {/* Clear Data */}
+    {/* Privacy Policy */}
     <div>
-      <h3 className="text-lg font-medium mb-3">Clear Data</h3>
-      <p className="text-muted-foreground mb-3">
-        Delete all conversations, artifacts, and settings. This action cannot be undone.
-      </p>
-      <button
-        onClick={clearAllData}
-        className="flex items-center gap-2 px-4 py-2 bg-red-500 text-white rounded-lg hover:bg-red-600"
-      >
-        <Trash2 className="w-4 h-4" />
-        Clear All Data
-      </button>
+      <h3 className="text-lg font-medium mb-3">Privacy & Legal</h3>
+      <div className="space-y-2">
+        <a
+          href="/docs/PRIVACY_POLICY.md"
+          target="_blank"
+          rel="noopener noreferrer"
+          className="block text-sm text-primary hover:underline"
+        >
+          Privacy Policy
+        </a>
+        <a
+          href="/docs/GDPR_CCPA_COMPLIANCE.md"
+          target="_blank"
+          rel="noopener noreferrer"
+          className="block text-sm text-primary hover:underline"
+        >
+          GDPR/CCPA Rights
+        </a>
+        <a
+          href="/docs/DATA_FLOW_DOCUMENTATION.md"
+          target="_blank"
+          rel="noopener noreferrer"
+          className="block text-sm text-primary hover:underline"
+        >
+          Data Flow Documentation
+        </a>
+      </div>
     </div>
 
-    {/* Privacy Note */}
+    {/* Data Deletion */}
     <div>
-      <h3 className="text-lg font-medium mb-3">Privacy</h3>
-      <p className="text-muted-foreground">
-        All your data is stored locally in your browser. No data is sent to external servers except
-        when communicating with the AI models through Ollama running on your machine.
+      <h3 className="text-lg font-medium mb-3 text-destructive">Data Deletion</h3>
+      <p className="text-sm text-muted-foreground mb-4">
+        These actions cannot be undone. Please be careful.
       </p>
+      <div className="space-y-3">
+        <button
+          onClick={deleteConversations}
+          disabled={loading}
+          className="flex items-center gap-2 px-4 py-2 border border-destructive text-destructive rounded-lg hover:bg-destructive/10 disabled:opacity-50"
+        >
+          <Trash2 className="w-4 h-4" />
+          {loading ? 'Deleting...' : 'Delete All Conversations'}
+        </button>
+        <button
+          onClick={clearAllData}
+          className="flex items-center gap-2 px-4 py-2 border rounded-lg hover:bg-muted"
+        >
+          <Trash2 className="w-4 h-4" />
+          Clear Local Data
+        </button>
+        <button
+          onClick={deleteAllData}
+          disabled={loading}
+          className="flex items-center gap-2 px-4 py-2 bg-destructive text-destructive-foreground rounded-lg hover:bg-destructive/90 disabled:opacity-50"
+        >
+          <Trash2 className="w-4 h-4" />
+          {loading ? 'Deleting...' : 'Delete Account & All Data'}
+        </button>
+      </div>
     </div>
   </div>
-);
+  );
+};

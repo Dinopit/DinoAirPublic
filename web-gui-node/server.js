@@ -59,6 +59,7 @@ const pageRoutes = require('./routes/pages');
 console.log(`[${new Date().toISOString()}] ✅ Page routes loaded`);
 const { smartRateLimit } = require('./middleware/auth-middleware');
 console.log(`[${new Date().toISOString()}] ✅ Rate limiting middleware loaded`);
+const privacyRoutes = require('./routes/api/privacy');
 
 // Create Express app
 console.log(`[${new Date().toISOString()}] 🏗️  Creating Express app and HTTP server...`);
@@ -210,6 +211,7 @@ app.use('/api/performance', require('./routes/api/performance'));
 console.log(`[${new Date().toISOString()}] ✅ Performance API routes mounted`);
 app.use('/api/v1/security', require('./routes/api/v1/security'));
 console.log(`[${new Date().toISOString()}] ✅ Security API routes mounted`);
+app.use('/api/privacy', privacyRoutes);
 app.use('/', pageRoutes);
 console.log(`[${new Date().toISOString()}] ✅ Page routes mounted`);
 
