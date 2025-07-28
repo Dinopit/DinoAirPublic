@@ -7,7 +7,7 @@
 
 import React from 'react';
 import { useTranslation } from 'react-i18next';
-import { useAccessibility } from '../../contexts/accessibility-context';
+import { preferences } from '../../contexts/accessibility-context';
 
 interface SkipLinkProps {
   href: string;
