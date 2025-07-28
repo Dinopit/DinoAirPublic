@@ -6,8 +6,15 @@ export async function analyticsAuthMiddleware(request: NextRequest) {
   const authHeader = request.headers.get('authorization');
 
   if (apiKey) {
-    const validKeys = process.env.DINOAIR_API_KEYS?.split(',') ?? ['dinoair_development_key'];
+    if (!process.env.DINOAIR_API_KEYS) {
+      if (process.env.NODE_ENV === 'development') {
+        throw new Error('DINOAIR_API_KEYS environment variable is not set. Please configure it for development.');
+      } else {
+        return NextResponse.json({ error: 'API key validation is not configured' }, { status: 500 });
+      }
+    }
 
+    const validKeys = process.env.DINOAIR_API_KEYS.split(',');
     if (!validKeys.includes(apiKey)) {
       return NextResponse.json({ error: 'Invalid API key for analytics access' }, { status: 401 });
     }
