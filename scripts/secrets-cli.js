@@ -425,7 +425,7 @@ Security Best Practices:
 }
 
 // Run CLI if called directly
-if (require.main === module) {
+if (process.argv[1] === __filename) {
   const cli = new SecretsManagerCLI();
   cli.run().catch(error => {
     console.error('Fatal error:', error);
