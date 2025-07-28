@@ -199,12 +199,17 @@ DEBUG=false
 RELOAD=false
 """
         
+        # Generate the API key once and store it
+        api_key = self.generate_api_key()
+        
+        # Create the .env file
         env_file = self.root_dir / ".env"
+        env_content = env_content.replace("your-api-key-placeholder", api_key)
         with open(env_file, 'w') as f:
             f.write(env_content)
         
-        # Also create a .env.example
-        example_content = env_content.replace(self.generate_api_key(), "your-api-key-here")
+        # Create the .env.example file
+        example_content = env_content.replace(api_key, "your-api-key-here")
         with open(self.root_dir / ".env.example", 'w') as f:
             f.write(example_content)
 
