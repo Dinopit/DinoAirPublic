@@ -195,7 +195,7 @@ class MemoryMonitor:
                     process_memory[name] += memory_mb
                 else:
                     process_memory[name] = memory_mb
-            except:
+            except (psutil.NoSuchProcess, psutil.AccessDenied, psutil.ZombieProcess):
                 pass
         
         # Determine alert level
