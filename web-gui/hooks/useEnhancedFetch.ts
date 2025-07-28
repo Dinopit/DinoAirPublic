@@ -8,14 +8,8 @@ interface ToastType {
   message?: string;
 }
 
-// Mock toast hook for now - this should be imported from the actual toast component
-const useToast = () => {
-  return {
-    addToast: (toast: ToastType) => {
-      console.log('Toast:', toast);
-    },
-  };
-};
+// Import the actual toast hook from the toast component
+import { useToast } from '../components/ToastProvider';
 
 interface RequestOptions extends RequestInit {
   skipQueue?: boolean;
