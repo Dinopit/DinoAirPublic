@@ -66,9 +66,9 @@ export class AnalyticsClient {
   }
 
   private processRealChatData(
-    sessions: any[],
-    messages: any[],
-    metrics: any[],
+    sessions: Session[],
+    messages: Message[],
+    metrics: Metric[],
     timeframe: string
   ): ChatAnalytics {
     const totalSessions = sessions.length;
