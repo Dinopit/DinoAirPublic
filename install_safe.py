@@ -12,6 +12,7 @@ import shutil
 import time
 import traceback
 import getpass
+import json
 from typing import Optional, Tuple, Dict, Any, List
 from pathlib import Path
 from dataclasses import dataclass, asdict
@@ -255,6 +256,7 @@ class HardwareDetector:
     def detect_cpu(self):
         """Detect CPU information"""
         try:
+            import psutil
             cpu_info = {
                 'cores': psutil.cpu_count(logical=False),
                 'threads': psutil.cpu_count(logical=True),
