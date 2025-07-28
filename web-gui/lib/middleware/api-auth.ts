@@ -10,7 +10,7 @@ export interface ApiKeyConfig {
 // Helper to get API keys from localStorage (client-side only)
 export function getApiKeys(): ApiKeyConfig[] {
   if (typeof window === 'undefined') return [];
-  
+
   const keys = localStorage.getItem('dinoair-api-keys');
   return keys ? JSON.parse(keys) : [];
 }
@@ -18,7 +18,7 @@ export function getApiKeys(): ApiKeyConfig[] {
 // Helper to save API keys to localStorage
 export function saveApiKeys(keys: ApiKeyConfig[]) {
   if (typeof window === 'undefined') return;
-  
+
   localStorage.setItem('dinoair-api-keys', JSON.stringify(keys));
 }
 
@@ -35,23 +35,24 @@ export function generateApiKey(): string {
 // API Authentication Middleware
 export async function apiAuthMiddleware(request: NextRequest) {
   const apiKey = request.headers.get('x-api-key');
-  
+
   if (!apiKey) {
-    return NextResponse.json(
-      { error: 'API key required' },
-      { status: 401 }
-    );
+    return NextResponse.json({ error: 'API key required' }, { status: 401 });
+  }
+
+  // Basic API key format validation
+  if (apiKey.length < 16 || !apiKey.includes('_')) {
+    return NextResponse.json({ error: 'Invalid API key format' }, { status: 401 });
   }
 
   // For server-side validation, we'll check against a temporary in-memory store
   // In production, this would be checked against a database
-  const validKeys = process.env.DINOAIR_API_KEYS?.split(',') || ['dinoair_development_key'];
-  
+  const validKeys = process.env.DINOAIR_API_KEYS?.split(',').map((key) => key.trim()) || [
+    'dinoair_development_key',
+  ];
+
   if (!validKeys.includes(apiKey)) {
-    return NextResponse.json(
-      { error: 'Invalid API key' },
-      { status: 401 }
-    );
+    return NextResponse.json({ error: 'Invalid API key' }, { status: 401 });
   }
 
   return null; // Authentication successful
@@ -64,7 +65,7 @@ export function withApiAuth<T extends any[]>(
   return async (request: NextRequest, ...args: T) => {
     const authError = await apiAuthMiddleware(request);
     if (authError) return authError;
-    
+
     return handler(request, ...args);
   };
 }
