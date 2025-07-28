@@ -161,7 +161,7 @@ const enhancedAuthValidation = {
 
     body('password')
       .isLength({ min: 12, max: 128 })
-      .matches(/^(?=.*[a-z])(?=.*[A-Z])(?=.*\d)(?=.*[@$!%*?&^#()_+\-=\[\]{};':"\\|,.<>\/?])[A-Za-z\d@$!%*?&^#()_+\-=\[\]{};':"\\|,.<>\/?]/)
+      .matches(PASSWORD_VALIDATION_REGEX)
       .custom(customValidators.isSecureString)
       .withMessage('Password must be 12+ characters with uppercase, lowercase, numbers, and special characters'),
 
