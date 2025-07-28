@@ -706,6 +706,15 @@ function getSecurityMetrics() {
   };
 }
 
+const deleteUser = async (userId) => {
+  try {
+    const { error } = await supabaseAdmin.auth.admin.deleteUser(userId);
+    return { error };
+  } catch (error) {
+    return { error };
+  }
+};
+
 module.exports = {
   signUpUser,
   signInUser,
@@ -724,5 +733,6 @@ module.exports = {
   getSecurityMetrics,
   generateSecureApiKey,
   hashApiKey,
-  verifyApiKeyHash
+  verifyApiKeyHash,
+  deleteUser
 };

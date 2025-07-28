@@ -55,6 +55,7 @@ const createTablesSQL = {
       metadata JSONB DEFAULT '{}'::jsonb,
       CONSTRAINT chat_metrics_model_check CHECK (char_length(model) > 0)
     );
+<<<<<<< HEAD
   `,
 
   // Artifacts Table (independent table for artifact storage)
@@ -105,6 +106,47 @@ const createTablesSQL = {
       CONSTRAINT refresh_tokens_user_id_check CHECK (char_length(user_id) > 0),
       CONSTRAINT refresh_tokens_token_hash_check CHECK (char_length(token_hash) > 0)
     );
+||||||| parent of c9ab310 (Implement privacy policy documentation and GDPR/CCPA compliance)
+=======
+  `,
+
+  consent_preferences: `
+    CREATE TABLE IF NOT EXISTS consent_preferences (
+      id UUID PRIMARY KEY DEFAULT gen_random_uuid(),
+      user_id UUID NOT NULL,
+      essential BOOLEAN DEFAULT true,
+      analytics BOOLEAN DEFAULT false,
+      improvements BOOLEAN DEFAULT false,
+      created_at TIMESTAMPTZ DEFAULT NOW(),
+      updated_at TIMESTAMPTZ DEFAULT NOW(),
+      CONSTRAINT consent_preferences_user_id_unique UNIQUE (user_id)
+    );
+  `,
+
+  consent_audit_log: `
+    CREATE TABLE IF NOT EXISTS consent_audit_log (
+      id UUID PRIMARY KEY DEFAULT gen_random_uuid(),
+      user_id UUID NOT NULL,
+      old_consent JSONB,
+      new_consent JSONB NOT NULL,
+      source TEXT DEFAULT 'user',
+      created_at TIMESTAMPTZ DEFAULT NOW()
+    );
+  `,
+
+  api_keys: `
+    CREATE TABLE IF NOT EXISTS api_keys (
+      id UUID PRIMARY KEY DEFAULT gen_random_uuid(),
+      user_id UUID NOT NULL,
+      name TEXT NOT NULL,
+      key_hash TEXT NOT NULL,
+      created_at TIMESTAMPTZ DEFAULT NOW(),
+      last_used_at TIMESTAMPTZ,
+      is_active BOOLEAN DEFAULT true,
+      CONSTRAINT api_keys_name_check CHECK (char_length(name) > 0),
+      CONSTRAINT api_keys_key_hash_check CHECK (char_length(key_hash) > 0)
+    );
+>>>>>>> c9ab310 (Implement privacy policy documentation and GDPR/CCPA compliance)
   `
 };
 
@@ -130,6 +172,7 @@ const createIndexesSQL = {
     CREATE INDEX IF NOT EXISTS idx_chat_metrics_session_id ON chat_metrics(session_id);
     CREATE INDEX IF NOT EXISTS idx_chat_metrics_created_at ON chat_metrics(created_at);
     CREATE INDEX IF NOT EXISTS idx_chat_metrics_model ON chat_metrics(model);
+<<<<<<< HEAD
   `,
   artifacts: `
     CREATE INDEX IF NOT EXISTS idx_artifacts_user_id ON artifacts(user_id);
@@ -154,6 +197,23 @@ const createIndexesSQL = {
     CREATE INDEX IF NOT EXISTS idx_refresh_tokens_expires_at ON refresh_tokens(expires_at);
     CREATE INDEX IF NOT EXISTS idx_refresh_tokens_created_at ON refresh_tokens(created_at);
     CREATE INDEX IF NOT EXISTS idx_refresh_tokens_revoked_at ON refresh_tokens(revoked_at);
+||||||| parent of c9ab310 (Implement privacy policy documentation and GDPR/CCPA compliance)
+=======
+  `,
+  consent_preferences: `
+    CREATE INDEX IF NOT EXISTS idx_consent_preferences_user_id ON consent_preferences(user_id);
+    CREATE INDEX IF NOT EXISTS idx_consent_preferences_created_at ON consent_preferences(created_at);
+    CREATE INDEX IF NOT EXISTS idx_consent_preferences_updated_at ON consent_preferences(updated_at);
+  `,
+  consent_audit_log: `
+    CREATE INDEX IF NOT EXISTS idx_consent_audit_log_user_id ON consent_audit_log(user_id);
+    CREATE INDEX IF NOT EXISTS idx_consent_audit_log_created_at ON consent_audit_log(created_at);
+  `,
+  api_keys: `
+    CREATE INDEX IF NOT EXISTS idx_api_keys_user_id ON api_keys(user_id);
+    CREATE INDEX IF NOT EXISTS idx_api_keys_created_at ON api_keys(created_at);
+    CREATE INDEX IF NOT EXISTS idx_api_keys_is_active ON api_keys(is_active);
+>>>>>>> c9ab310 (Implement privacy policy documentation and GDPR/CCPA compliance)
   `
 };
 
@@ -170,11 +230,30 @@ const createConstraintsSQL = {
     ALTER TABLE chat_metrics 
     ADD CONSTRAINT IF NOT EXISTS fk_chat_metrics_session_id 
     FOREIGN KEY (session_id) REFERENCES chat_sessions(id) ON DELETE CASCADE;
+<<<<<<< HEAD
   `,
   artifacts: `
     ALTER TABLE artifacts 
     ADD CONSTRAINT IF NOT EXISTS fk_artifacts_parent_id 
     FOREIGN KEY (parent_id) REFERENCES artifacts(id) ON DELETE SET NULL;
+||||||| parent of c9ab310 (Implement privacy policy documentation and GDPR/CCPA compliance)
+=======
+  `,
+  consent_preferences: `
+    ALTER TABLE consent_preferences 
+    ADD CONSTRAINT IF NOT EXISTS fk_consent_preferences_user_id 
+    FOREIGN KEY (user_id) REFERENCES users(id) ON DELETE CASCADE;
+  `,
+  consent_audit_log: `
+    ALTER TABLE consent_audit_log 
+    ADD CONSTRAINT IF NOT EXISTS fk_consent_audit_log_user_id 
+    FOREIGN KEY (user_id) REFERENCES users(id) ON DELETE CASCADE;
+  `,
+  api_keys: `
+    ALTER TABLE api_keys 
+    ADD CONSTRAINT IF NOT EXISTS fk_api_keys_user_id 
+    FOREIGN KEY (user_id) REFERENCES users(id) ON DELETE CASCADE;
+>>>>>>> c9ab310 (Implement privacy policy documentation and GDPR/CCPA compliance)
   `
 };
 
@@ -248,6 +327,7 @@ const createRLSPolicies = {
     -- Policy: Service role can access all metrics
     CREATE POLICY IF NOT EXISTS "Service role can access all metrics" ON chat_metrics
       FOR ALL USING (auth.role() = 'service_role');
+<<<<<<< HEAD
   `,
 
   artifacts: `
@@ -300,6 +380,48 @@ const createRLSPolicies = {
     -- Policy: Service role can access all refresh tokens
     CREATE POLICY IF NOT EXISTS "Service role can access all refresh tokens" ON refresh_tokens
       FOR ALL USING (auth.role() = 'service_role');
+||||||| parent of c9ab310 (Implement privacy policy documentation and GDPR/CCPA compliance)
+=======
+  `,
+
+  consent_preferences: `
+    -- Enable RLS
+    ALTER TABLE consent_preferences ENABLE ROW LEVEL SECURITY;
+    
+    -- Policy: Users can only access their own consent preferences
+    CREATE POLICY IF NOT EXISTS "Users can access own consent preferences" ON consent_preferences
+      FOR ALL USING (auth.uid()::text = user_id::text);
+    
+    -- Policy: Service role can access all consent preferences
+    CREATE POLICY IF NOT EXISTS "Service role can access all consent preferences" ON consent_preferences
+      FOR ALL USING (auth.role() = 'service_role');
+  `,
+
+  consent_audit_log: `
+    -- Enable RLS
+    ALTER TABLE consent_audit_log ENABLE ROW LEVEL SECURITY;
+    
+    -- Policy: Users can only access their own consent audit logs
+    CREATE POLICY IF NOT EXISTS "Users can access own consent audit logs" ON consent_audit_log
+      FOR SELECT USING (auth.uid()::text = user_id::text);
+    
+    -- Policy: Service role can access all consent audit logs
+    CREATE POLICY IF NOT EXISTS "Service role can access all consent audit logs" ON consent_audit_log
+      FOR ALL USING (auth.role() = 'service_role');
+  `,
+
+  api_keys: `
+    -- Enable RLS
+    ALTER TABLE api_keys ENABLE ROW LEVEL SECURITY;
+    
+    -- Policy: Users can only access their own API keys
+    CREATE POLICY IF NOT EXISTS "Users can access own API keys" ON api_keys
+      FOR ALL USING (auth.uid()::text = user_id::text);
+    
+    -- Policy: Service role can access all API keys
+    CREATE POLICY IF NOT EXISTS "Service role can access all API keys" ON api_keys
+      FOR ALL USING (auth.role() = 'service_role');
+>>>>>>> c9ab310 (Implement privacy policy documentation and GDPR/CCPA compliance)
   `
 };
 
@@ -365,6 +487,9 @@ async function createTables() {
     await executeSQLStatement(createTablesSQL.artifacts, 'Create artifacts table');
     await executeSQLStatement(createTablesSQL.user_sessions, 'Create user_sessions table');
     await executeSQLStatement(createTablesSQL.refresh_tokens, 'Create refresh_tokens table');
+    await executeSQLStatement(createTablesSQL.consent_preferences, 'Create consent_preferences table');
+    await executeSQLStatement(createTablesSQL.consent_audit_log, 'Create consent_audit_log table');
+    await executeSQLStatement(createTablesSQL.api_keys, 'Create api_keys table');
 
     // Step 2: Create indexes for better performance
     console.log('\n🔧 Creating indexes...\n');
@@ -375,12 +500,18 @@ async function createTables() {
     await executeSQLStatement(createIndexesSQL.artifacts, 'Create indexes for artifacts');
     await executeSQLStatement(createIndexesSQL.user_sessions, 'Create indexes for user_sessions');
     await executeSQLStatement(createIndexesSQL.refresh_tokens, 'Create indexes for refresh_tokens');
+    await executeSQLStatement(createIndexesSQL.consent_preferences, 'Create indexes for consent_preferences');
+    await executeSQLStatement(createIndexesSQL.consent_audit_log, 'Create indexes for consent_audit_log');
+    await executeSQLStatement(createIndexesSQL.api_keys, 'Create indexes for api_keys');
 
     // Step 3: Add foreign key constraints
     console.log('\n🔧 Adding foreign key constraints...\n');
     await executeSQLStatement(createConstraintsSQL.chat_messages, 'Add foreign key constraint for chat_messages');
     await executeSQLStatement(createConstraintsSQL.chat_metrics, 'Add foreign key constraint for chat_metrics');
     await executeSQLStatement(createConstraintsSQL.artifacts, 'Add foreign key constraint for artifacts');
+    await executeSQLStatement(createConstraintsSQL.consent_preferences, 'Add foreign key constraint for consent_preferences');
+    await executeSQLStatement(createConstraintsSQL.consent_audit_log, 'Add foreign key constraint for consent_audit_log');
+    await executeSQLStatement(createConstraintsSQL.api_keys, 'Add foreign key constraint for api_keys');
 
     console.log('\n✅ All tables, indexes, and constraints created successfully!');
   } catch (error) {
@@ -403,6 +534,9 @@ async function setupRLS() {
     await executeSQLStatement(createRLSPolicies.artifacts, 'Setup RLS for artifacts');
     await executeSQLStatement(createRLSPolicies.user_sessions, 'Setup RLS for user_sessions');
     await executeSQLStatement(createRLSPolicies.refresh_tokens, 'Setup RLS for refresh_tokens');
+    await executeSQLStatement(createRLSPolicies.consent_preferences, 'Setup RLS for consent_preferences');
+    await executeSQLStatement(createRLSPolicies.consent_audit_log, 'Setup RLS for consent_audit_log');
+    await executeSQLStatement(createRLSPolicies.api_keys, 'Setup RLS for api_keys');
 
     console.log('\n✅ Row Level Security policies configured successfully!');
   } catch (error) {
@@ -417,8 +551,8 @@ async function setupRLS() {
 async function verifyTables() {
   console.log('\n🔍 Verifying table creation...\n');
 
-  const tables = ['DinoAI', 'chat_sessions', 'chat_messages', 'chat_metrics', 'artifacts', 'user_sessions', 'refresh_tokens'];
-
+  const tables = ['DinoAI', 'chat_sessions', 'chat_messages', 'chat_metrics', 'artifacts', 'user_sessions', 'refresh_tokens', 'consent_preferences', 'consent_audit_log', 'api_keys'];
+  
   for (const table of tables) {
     try {
       const { data, error } = await supabaseAdmin
