@@ -4,7 +4,6 @@
  */
 
 const request = require('supertest');
-const { jest } = require('@jest/globals');
 const app = require('../server'); // Assume server exports the Express app
 const { MFAManager } = require('../lib/mfa-manager');
 const { LockoutManager } = require('../lib/lockout-manager');
