@@ -34,8 +34,14 @@ export async function analyticsAuthMiddleware(request: NextRequest) {
   const referer = request.headers.get('referer');
 
   if (process.env.NODE_ENV === 'development') {
-    if (origin?.includes('localhost') || referer?.includes('localhost')) {
-      return null;
+    try {
+      const originHostname = origin ? new URL(origin).hostname : null;
+      const refererHostname = referer ? new URL(referer).hostname : null;
+      if (originHostname === 'localhost' || refererHostname === 'localhost') {
+        return null;
+      }
+    } catch (e) {
+      // Ignore invalid URLs in origin or referer
     }
   }
 
