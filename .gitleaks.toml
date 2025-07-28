@@ -73,7 +73,7 @@ tags = ["smtp", "credentials"]
 [[rules]]
 id = "weak-password-patterns"
 description = "Common Weak Password Patterns"
-regex = '''(?i)(password|secret|key)[[:space:]]*[=:][[:space:]]*['\"]?(password|secret|key|123|admin|root|test|demo)[0-9]*['\"]?'''
+regex = '''(?i)\b(password|secret|key)\b[[:space:]]*[=:][[:space:]]*['\"]?(password|1234?|admin|root|test|demo|letmein|welcome|qwerty|abc123)['\"]?'''
 tags = ["weak", "password"]
 
 [[rules]]
