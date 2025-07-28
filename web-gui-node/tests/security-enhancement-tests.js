@@ -277,6 +277,62 @@ describe('Security Enhancement Tests', () => {
       fs.unlinkSync(highEntropyFile);
       fs.rmdirSync(testDir);
     });
+
+    test('should use entropy caching for performance optimization', () => {
+      const { calculateEntropyOptimized, clearEntropyCache, getEntropyCacheStats } = require('../middleware/file-security');
+      
+      // Clear cache for clean test
+      clearEntropyCache();
+      
+      // Create test data with high entropy
+      const highEntropyData = Buffer.allocUnsafe(2048);
+      for (let i = 0; i < highEntropyData.length; i++) {
+        highEntropyData[i] = Math.floor(Math.random() * 256);
+      }
+
+      // First calculation should not be cached
+      const result1 = calculateEntropyOptimized(highEntropyData, highEntropyData.length);
+      expect(result1.cached).toBe(false);
+      expect(result1.skipped).toBe(false);
+      expect(result1.entropy).toBeGreaterThan(7);
+
+      // Second calculation with same data should be cached
+      const result2 = calculateEntropyOptimized(highEntropyData, highEntropyData.length);
+      expect(result2.cached).toBe(true);
+      expect(result2.skipped).toBe(false);
+      expect(result2.entropy).toBe(result1.entropy);
+
+      // Verify cache statistics
+      const stats = getEntropyCacheStats();
+      expect(stats.size).toBe(1);
+    });
+
+    test('should skip entropy calculation for small files', () => {
+      const { calculateEntropyOptimized, ENTROPY_SETTINGS } = require('../middleware/file-security');
+      
+      // Create small file data (less than threshold)
+      const smallFileData = Buffer.alloc(ENTROPY_SETTINGS.FILE_SIZE_THRESHOLD - 100);
+      
+      const result = calculateEntropyOptimized(smallFileData, smallFileData.length);
+      expect(result.skipped).toBe(true);
+      expect(result.reason).toBe('file_too_small');
+      expect(result.entropy).toBe(0);
+    });
+
+    test('should process large files but limit analysis bytes', () => {
+      const { calculateEntropyOptimized, ENTROPY_SETTINGS } = require('../middleware/file-security');
+      
+      // Create large file data (more than MAX_ANALYSIS_BYTES)
+      const largeFileData = Buffer.allocUnsafe(ENTROPY_SETTINGS.MAX_ANALYSIS_BYTES * 2);
+      for (let i = 0; i < largeFileData.length; i++) {
+        largeFileData[i] = Math.floor(Math.random() * 256);
+      }
+      
+      const result = calculateEntropyOptimized(largeFileData, largeFileData.length);
+      expect(result.skipped).toBe(false);
+      expect(result.entropy).toBeGreaterThan(0);
+      // Should process successfully despite large file size
+    });
   });
 
   describe('URL Validation Security', () => {

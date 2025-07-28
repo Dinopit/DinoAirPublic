@@ -8,6 +8,7 @@ const path = require('path');
 const fs = require('fs').promises;
 const crypto = require('crypto');
 const { execSync } = require('child_process');
+const { LRUCache } = require('lru-cache');
 
 // File type validation using magic numbers (file signatures)
 const FILE_SIGNATURES = {
@@ -36,6 +37,25 @@ const DANGEROUS_EXTENSIONS = [
   '.app', '.deb', '.pkg', '.dmg', '.rpm', '.msi', '.dll', '.so', '.dylib',
   '.sh', '.bash', '.zsh', '.fish', '.ps1', '.psm1', '.psd1'
 ];
+
+// Entropy calculation optimization settings
+const ENTROPY_SETTINGS = {
+  // Only calculate entropy for files larger than this threshold (1KB)
+  FILE_SIZE_THRESHOLD: 1024,
+  // High entropy threshold for detecting packed/encrypted content
+  HIGH_ENTROPY_THRESHOLD: 7.5,
+  // Maximum bytes to analyze for entropy (8KB)
+  MAX_ANALYSIS_BYTES: 8192,
+  // Cache settings
+  CACHE_MAX_SIZE: 1000, // Maximum number of cached entropy results
+  CACHE_TTL: 1000 * 60 * 60 // Cache TTL: 1 hour
+};
+
+// LRU cache for entropy calculations
+const entropyCache = new LRUCache({
+  max: ENTROPY_SETTINGS.CACHE_MAX_SIZE,
+  ttl: ENTROPY_SETTINGS.CACHE_TTL
+});
 
 // Per-user storage quotas (can be made configurable)
 const USER_QUOTAS = {
@@ -171,11 +191,14 @@ async function scanFileForViruses(filePath) {
     }
 
     // Method 4: Check file entropy (high entropy might indicate packed/encrypted malware)
-    const entropy = calculateEntropy(content.subarray(0, Math.min(content.length, 8192)));
-    if (entropy > 7.5) { // High entropy threshold
+    // Optimized with caching and size threshold
+    const entropyResult = calculateEntropyOptimized(content, content.length);
+    
+    if (!entropyResult.skipped && entropyResult.entropy > ENTROPY_SETTINGS.HIGH_ENTROPY_THRESHOLD) {
+      const cacheInfo = entropyResult.cached ? ' (cached)' : '';
       return {
         clean: false,
-        result: `High entropy detected (${entropy.toFixed(2)}) - possible packed/encrypted content`,
+        result: `High entropy detected (${entropyResult.entropy.toFixed(2)}) - possible packed/encrypted content${cacheInfo}`,
         method: 'entropy_analysis'
       };
     }
@@ -206,6 +229,7 @@ async function scanFileForViruses(filePath) {
 
 /**
  * Calculate Shannon entropy of data to detect packed/encrypted content
+ * Optimized with caching and size thresholds
  */
 function calculateEntropy(buffer) {
   const frequencies = new Array(256).fill(0);
@@ -225,6 +249,49 @@ function calculateEntropy(buffer) {
   }
   
   return entropy;
+}
+
+/**
+ * Optimized entropy calculation with caching and size threshold
+ */
+function calculateEntropyOptimized(buffer, fileSize) {
+  // Skip entropy calculation for small files
+  if (fileSize < ENTROPY_SETTINGS.FILE_SIZE_THRESHOLD) {
+    return {
+      entropy: 0,
+      skipped: true,
+      reason: 'file_too_small'
+    };
+  }
+
+  // Limit analysis to first MAX_ANALYSIS_BYTES
+  const analysisBuffer = buffer.subarray(0, Math.min(buffer.length, ENTROPY_SETTINGS.MAX_ANALYSIS_BYTES));
+  
+  // Generate cache key from buffer hash
+  const hash = crypto.createHash('sha256').update(analysisBuffer).digest('hex');
+  const cacheKey = `entropy_${hash}_${analysisBuffer.length}`;
+  
+  // Check cache first
+  const cachedResult = entropyCache.get(cacheKey);
+  if (cachedResult !== undefined) {
+    return {
+      entropy: cachedResult,
+      cached: true,
+      skipped: false
+    };
+  }
+  
+  // Calculate entropy
+  const entropy = calculateEntropy(analysisBuffer);
+  
+  // Cache the result
+  entropyCache.set(cacheKey, entropy);
+  
+  return {
+    entropy,
+    cached: false,
+    skipped: false
+  };
 }
 
 /**
@@ -441,6 +508,25 @@ const secureDownloadHeaders = (req, res, next) => {
   next();
 };
 
+/**
+ * Get entropy cache statistics for monitoring
+ */
+function getEntropyCacheStats() {
+  return {
+    size: entropyCache.size,
+    maxSize: entropyCache.max,
+    hitRate: entropyCache.calculatedSize > 0 ? (entropyCache.size / entropyCache.calculatedSize) : 0,
+    settings: ENTROPY_SETTINGS
+  };
+}
+
+/**
+ * Clear entropy cache (useful for testing or maintenance)
+ */
+function clearEntropyCache() {
+  entropyCache.clear();
+}
+
 module.exports = {
   createSecureUpload,
   postUploadValidation,
@@ -449,5 +535,10 @@ module.exports = {
   getUserStorageUsage,
   validateFileSignature,
   scanFileForViruses,
+  calculateEntropy,
+  calculateEntropyOptimized,
+  getEntropyCacheStats,
+  clearEntropyCache,
+  ENTROPY_SETTINGS,
   USER_QUOTAS
 };
