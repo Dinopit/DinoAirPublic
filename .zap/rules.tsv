@@ -1,0 +1,34 @@
+# ZAP Baseline Rules File
+# This file contains rules for OWASP ZAP to customize security scanning
+
+# Ignore low priority alerts for baseline scans
+IGNORE	LEVEL	LOW
+
+# Ignore specific false positives (customize based on your application)
+IGNORE	10021	/	# Informational alerts about software versions
+
+# Focus on critical and high severity issues
+WARN	LEVEL	HIGH
+FAIL	LEVEL	CRITICAL
+
+# Specific rules for common web vulnerabilities
+WARN	40012	/	# Cross Site Scripting (XSS) in HTML page
+WARN	40013	/	# Session fixation
+WARN	40014	/	# Cross Site Request Forgery (CSRF)
+WARN	40015	/	# Heartbleed OpenSSL vulnerability
+WARN	40016	/	# Cross-Domain misconfiguration
+WARN	40017	/	# Source code disclosure
+WARN	40018	/	# SQL injection
+WARN	40019	/	# External redirect
+
+# Authentication and session management
+WARN	10001	/	# Authentication bypass
+WARN	10002	/	# Session management issues
+
+# Information disclosure
+IGNORE	10016	/	# Web browser XSS protection not enabled
+IGNORE	10017	/	# Cross-domain JavaScript source file inclusion
+IGNORE	10020	/	# X-Frame-Options header
+
+# Custom application-specific rules
+# Add your application-specific security rules here
