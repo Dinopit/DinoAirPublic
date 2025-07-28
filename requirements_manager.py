@@ -167,17 +167,18 @@ class RequirementsManager:
                             req = Requirement(line)
                             pkg_name = req.name
                             
+                            # Define common variations for the package name
+                            variations = [
+                                pkg_name.replace('_', '-'),
+                                pkg_name.lower(),
+                                pkg_name.upper()
+                            ]
+                            
                             # Try to find and import the module
                             # Handle cases where package name differs from import name
                             import_name = pkg_name.replace('-', '_')
                             spec = importlib.util.find_spec(import_name)
                             if spec is None:
-                                # Try some common variations
-                                variations = [
-                                    pkg_name.replace('_', '-'),
-                                    pkg_name.lower(),
-                                    pkg_name.upper()
-                                ]
                                 found = False
                                 for variation in variations:
                                     spec = importlib.util.find_spec(variation.replace('-', '_'))
