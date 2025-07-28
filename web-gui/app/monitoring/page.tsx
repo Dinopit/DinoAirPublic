@@ -21,7 +21,7 @@ import { Tabs, TabsContent, TabsList, TabsTrigger } from '@/components/ui/tabs';
 import { LineChart } from '@/components/ui/charts/line-chart';
 import { BarChart as CustomBarChart } from '@/components/ui/charts/bar-chart';
 import { PieChart } from '@/components/ui/charts/pie-chart';
-import { AnalyticsData } from '@/types/analytics';
+import type { AnalyticsData } from '@/types/analytics';
 import {
   Activity,
   Cpu,

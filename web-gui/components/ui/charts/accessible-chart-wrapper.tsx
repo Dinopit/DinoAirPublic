@@ -1,7 +1,7 @@
 'use client';
 
 import React, { useRef, useEffect, useState } from 'react';
-import type { TimeSeriesDataPoint } from '../../../types/analytics';
+import type { TimeSeriesDataPoint } from '@/types/analytics';
 
 interface IAccessibleChartWrapperProps {
   children: React.ReactNode;
