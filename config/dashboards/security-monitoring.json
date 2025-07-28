@@ -1,0 +1,256 @@
+{
+  "dashboard": {
+    "id": "dinoair-security-monitoring",
+    "title": "DinoAir Security Monitoring",
+    "tags": ["dinoair", "security", "monitoring"],
+    "timezone": "browser",
+    "refresh": "10s",
+    "time": {
+      "from": "now-1h",
+      "to": "now"
+    },
+    "panels": [
+      {
+        "id": 1,
+        "title": "Security Alerts",
+        "type": "stat",
+        "targets": [
+          {
+            "expr": "sum(dinoair_security_alerts_total)",
+            "legendFormat": "Security Alerts"
+          }
+        ],
+        "fieldConfig": {
+          "defaults": {
+            "color": {
+              "mode": "thresholds"
+            },
+            "thresholds": {
+              "steps": [
+                {
+                  "color": "green",
+                  "value": 0
+                },
+                {
+                  "color": "yellow",
+                  "value": 1
+                },
+                {
+                  "color": "red",
+                  "value": 3
+                }
+              ]
+            }
+          }
+        },
+        "gridPos": {
+          "h": 8,
+          "w": 6,
+          "x": 0,
+          "y": 0
+        }
+      },
+      {
+        "id": 2,
+        "title": "Failed Authentications",
+        "type": "stat",
+        "targets": [
+          {
+            "expr": "sum(rate(dinoair_auth_failures_total[5m]))",
+            "legendFormat": "Auth Failures/sec"
+          }
+        ],
+        "fieldConfig": {
+          "defaults": {
+            "color": {
+              "mode": "thresholds"
+            },
+            "thresholds": {
+              "steps": [
+                {
+                  "color": "green",
+                  "value": 0
+                },
+                {
+                  "color": "yellow",
+                  "value": 0.1
+                },
+                {
+                  "color": "red",
+                  "value": 1
+                }
+              ]
+            },
+            "unit": "reqps"
+          }
+        },
+        "gridPos": {
+          "h": 8,
+          "w": 6,
+          "x": 6,
+          "y": 0
+        }
+      },
+      {
+        "id": 3,
+        "title": "Suspicious Activity Score",
+        "type": "stat",
+        "targets": [
+          {
+            "expr": "avg(dinoair_security_risk_score)",
+            "legendFormat": "Risk Score"
+          }
+        ],
+        "fieldConfig": {
+          "defaults": {
+            "color": {
+              "mode": "thresholds"
+            },
+            "thresholds": {
+              "steps": [
+                {
+                  "color": "green",
+                  "value": 0
+                },
+                {
+                  "color": "yellow",
+                  "value": 50
+                },
+                {
+                  "color": "red",
+                  "value": 80
+                }
+              ]
+            },
+            "unit": "percent"
+          }
+        },
+        "gridPos": {
+          "h": 8,
+          "w": 6,
+          "x": 12,
+          "y": 0
+        }
+      },
+      {
+        "id": 4,
+        "title": "Audit Events Rate",
+        "type": "stat",
+        "targets": [
+          {
+            "expr": "sum(rate(dinoair_audit_events_total[5m]))",
+            "legendFormat": "Audit Events/sec"
+          }
+        ],
+        "fieldConfig": {
+          "defaults": {
+            "color": {
+              "mode": "palette-classic"
+            },
+            "unit": "reqps"
+          }
+        },
+        "gridPos": {
+          "h": 8,
+          "w": 6,
+          "x": 18,
+          "y": 0
+        }
+      },
+      {
+        "id": 5,
+        "title": "Security Events Timeline",
+        "type": "timeseries",
+        "targets": [
+          {
+            "expr": "rate(dinoair_security_events_total[1m])",
+            "legendFormat": "Security Events"
+          },
+          {
+            "expr": "rate(dinoair_auth_failures_total[1m])",
+            "legendFormat": "Auth Failures"
+          },
+          {
+            "expr": "rate(dinoair_privilege_escalation_total[1m])",
+            "legendFormat": "Privilege Escalations"
+          }
+        ],
+        "fieldConfig": {
+          "defaults": {
+            "color": {
+              "mode": "palette-classic"
+            },
+            "unit": "reqps"
+          }
+        },
+        "gridPos": {
+          "h": 9,
+          "w": 24,
+          "x": 0,
+          "y": 8
+        }
+      },
+      {
+        "id": 6,
+        "title": "Top Security Event Sources",
+        "type": "table",
+        "targets": [
+          {
+            "expr": "topk(10, sum by (source_ip) (dinoair_security_events_total))",
+            "legendFormat": "{{source_ip}}"
+          }
+        ],
+        "fieldConfig": {
+          "defaults": {
+            "color": {
+              "mode": "palette-classic"
+            }
+          }
+        },
+        "gridPos": {
+          "h": 8,
+          "w": 12,
+          "x": 0,
+          "y": 17
+        }
+      },
+      {
+        "id": 7,
+        "title": "Compliance Violations",
+        "type": "timeseries",
+        "targets": [
+          {
+            "expr": "rate(dinoair_compliance_violations_total[5m])",
+            "legendFormat": "Compliance Violations"
+          }
+        ],
+        "fieldConfig": {
+          "defaults": {
+            "color": {
+              "mode": "thresholds"
+            },
+            "thresholds": {
+              "steps": [
+                {
+                  "color": "green",
+                  "value": 0
+                },
+                {
+                  "color": "red",
+                  "value": 0.001
+                }
+              ]
+            },
+            "unit": "reqps"
+          }
+        },
+        "gridPos": {
+          "h": 8,
+          "w": 12,
+          "x": 12,
+          "y": 17
+        }
+      }
+    ]
+  }
+}

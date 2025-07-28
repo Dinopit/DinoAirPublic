@@ -39,6 +39,15 @@ class AlertCategory(Enum):
     DATA_CORRUPTION = "data_corruption"
     AUTHENTICATION_FAILURE = "authentication_failure"
     CONFIGURATION_ERROR = "configuration_error"
+    PRIVILEGE_ESCALATION = "privilege_escalation"
+    SUSPICIOUS_ACTIVITY = "suspicious_activity"
+    COMPLIANCE_VIOLATION = "compliance_violation"
+    AUDIT_FAILURE = "audit_failure"
+    ENCRYPTION_FAILURE = "encryption_failure"
+    MEMORY_LEAK = "memory_leak"
+    CPU_SPIKE = "cpu_spike"
+    DISK_FULL = "disk_full"
+    NETWORK_ANOMALY = "network_anomaly"
 
 class AlertStatus(Enum):
     """Alert status."""

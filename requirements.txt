@@ -16,5 +16,16 @@ sentry-sdk>=2.0.0
 # Cross-platform terminal color support
 colorama>=0.4.6
 
+# Advanced monitoring and observability dependencies
+# OpenTelemetry for distributed tracing
+opentelemetry-api>=1.20.0
+opentelemetry-sdk>=1.20.0
+opentelemetry-exporter-jaeger-thrift>=1.20.0
+opentelemetry-exporter-otlp-proto-grpc>=1.20.0
+opentelemetry-semantic-conventions>=0.41b0
+
+# Cryptography for audit log encryption
+cryptography>=41.0.0
+
 # Note: ComfyUI has its own requirements.txt that will be installed separately
 # This file contains only the additional dependencies needed for model downloading
