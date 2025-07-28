@@ -10,9 +10,21 @@ import tempfile
 from pathlib import Path
 
 # Add the project root to the path
-project_root = Path(__file__).parent.parent
-sys.path.insert(0, str(project_root))
+def find_project_root(marker=".git"):
+    """Find the project root by searching for a marker file."""
+    current_dir = Path(__file__).resolve().parent
+    while current_dir != current_dir.parent:  # Stop at filesystem root
+        if (current_dir / marker).exists():
+            return current_dir
+        current_dir = current_dir.parent
+    raise FileNotFoundError(f"Project root marker '{marker}' not found.")
 
+try:
+    project_root = find_project_root()
+    sys.path.insert(0, str(project_root))
+except FileNotFoundError as e:
+    print(f"Error: {e}")
+    sys.exit(1)
 def test_opentelemetry_tracer():
     """Test OpenTelemetry tracer functionality."""
     print("Testing OpenTelemetry tracer...")
