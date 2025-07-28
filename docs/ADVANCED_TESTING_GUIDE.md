@@ -205,7 +205,7 @@ The testing framework implements quality gates to ensure code quality:
 npm run security:full-audit
 
 # Run individual tools
-bandit -r . -f json -o bandit-results.json
+bandit -r . --exclude tests,migrations -f json -o bandit-results.json
 safety check --json --output safety-results.json
 semgrep --config=auto --json .
 ```
