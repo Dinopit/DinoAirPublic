@@ -22,9 +22,15 @@ from .config_validator import (
     CONFIG_TEMPLATE
 )
 
+# Add SecretsError for test compatibility
+class SecretsError(Exception):
+    """Exception raised for secrets-related configuration errors."""
+    pass
+
 __all__ = [
     # Core config classes
     'ConfigError',
+    'SecretsError',  # Add to exports
     'ConfigValueType',
     'ConfigField',
     'ConfigValidator',
