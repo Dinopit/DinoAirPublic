@@ -398,8 +398,8 @@ class ResourceMonitor:
                     unit="MB/s",
                     timestamp=timestamp
                 ))
-        except:
-            pass
+        except Exception as e:
+            self.logger.error(f"Error collecting disk I/O metrics: {e}")
         
         return metrics
     
