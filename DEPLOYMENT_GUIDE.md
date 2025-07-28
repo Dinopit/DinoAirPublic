@@ -280,6 +280,58 @@ WantedBy=multi-user.target
 
 ## Configuration
 
+### Production Environment Templates
+
+DinoAir provides pre-configured environment templates for different deployment scenarios:
+
+#### Production Environment
+
+Copy `.env.production.example` to `.env.production` and configure:
+
+```bash
+# Copy the production template
+cp .env.production.example .env.production
+
+# Edit the configuration
+nano .env.production
+```
+
+Key production settings to configure:
+
+- **DINOAIR_SECRET_KEY**: Generate with `openssl rand -hex 32`
+- **DINOAIR_DATABASE_PASSWORD**: Strong database password
+- **Database connection details**: Host, port, user, database name
+- **AI service endpoints**: ComfyUI and Ollama hosts/ports
+- **Monitoring settings**: Alert email, webhook URLs
+
+#### Staging Environment
+
+For staging deployments:
+
+```bash
+# Copy the staging template
+cp .env.staging.example .env.staging
+
+# Edit the configuration
+nano .env.staging
+```
+
+Staging uses different ports and more verbose logging for debugging.
+
+#### Environment Configuration Loading
+
+DinoAir supports multiple configuration methods (in order of precedence):
+
+1. **Environment variables** (highest priority)
+2. **Environment-specific YAML files** (`config/environments/production.yaml`)
+3. **Main configuration file** (`config.yaml`)
+4. **Default values** (lowest priority)
+
+The configuration system supports:
+- Variable substitution: `${VARIABLE_NAME}` or `${VARIABLE_NAME:-default_value}`
+- Environment prefixes: `DINOAIR_SERVER_PORT` → `server.port`
+- Nested configuration: `DINOAIR_DATABASE_HOST` → `database.host`
+
 ### Environment Variables
 
 ```bash

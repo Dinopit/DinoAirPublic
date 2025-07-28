@@ -218,18 +218,24 @@ class EnvSecretsProvider(SecretsProvider):
         if value is None:
             raise SecretsError(f"Environment variable '{path}' not found")
         
-        # Try to parse as JSON if key is requested
-        if key:
-            try:
-                secret_data = json.loads(value)
-                if not isinstance(secret_data, dict):
-                    raise SecretsError(f"Environment variable '{path}' is not a JSON object")
-                if key not in secret_data:
-                    raise SecretsError(f"Key '{key}' not found in environment variable '{path}'")
-                return secret_data[key]
-            except json.JSONDecodeError:
+        # Try to parse as JSON first (for both key and no-key cases)
+        try:
+            secret_data = json.loads(value)
+            if isinstance(secret_data, dict):
+                # If a key is requested, return that specific value
+                if key:
+                    if key not in secret_data:
+                        raise SecretsError(f"Key '{key}' not found in environment variable '{path}'")
+                    return secret_data[key]
+                # If no key requested, return the entire parsed object
+                else:
+                    return secret_data
+        except json.JSONDecodeError:
+            # If JSON parsing fails and a key was requested, this is an error
+            if key:
                 raise SecretsError(f"Environment variable '{path}' is not valid JSON")
         
+        # Return raw string value if JSON parsing failed or wasn't applicable
         return value
     
     def is_available(self) -> bool:
