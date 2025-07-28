@@ -1,5 +1,4 @@
 #!/usr/bin/env sh
-. "$(dirname -- "$0")/_/husky.sh"
 
 echo "🔍 Running basic pre-commit checks..."
 
@@ -24,16 +23,13 @@ if git diff --cached --name-only | grep -E '\.env$' | grep -v '\.env\.example$';
     exit 1
 fi
 
-# Run Node.js linting where possible
-echo "🎨 Running Node.js project checks..."
-for dir in web-gui-node installer; do
-    if [ -d "$dir" ] && [ -f "$dir/package.json" ]; then
-        cd "$dir"
-        echo "📝 Checking $dir..."
-        npm run lint:fix-safe 2>/dev/null || echo "⚠️  Linting not available for $dir"
-        cd ..
-    fi
-done
+# Check for hardcoded credentials (basic)
+echo "🔍 Checking for obvious credentials..."
+if git diff --cached --name-only | xargs grep -E "(password|secret|key|token)\\s*=\\s*[\"\'][^\"\']+" 2>/dev/null | grep -v -E "(example|test|spec|mock|fake|dummy|placeholder)"; then
+    echo "❌ Potential hardcoded credentials detected!"
+    echo "💡 If this is intentional, use SKIP_HOOKS=1"
+    exit 1
+fi
 
 echo "✅ Basic pre-commit checks completed!"
 echo "💡 Use SKIP_HOOKS=1 to bypass all checks if needed"
