@@ -323,7 +323,7 @@ const OptimizedLocalGuiContent = () => {
     ]
   );
 
-  useKeyboardShortcuts({ shortcuts });
+  useKeyboardShortcuts(shortcuts);
 
   // Memoize tab content to prevent unnecessary re-renders
   const tabContent = useMemo(() => {
