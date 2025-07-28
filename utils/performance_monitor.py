@@ -57,9 +57,9 @@ class PerformanceMonitor:
                         "memory_total": gpu.memoryTotal,
                         "temperature": gpu.temperature
                     })
-        except ImportError:
+        except ImportError as e:
             # GPU monitoring not available
-            pass
+            self.logger.debug(f"GPUtil module not available: {e}")
         except Exception:
             # GPU access error
             pass
