@@ -61,6 +61,7 @@
     "@radix-ui/react-slot": "^1.0.2",
     "@radix-ui/react-tabs": "^1.1.12",
     "@radix-ui/react-toast": "^1.1.5",
+    "@supabase/supabase-js": "^2.39.0",
     "@t3-oss/env-nextjs": "^0.13.8",
     "@types/prismjs": "^1.26.5",
     "@types/swagger-ui-react": "^5.18.0",
