@@ -345,7 +345,14 @@ class ConfigValidator:
                 if not isinstance(value, str):
                     value = str(value)
                 
-                if field_def.pattern and not re.match(field_def.pattern, value):
+                # Check if value is an environment variable template
+                is_env_template = (
+                    value.startswith('${') and value.endswith('}') or
+                    value.startswith('env://') or 
+                    value.startswith('$')
+                )
+                
+                if field_def.pattern and not is_env_template and not re.match(field_def.pattern, value):
                     self.errors.append(
                         f"{path}: Value '{value}' does not match pattern '{field_def.pattern}'"
                     )
@@ -496,13 +503,44 @@ class ConfigLoader:
         try:
             with open(path, 'r') as f:
                 if path.suffix in ['.yaml', '.yml']:
-                    return yaml.safe_load(f) or {}
+                    config = yaml.safe_load(f) or {}
                 elif path.suffix == '.json':
-                    return json.load(f)
+                    config = json.load(f)
                 else:
                     raise ConfigError(f"Unsupported config file format: {path.suffix}")
+            
+            # Substitute environment variables in the loaded config
+            return self._substitute_env_vars(config)
+            
         except Exception as e:
             raise ConfigError(f"Failed to load config file {file_path}: {e}")
+    
+    def _substitute_env_vars(self, config: Any) -> Any:
+        """Recursively substitute environment variables in config"""
+        if isinstance(config, dict):
+            return {key: self._substitute_env_vars(value) for key, value in config.items()}
+        elif isinstance(config, list):
+            return [self._substitute_env_vars(item) for item in config]
+        elif isinstance(config, str):
+            # Handle ${VAR} and ${VAR:-default} patterns
+            import re
+            def replace_env_var(match):
+                var_expr = match.group(1)
+                if ':-' in var_expr:
+                    var_name, default_value = var_expr.split(':-', 1)
+                    return os.environ.get(var_name, default_value)
+                else:
+                    return os.environ.get(var_expr, match.group(0))  # Return original if not found
+            
+            # Replace ${VAR} and ${VAR:-default} patterns
+            config = re.sub(r'\$\{([^}]+)\}', replace_env_var, config)
+            
+            # Handle env:// prefix for tests
+            if config.startswith('env://'):
+                env_var = config[6:]  # Remove 'env://' prefix
+                return os.environ.get(env_var, config)  # Return original if not found
+                
+        return config
     
     def _load_from_env(self, prefix: str) -> Dict[str, Any]:
         """Load configuration from environment variables"""
@@ -510,8 +548,28 @@ class ConfigLoader:
         
         for key, value in os.environ.items():
             if key.startswith(prefix):
-                # Convert DINOAIR_SERVER_PORT to server.port
-                config_key = key[len(prefix):].lower().replace('_', '.')
+                # Convert DINOAIR_SERVER_PORT to server.port but DINOAIR_APP_NAME to app_name
+                config_key = key[len(prefix):].lower()
+                
+                # Only convert underscores to dots for known nested structures
+                # For simple fields like app_name, keep underscores
+                if config_key.startswith('server_'):
+                    config_key = config_key.replace('_', '.', 1)
+                elif config_key.startswith('database_'):
+                    config_key = config_key.replace('_', '.', 1)
+                elif config_key.startswith('security_'):
+                    config_key = config_key.replace('_', '.', 1)
+                elif config_key.startswith('comfyui_'):
+                    config_key = config_key.replace('_', '.', 1)
+                elif config_key.startswith('ollama_'):
+                    config_key = config_key.replace('_', '.', 1)
+                elif config_key.startswith('resources_'):
+                    config_key = config_key.replace('_', '.', 1)
+                elif config_key.startswith('logging_'):
+                    config_key = config_key.replace('_', '.', 1)
+                elif config_key.startswith('monitoring_'):
+                    config_key = config_key.replace('_', '.', 1)
+                # For top-level fields, keep underscores as they are
                 
                 # Try to parse value
                 try:

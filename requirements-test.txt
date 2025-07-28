@@ -6,3 +6,6 @@ pytest-asyncio>=0.21.1
 psutil>=5.9.0
 requests>=2.31.0
 colorama>=0.4.6
+
+# Additional dependencies for config module testing
+watchdog>=3.0.0
