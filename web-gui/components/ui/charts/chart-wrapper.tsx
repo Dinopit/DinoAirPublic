@@ -23,7 +23,7 @@ export function ChartWrapper({
   onError,
 }: IChartWrapperProps) {
   return (
-    <ChartErrorBoundary onError={onError ?? undefined}>
+    <ChartErrorBoundary onError={onError}>
       <AccessibleChartWrapper
         data={data}
         title={title}
