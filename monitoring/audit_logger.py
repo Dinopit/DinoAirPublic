@@ -189,7 +189,7 @@ class AuditLogger:
         
         try:
             encrypted = self._cipher.encrypt(data.encode())
-            return encrypted.decode('latin-1')  # Use latin-1 for byte preservation
+            return base64.b64encode(encrypted).decode('utf-8')  # Use Base64 for safe text storage
         except Exception as e:
             print(f"Warning: Failed to encrypt audit data: {e}")
             return data
