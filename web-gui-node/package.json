@@ -38,7 +38,7 @@
     "security:validate": "node scripts/validate-security.js",
     "security:test": "npm run test && npm run security:validate",
     "prepare": "cd .. && husky install",
-    "lint:fix-safe": "npx eslint --fix . || true"
+    "lint:fix-safe": "npx eslint --fix .; EXIT_CODE=$?; if [ $EXIT_CODE -ne 0 ]; then echo 'Warning: eslint encountered issues. Exit code: $EXIT_CODE'; fi"
   },
   "dependencies": {
     "@opentelemetry/api": "^1.9.0",
