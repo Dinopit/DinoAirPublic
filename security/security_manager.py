@@ -58,25 +58,25 @@ class SecurityManager:
         except ValueError:
             return False
     
-    def validate_password(self, password: str) -> tuple[bool, str]:
+    def validate_password(self, password: str) -> PasswordValidationResult:
         """Validate password meets requirements"""
         if len(password) < self.config["password_min_length"]:
-            return False, f"Password must be at least {self.config['password_min_length']} characters"
+            return PasswordValidationResult(False, f"Password must be at least {self.config['password_min_length']} characters")
         
         if self.config["password_require_special"]:
             if not re.search(r'[!@#$%^&*(),.?":{}|<>]', password):
-                return False, "Password must contain at least one special character"
+                return PasswordValidationResult(False, "Password must contain at least one special character")
         
         if not re.search(r'[A-Z]', password):
-            return False, "Password must contain at least one uppercase letter"
+            return PasswordValidationResult(False, "Password must contain at least one uppercase letter")
         
         if not re.search(r'[a-z]', password):
-            return False, "Password must contain at least one lowercase letter"
+            return PasswordValidationResult(False, "Password must contain at least one lowercase letter")
         
         if not re.search(r'[0-9]', password):
-            return False, "Password must contain at least one number"
+            return PasswordValidationResult(False, "Password must contain at least one number")
         
-        return True, "Password is valid"
+        return PasswordValidationResult(True, "Password is valid")
     
     def generate_jwt_token(self, user_id: str, additional_claims: Dict = None) -> str:
         """Generate a JWT token (simplified version)"""
