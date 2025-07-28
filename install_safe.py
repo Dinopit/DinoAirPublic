@@ -255,7 +255,6 @@ class HardwareDetector:
     def detect_cpu(self):
         """Detect CPU information"""
         try:
-            import psutil
             cpu_info = {
                 'cores': psutil.cpu_count(logical=False),
                 'threads': psutil.cpu_count(logical=True),
