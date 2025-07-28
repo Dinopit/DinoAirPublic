@@ -172,6 +172,9 @@ jobs:
       - name: Checkout code
         uses: actions/checkout@v4
 
+      # The 'uses' syntax is not employed here because security testing is handled by a separate
+      # workflow ('Advanced Security Testing') that runs automatically on push/PR events. This step
+      # serves as a reference for maintainers to understand the workflow orchestration.
       - name: Security testing reference
         run: |
           echo "Security testing is handled by the 'Advanced Security Testing' workflow"
