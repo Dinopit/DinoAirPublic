@@ -1,0 +1,26 @@
+{
+  "comfyui": {
+    "enabled": true,
+    "host": "localhost",
+    "port": 8188,
+    "api_path": "/api",
+    "healthcheck_interval": 30
+  },
+  "ollama": {
+    "enabled": true,
+    "host": "localhost",
+    "port": 11434,
+    "api_path": "/api",
+    "models": [
+      "qwen",
+      "llama"
+    ],
+    "default_model": "qwen"
+  },
+  "web_gui": {
+    "enabled": true,
+    "host": "localhost",
+    "port": 3000,
+    "api_path": "/api"
+  }
+}

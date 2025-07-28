@@ -1,0 +1,146 @@
+{
+  "timestamp": 1753715890.216317,
+  "total_tests": 27,
+  "passed": 23,
+  "success_rate": 85.18518518518519,
+  "results": [
+    {
+      "test": "Web GUI Health",
+      "url": "http://localhost:3000/api/health",
+      "error": "Connection refused - service not running",
+      "success": false
+    },
+    {
+      "test": "ComfyUI Health",
+      "url": "http://localhost:8188/system_stats",
+      "error": "Connection refused - service not running",
+      "success": false
+    },
+    {
+      "test": "Ollama Health",
+      "url": "http://localhost:11434/api/tags",
+      "error": "Connection refused - service not running",
+      "success": false
+    },
+    {
+      "test": "Configuration file: config/services.json",
+      "success": true,
+      "details": "File exists: True"
+    },
+    {
+      "test": "Configuration file: config/security.json",
+      "success": true,
+      "details": "File exists: True"
+    },
+    {
+      "test": "Configuration file: config/config.yaml",
+      "success": true,
+      "details": "File exists: True"
+    },
+    {
+      "test": "Configuration file: .env",
+      "success": false,
+      "details": "File exists: False"
+    },
+    {
+      "test": "Script exists: System Requirements Checker",
+      "success": true,
+      "details": "File: check_requirements.py"
+    },
+    {
+      "test": "Script exists: Requirements Manager",
+      "success": true,
+      "details": "File: requirements_manager.py"
+    },
+    {
+      "test": "Script exists: Enhanced Installer",
+      "success": true,
+      "details": "File: install_enhanced.py"
+    },
+    {
+      "test": "Script exists: Troubleshooter",
+      "success": true,
+      "details": "File: troubleshoot.py"
+    },
+    {
+      "test": "Script exists: Enhanced Starter",
+      "success": true,
+      "details": "File: start_enhanced.py"
+    },
+    {
+      "test": "Module import: Config Manager",
+      "success": true,
+      "details": "Successfully imported and instantiated ConfigManager"
+    },
+    {
+      "test": "Module import: Service Manager",
+      "success": true,
+      "details": "Successfully imported and instantiated ServiceManager"
+    },
+    {
+      "test": "Module import: Performance Monitor",
+      "success": true,
+      "details": "Successfully imported and instantiated PerformanceMonitor"
+    },
+    {
+      "test": "Module import: Security Manager",
+      "success": true,
+      "details": "Successfully imported and instantiated SecurityManager"
+    },
+    {
+      "test": "Directory: config",
+      "success": true,
+      "details": "Directory exists: True"
+    },
+    {
+      "test": "Directory: services",
+      "success": true,
+      "details": "Directory exists: True"
+    },
+    {
+      "test": "Directory: utils",
+      "success": true,
+      "details": "Directory exists: True"
+    },
+    {
+      "test": "Directory: security",
+      "success": true,
+      "details": "Directory exists: True"
+    },
+    {
+      "test": "Directory: tests",
+      "success": true,
+      "details": "Directory exists: True"
+    },
+    {
+      "test": "Directory: logs",
+      "success": true,
+      "details": "Directory exists: True"
+    },
+    {
+      "test": "Directory: models",
+      "success": true,
+      "details": "Directory exists: True"
+    },
+    {
+      "test": "Directory: data",
+      "success": true,
+      "details": "Directory exists: True"
+    },
+    {
+      "test": "Requirements file: requirements.txt",
+      "success": true,
+      "details": "File has 62 lines"
+    },
+    {
+      "test": "Requirements file: requirements-dev.txt",
+      "success": true,
+      "details": "File has 23 lines"
+    },
+    {
+      "test": "Requirements file: requirements-gpu.txt",
+      "success": true,
+      "details": "File has 24 lines"
+    }
+  ]
+}

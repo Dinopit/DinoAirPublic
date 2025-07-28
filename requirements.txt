@@ -1,31 +1,62 @@
-# DinoAir Model Downloader Dependencies
-# These are additional requirements for the automated model download functionality
+# Base requirements for DinoAir
+# Generated automatically - enhanced version
 
-# HTTP requests library for downloading files
-requests>=2.31.0
+# Core web framework
+fastapi>=0.104.0
+uvicorn>=0.24.0
+pydantic>=2.4.0
 
-# Progress bar library for showing download progress
-tqdm>=4.66.0
+# Database and ORM
+sqlalchemy>=2.0.0
+alembic>=1.12.0
 
-# Metrics collection dependencies
-psutil>=5.9.0
+# Authentication and security
+python-jose>=3.3.0
+passlib>=1.7.4
+bcrypt>=4.0.0
 
-# Sentry for error tracking and monitoring
+# HTTP and WebSocket support
+python-multipart>=0.0.6
+aiofiles>=23.2.0
+httpx>=0.25.0
+websockets>=12.0
+
+# Task processing and caching
+redis>=5.0.0
+celery>=5.3.0
+
+# Monitoring and observability
+prometheus-client>=0.18.0
+structlog>=23.2.0
 sentry-sdk>=2.0.0
 
-# Cross-platform terminal color support
-colorama>=0.4.6
+# Configuration and environment
+python-dotenv>=1.0.0
+pyyaml>=6.0.1
 
-# Advanced monitoring and observability dependencies
-# OpenTelemetry for distributed tracing
+# CLI and utilities
+click>=8.1.0
+rich>=13.6.0
+
+# HTTP requests and parsing
+requests>=2.31.0
+beautifulsoup4>=4.12.0
+
+# System and file handling
+psutil>=5.9.0
+colorama>=0.4.6
+tqdm>=4.66.0
+
+# Data processing
+pillow>=10.1.0
+numpy>=1.24.0
+
+# Cryptography
+cryptography>=41.0.0
+
+# Telemetry (existing)
 opentelemetry-api>=1.20.0
 opentelemetry-sdk>=1.20.0
 opentelemetry-exporter-jaeger-thrift>=1.20.0
 opentelemetry-exporter-otlp-proto-grpc>=1.20.0
 opentelemetry-semantic-conventions>=0.41b0
-
-# Cryptography for audit log encryption
-cryptography>=41.0.0
-
-# Note: ComfyUI has its own requirements.txt that will be installed separately
-# This file contains only the additional dependencies needed for model downloading

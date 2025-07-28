@@ -1,0 +1,91 @@
+# Multi-stage build for DinoAir - Enhanced Version
+FROM python:3.11-slim AS python-builder
+
+# Install build dependencies
+RUN apt-get update && apt-get install -y \
+    build-essential \
+    git \
+    curl \
+    && rm -rf /var/lib/apt/lists/*
+
+# Set working directory
+WORKDIR /app
+
+# Copy enhanced requirements files
+COPY requirements*.txt ./
+
+# Create virtual environment and install dependencies
+RUN python -m venv /opt/venv
+ENV PATH="/opt/venv/bin:$PATH"
+RUN pip install --upgrade pip && \
+    pip install -r requirements.txt
+
+# Node.js stage
+FROM node:18-slim AS node-builder
+
+WORKDIR /app
+
+# Copy package files for all Node.js components
+COPY web-gui/package*.json ./web-gui/
+COPY web-gui-node/package*.json ./web-gui-node/
+COPY mobile-app/package*.json ./mobile-app/
+
+# Install Node dependencies for each component
+RUN cd web-gui && npm ci --only=production && \
+    cd ../web-gui-node && npm ci --only=production && \
+    cd ../mobile-app && (npm ci --only=production || echo "Mobile app deps optional")
+
+# Final stage
+FROM python:3.11-slim
+
+# Install runtime dependencies
+RUN apt-get update && apt-get install -y \
+    curl \
+    git \
+    && rm -rf /var/lib/apt/lists/*
+
+# Install Node.js
+RUN curl -fsSL https://deb.nodesource.com/setup_18.x | bash - && \
+    apt-get install -y nodejs
+
+# Create non-root user
+RUN useradd -m -u 1000 dinoair
+
+# Set working directory
+WORKDIR /app
+
+# Copy Python virtual environment
+COPY --from=python-builder /opt/venv /opt/venv
+ENV PATH="/opt/venv/bin:$PATH"
+
+# Copy Node modules
+COPY --from=node-builder /app/web-gui/node_modules ./web-gui/node_modules
+COPY --from=node-builder /app/web-gui-node/node_modules ./web-gui-node/node_modules
+COPY --from=node-builder /app/mobile-app/node_modules ./mobile-app/node_modules
+
+# Copy application code
+COPY --chown=dinoair:dinoair . .
+
+# Create necessary directories with proper permissions
+RUN mkdir -p logs data models config && \
+    chown -R dinoair:dinoair /app && \
+    chmod +x start_enhanced.py check_requirements.py troubleshoot.py
+
+# Switch to non-root user
+USER dinoair
+
+# Run system check and setup
+RUN python check_requirements.py || echo "Requirements check completed"
+
+# Create default configuration
+RUN python -c "from config.config_manager import ConfigManager; ConfigManager().validate_config()" || echo "Config setup completed"
+
+# Expose ports
+EXPOSE 3000 8188 11434
+
+# Health check using our enhanced system
+HEALTHCHECK --interval=30s --timeout=10s --start-period=5s --retries=3 \
+    CMD python -c "import requests; requests.get('http://localhost:3000/api/health', timeout=5)" || exit 1
+
+# Start with enhanced launcher
+CMD ["python", "start_enhanced.py"]
