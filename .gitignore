@@ -143,6 +143,16 @@ output/
 input/
 custom_nodes/
 
+# Generated reports and logs (should be generated, not stored)
+*_report.json
+*_report.txt
+*_install_log.txt
+*_test_report.*
+system_check_*
+prerequisite_*
+integration_test_*
+troubleshooting_*
+
 # Security - credentials and secrets
 *.pem
 *.key

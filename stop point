@@ -1,4 +1,0 @@
-he CLI testing framework was set up, including unit tests for logger.js, fileUtils.js, and spawnManager.js,
-as well as integration tests for CLI-Python communication.
-Significant coverage was achieved for logger.js, while overall coverage remains low due to untested modules. End-to-end testing scenarios
-for installation processes were also planned.

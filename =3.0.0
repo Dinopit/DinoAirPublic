@@ -1,8 +1,0 @@
-Defaulting to user installation because normal site-packages is not writeable
-Collecting watchdog
-  Downloading watchdog-6.0.0-py3-none-manylinux2014_x86_64.whl.metadata
-     - 44.3 kB 214.3 MB/s 0:00:00
-Downloading watchdog-6.0.0-py3-none-manylinux2014_x86_64.whl
-   - 79.1 kB 211.1 MB/s 0:00:00
-Installing collected packages: watchdog
-Successfully installed watchdog-6.0.0
